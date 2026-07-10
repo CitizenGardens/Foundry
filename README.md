@@ -2,7 +2,7 @@
 
 **The world's first trustless, formally verified orchestration engine over 𝔽₁.**
 
-The Prime Materia Commons (formerly Phase Mirror) represents the foundational stack of Multiplicity. It translates natural language commands and agentic decisions into deterministically verified state transitions using a pure mathematical foundation and recursive zero-knowledge consensus. This ensures that no hallucination, malicious injection, or out-of-bounds mutation can ever reach physical execution.
+The Prime Materia Commons (Phase Mirror) represents the foundational stack of Multiplicity. It translates natural language commands and agentic decisions into deterministically verified state transitions using a pure mathematical foundation and recursive zero-knowledge consensus. This ensures that no hallucination, malicious injection, or out-of-bounds mutation can ever reach physical execution.
 
 ## The Sedona Spine Architecture
 
