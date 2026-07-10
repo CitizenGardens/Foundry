@@ -1,5 +1,4 @@
 import ALP.Types.Action
-import Mathlib
 
 namespace ALP.Types.AdmissibilityReport
 

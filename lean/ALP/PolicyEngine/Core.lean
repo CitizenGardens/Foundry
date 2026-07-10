@@ -1,10 +1,12 @@
 import ALP.Constitution.Model
+import ALP.Constitution.L0
 import ALP.Types.Action
 import ALP.Types.TrustLevel
 import ALP.Types.AdmissibilityReport
-import Mathlib
 
 namespace ALP.PolicyEngine
+
+open ALP.Types
 
 structure PolicyEngine where
   constitution : ConstitutionModel

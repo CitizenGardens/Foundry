@@ -17,8 +17,8 @@ import PIRTM.Drift
 import PIRTM.Authority
 import PIRTM.LegalESI02
 import PIRTM.FinancialTreasury01
-import CPIRTM
-import DRMM
+import PIRTM.CPIRTM
+import PIRTM.DRMM
 
 namespace SedonaSpineWasm
 

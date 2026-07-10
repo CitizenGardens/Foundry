@@ -1,5 +1,4 @@
 import ALP.Basic
-import Mathlib
 
 namespace ALP.Constitution
 

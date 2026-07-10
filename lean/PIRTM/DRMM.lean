@@ -1,6 +1,6 @@
 import MOC.Core
 import MOC.Hecke
-import CPIRTM
+import PIRTM.CPIRTM
 
 namespace DRMM
 

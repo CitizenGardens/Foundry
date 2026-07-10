@@ -1,5 +1,4 @@
 import ALP.Constitution.Model
-import Mathlib
 
 namespace ALP.Constitution.L0
 
@@ -7,18 +6,17 @@ def LAMBDA_M_THRESHOLD : Float := 0.1
 def CIRCUIT_BREAKER_THRESHOLD : Nat := 3
 
 def isPrime (n : Nat) : Bool :=
-  match n with
-  | 0 | 1 => false
-  | 2 => true
-  | 3 => true
-  | n =>
-    if n % 2 == 0 || n % 3 == 0 then false
-    else
-      let rec aux (i : Nat) : Bool :=
+  if n < 2 then false
+  else if n == 2 then true
+  else
+    let rec aux (i : Nat) (fuel : Nat) : Bool :=
+      match fuel with
+      | 0 => true
+      | fuel' + 1 =>
         if i * i > n then true
-        else if n % i == 0 || n % (i + 2) == 0 then false
-        else aux (i + 6)
-      aux 5
+        else if n % i == 0 then false
+        else aux (i + 1) fuel'
+    aux 2 n
 
 def l0_1_state_norm_bounded (c : ConstitutionModel) : Bool :=
   c.state_norm.isFinite && c.state_norm > 0

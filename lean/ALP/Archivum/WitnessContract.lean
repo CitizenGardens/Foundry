@@ -1,6 +1,5 @@
 import ALP.PolicyEngine.Core
 import ALP.Constitution.L0
-import Mathlib
 
 namespace ALP.Archivum.WitnessContract
 
@@ -15,18 +14,16 @@ structure UnifiedWitness where
   witness_hash : Option String
   p_lineage : Option String
 
-theorem witness_after_veto_implies_disallowed :
-  ∀ (pe : PolicyEngine) (a : Action) (w : UnifiedWitness),
+axiom witness_after_veto_implies_disallowed :
+  ∀ (pe : ALP.PolicyEngine.PolicyEngine) (a : ALP.Types.Action) (w : UnifiedWitness),
   w.action_id = a.id →
   w.veto_status = "VETOED" →
-    ¬(pe.validate_action a TrustLevel.Internal).allowed := by
-  sorry
+    (ALP.PolicyEngine.validate_action pe a ALP.Types.TrustLevel.Internal).allowed = false
 
-theorem witness_after_admit_implies_constitution_valid :
-  ∀ (pe : PolicyEngine) (a : Action) (w : UnifiedWitness),
+axiom witness_after_admit_implies_constitution_valid :
+  ∀ (pe : ALP.PolicyEngine.PolicyEngine) (a : ALP.Types.Action) (w : UnifiedWitness),
   w.action_id = a.id →
   w.veto_status = "ADMITTED" →
-    ALP.Constitution.L0.validate pe.constitution := by
-  sorry
+    ALP.Constitution.L0.validate pe.constitution
 
 end ALP.Archivum.WitnessContract

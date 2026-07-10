@@ -33,13 +33,6 @@ srcDir = "."
 name = "PirtmMocWasm"
 srcDir = "."
 
-[[lean_lib]]
-name = "DRMM"
-srcDir = "."
-
-[[lean_lib]]
-name = "CPIRTM"
-srcDir = "."
 
 [[lean_lib]]
 name = "PRMS"
@@ -75,6 +68,6 @@ srcDir = "."
 
 [[lean_lib]]
 name = "ALP"
-srcDir = "ALP"
+srcDir = "."
 
 
