@@ -26,8 +26,12 @@ class ObservabilitySentinel:
     def __init__(self):
         self.nc = None
         self.window = deque(maxlen=WINDOW_SIZE)
-        # Load the calibrated model
-        self.model = load('observability/anomaly_model.pkl')
+        # Load the canonical model
+        MODEL_PATH = "observability/anomaly_model.pkl"
+        if not os.path.exists(MODEL_PATH):
+            raise FileNotFoundError(f"❌ {MODEL_PATH} missing. Check Sedona Spine artifact.")
+            
+        self.model = load(MODEL_PATH)
         logger.info("Isolation Forest loaded from observability/anomaly_model.pkl.")
 
     async def connect(self):

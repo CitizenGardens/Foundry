@@ -19,7 +19,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Multi-arch Images
-        run: echo "Building multi-arch images (amd64, arm64)"
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.mcp
+          platforms: linux/amd64,linux/arm64
+          push: false
+          tags: ghcr.io/${{ github.repository }}:latest
+          outputs: type=docker,dest=/tmp/image.tar
 
       - name: Run Trivy vulnerability scan
         uses: aquasecurity/trivy-action@master
@@ -31,8 +38,14 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.5.0
+
       - name: Sign with sigstore/cosign
-        run: echo "Cosign signing placeholder"
+        run: |
+          cosign sign --yes ghcr.io/${{ github.repository }}:latest
 
       - name: Push to registry with provenance
-        run: echo "Push placeholder"
+        run: |
+          docker load --input /tmp/image.tar
+          docker push ghcr.io/${{ github.repository }}:latest

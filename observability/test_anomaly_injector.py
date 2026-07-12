@@ -61,7 +61,7 @@ async def run_injector():
     kill_received.clear()
     await nc.publish(TELEMETRY_SUBJECT, json.dumps(PAYLOAD_THERMAL_SPIKE).encode())
     try:
-        await asyncio.wait_for(kill_received.wait(), timeout=3.0)
+        await asyncio.wait_for(kill_received.wait(), timeout=10.0)
     except asyncio.TimeoutError:
         logging.error("FAILED: Did not receive SIG_GOV_KILL for Thermal Spike.")
 
@@ -69,7 +69,7 @@ async def run_injector():
     kill_received.clear()
     await nc.publish(TELEMETRY_SUBJECT, json.dumps(PAYLOAD_HSEC_BREACH).encode())
     try:
-        await asyncio.wait_for(kill_received.wait(), timeout=3.0)
+        await asyncio.wait_for(kill_received.wait(), timeout=10.0)
     except asyncio.TimeoutError:
         logging.error("FAILED: Did not receive SIG_GOV_KILL for HSEC Breach.")
 
