@@ -71,5 +71,9 @@ name = "ALP"
 srcDir = "."
 
 [[lean_lib]]
+name = "UAC"
+srcDir = "UAC"
+
+[[lean_lib]]
 name = "SnapKitty"
 srcDir = "SNAPKITTY"

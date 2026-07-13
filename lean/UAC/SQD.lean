@@ -1,6 +1,6 @@
-import SnapKitty.Core
+import UAC.Core
 
-namespace SnapKitty.SQD
+namespace UAC.SQD
 
 -- 1. SQD Constants for Q-SQD Quantization and Stability Bounds
 -- These must be scaled to avoid floating point in Lean
@@ -23,4 +23,4 @@ def checkStability (f_hat_scaled : Int) (q : Int) (se_scaled : Int) (b_val : Nat
   -- Mock instability logic for formalization
   true
 
-end SnapKitty.SQD
+end UAC.SQD

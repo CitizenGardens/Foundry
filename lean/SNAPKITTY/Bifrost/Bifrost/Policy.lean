@@ -7,7 +7,7 @@
 --      Currently has a `sorry` placeholder; the proof obligation is tracked
 --      as a P0 item for the Policy Engineer.
 
-import SnapKitty.Bifrost.State
+import UAC.Bifrost.State
 
 namespace Bifrost
 

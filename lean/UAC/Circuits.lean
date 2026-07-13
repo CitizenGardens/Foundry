@@ -1,6 +1,6 @@
-import SnapKitty.Core
+import UAC.Core
 
-namespace SnapKitty.Circuits
+namespace UAC.Circuits
 
 -- Phase 1: Circom Circuit Formalization
 
@@ -62,4 +62,4 @@ theorem attestation_schema_soundness (signals : AttestationSignals) :
   simp only [verifyAttestationSchema, Bool.and_eq_true, decide_eq_true_eq] at h
   exact h
 
-end SnapKitty.Circuits
+end UAC.Circuits

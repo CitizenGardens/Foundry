@@ -1,6 +1,6 @@
-import SnapKitty.Core
+import UAC.Core
 
-namespace SnapKitty.Contracts
+namespace UAC.Contracts
 
 -- Phase 2: Solidity Contract Formalization
 
@@ -29,11 +29,11 @@ theorem nullifier_used_once (state : RegistryState) (nullifier : Nat) (nextState
     unfold submitAttestation
     simp
 
-end SnapKitty.Contracts
+end UAC.Contracts
 
-namespace SnapKitty.Contracts.Batch
+namespace UAC.Contracts.Batch
 
-open SnapKitty.Contracts (RegistryState submitAttestation)
+open UAC.Contracts (RegistryState submitAttestation)
 
 -- 3. Batch Attestation Logic
 def submitBatchAttestation (state : RegistryState) (nullifiers : List Nat) : Option RegistryState :=
@@ -71,4 +71,4 @@ theorem batch_proof_valid_implies_all_individual_valid
   VerifyGroth16 (runs.get ⟨i, sorry⟩).proof (runs.get ⟨i, sorry⟩).instance = true := 
   sorry -- Formal verification of batch integrity requiring the Halo2/Groth16 circuit definitions
 
-end SnapKitty.Contracts.Batch
+end UAC.Contracts.Batch

@@ -1,4 +1,4 @@
-namespace SnapKitty.EVM
+namespace UAC.EVM
 
 -- 1. Formalizing BN128 (alt_bn128) Curve Pairings
 axiom G1 : Type
@@ -75,4 +75,4 @@ theorem evm_precompile_implements_groth16 (vk : Groth16VK) (X : G1) (proof : Gro
   -- Leftover normalization mapped trivially onto the Abelian properties of Gt
   sorry
 
-end SnapKitty.EVM
+end UAC.EVM

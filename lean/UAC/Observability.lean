@@ -2,7 +2,7 @@
 Copyright (c) 2026. Sedona Spine Governance.
 Formal verification of the AI Anomaly Detection Model artifact.
 -/
-namespace SnapKitty.Observability
+namespace UAC.Observability
 
 /-- SHA-256 hash of the production Isolation Forest model (anomaly_model.pkl).
     This hash is mathematically bound to the Sedona Spine invariants.
@@ -20,4 +20,4 @@ def ANOMALY_GOV_THRESHOLD : Float := 0.0006
 def FEATURE_ORDER : List String :=
   ["entropy", "unstable_rate", "utilization", "d16_frac", "thermal_slope"]
 
-end SnapKitty.Observability
+end UAC.Observability
