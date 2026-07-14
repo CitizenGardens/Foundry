@@ -249,3 +249,11 @@ srcDir = "M_OPERATOR"
 [[lean_lib]]
 name = "MetaMaterials"
 srcDir = "META_MATERIALS"
+
+[[lean_lib]]
+name = "Core"
+srcDir = "."
+
+[[lean_lib]]
+name = "dynamics"
+srcDir = "."

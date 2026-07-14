@@ -5,7 +5,7 @@
 
 import Init.Data.Nat.Basic
 import Init.Data.List.Basic
-import MOC.Core
+import Core.Spine
 import CRMF.Resonance
 import CRMF.Stability
 import PIRTM.Stability

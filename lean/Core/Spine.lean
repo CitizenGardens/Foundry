@@ -1,7 +1,7 @@
 import Init.Data.Nat.Basic
 import Init.Data.List.Basic
 
-namespace MOC
+namespace Core.Spine
 
 /-- Square for Nat -/
 def nat_sq (x : Nat) : Nat := x * x
@@ -120,4 +120,57 @@ theorem state_morphism_induction (m1 m2 : StateMorphism) :
   unfold isMorphismAdmissible
   exact h
 
-end MOC
+/-- 
+  ESI Risk Levels 
+--/
+inductive RiskLevel
+  | Critical
+  | High
+  | Medium
+  deriving Repr, DecidableEq
+
+/-- 
+  Simplified Representation of ESI Inputs (scaled to Nat for axiom-clean core)
+  spoliation_potential and preservation_urgency are scaled (e.g., 0-100)
+--/
+structure EsiInputs where
+  spoliation : Nat
+  urgency : Nat
+
+/-- 
+  Approximated Spectral Radius Bounds (rho proxy)
+  To remain axiom-clean, we map the structural dimensions into integer bounds.
+--/
+def evaluateEsiRiskLevel (inputs : EsiInputs) (is_stable : Bool) (rho_scaled : Nat) : RiskLevel :=
+  if ¬is_stable then
+    RiskLevel.Critical
+  else if rho_scaled > 150 then -- representing 1.5 scaled by 100
+    RiskLevel.High
+  else
+    RiskLevel.Medium
+
+/-- 
+  Theorem: Risk Evaluation Completeness
+  Proves that any set of valid inputs maps to exactly one RiskLevel.
+--/
+theorem esi_risk_completeness (inputs : EsiInputs) (is_stable : Bool) (rho_scaled : Nat) :
+  evaluateEsiRiskLevel inputs is_stable rho_scaled = RiskLevel.Critical ∨
+  evaluateEsiRiskLevel inputs is_stable rho_scaled = RiskLevel.High ∨
+  evaluateEsiRiskLevel inputs is_stable rho_scaled = RiskLevel.Medium := by
+  unfold evaluateEsiRiskLevel
+  split
+  · exact Or.inl rfl
+  · split
+    · exact Or.inr (Or.inl rfl)
+    · exact Or.inr (Or.inr rfl)
+
+/-- 
+  Theorem: Unstable is always Critical
+  Proves the Zero Drift mandate constraint that mathematical instability 
+  cannot be overridden by the agent.
+--/
+theorem unstable_esi_is_critical (inputs : EsiInputs) (rho_scaled : Nat) :
+  evaluateEsiRiskLevel inputs false rho_scaled = RiskLevel.Critical := by
+  rfl
+
+end Core.Spine

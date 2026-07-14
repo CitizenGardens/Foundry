@@ -98,6 +98,7 @@ import F1Square.Tropical.Closure
 import F1Square.Tropical.Signature
 import F1Square.Tropical.Spectrum
 import F1Square.Tropical.Siblings
+import F1Square.RiemannZeta
 import F1Square.Tropical.IntersectionPositivity
 import F1Square.Tropical.PIRTMBridge
 import F1Square.Analysis.Rat

@@ -13,6 +13,23 @@ lean_lib "ADR" {
 lean_lib "Analytic" {
   srcDir := "src"
 }
+
+lean_lib "F1Square" {
+  srcDir := "lean/F1_SQUARE"
+}
+
+lean_exe test {
+  root := `TestMain
+  supportInterpreter := true
+}
+
+lean_lib "ADR" {
+  srcDir := "src"
+}
+
+lean_lib "Analytic" {
+  srcDir := "src"
+}
 lean_exe test {
   root := `TestMain
   supportInterpreter := true

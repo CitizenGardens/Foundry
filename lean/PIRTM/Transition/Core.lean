@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 
 namespace PIRTM
 
@@ -9,7 +9,7 @@ structure ProofHash where
 
 /-- Tensor Morphism: A transition defined as a sequence of MOC operators. -/
 structure Transition where
-  action : MOC.OperatorWord
+  action : Core.Spine.OperatorWord
   proof_hash : ProofHash
   h_stable : MOC.isACEStable action = true
 

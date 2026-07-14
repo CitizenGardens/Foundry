@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 import MOC.CNL
 
 -- Abstract execution state (e.g. cluster state)

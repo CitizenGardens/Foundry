@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 import MOC.Hecke
 import MOC.Prismatic
 import F1Square.Mechanism

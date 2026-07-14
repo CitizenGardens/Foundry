@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 import PIRTM.Stability
 
 namespace PIRTM.Authority

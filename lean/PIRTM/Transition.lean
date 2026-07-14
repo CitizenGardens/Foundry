@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 
 namespace PIRTM
 
@@ -11,7 +11,7 @@ structure ProofHash where
 structure Transition where
   domain : Nat
   codomain : Nat
-  action : MOC.OperatorWord
+  action : Core.Spine.OperatorWord
   proof_hash : ProofHash
   h_morphism : MOC.dim action = codomain
 

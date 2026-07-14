@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 
 inductive Token where
   | Deploy

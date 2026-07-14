@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 import MOC.Resonance
 import PIRTM.Transition
 import UMCPAROM.Contraction
@@ -16,9 +16,9 @@ abbrev is_contractive (ace_bound : Nat) : Prop :=
 --/
 structure StabilityCertificate (codomain : Nat) where
   trans : Transition
-  res_bound : MOC.ResonanceBound
+  res_bound : Core.Spine.ResonanceBound
   ace_bound : Nat
-  h_stable : MOC.is_lambda_m_stable ace_bound res_bound
+  h_stable : Core.Spine.is_lambda_m_stable ace_bound res_bound
   h_contractive : is_contractive ace_bound
   -- Note: The rigorous real-analysis bounds are evaluated by UmcParom.System.joint_contraction
   -- over WebAssembly. Lean simply enforces the structural constraints here.

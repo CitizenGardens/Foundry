@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 import MOC.Resonance
 
 namespace MOC.Banach

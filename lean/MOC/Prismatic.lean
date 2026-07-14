@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 import MOC.Moonshine
 import MOC.AlmostPurity
 import F1Square.Mechanism

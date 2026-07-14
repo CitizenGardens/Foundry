@@ -1,5 +1,5 @@
 import MOC.PIRTM
-import MOC.Core
+import Core.Spine
 
 namespace PhaseMirror
 

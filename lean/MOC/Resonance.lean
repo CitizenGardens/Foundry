@@ -1,6 +1,6 @@
 import Init.Data.Nat.Basic
 import Init.Data.List.Basic
-import MOC.Core
+import Core.Spine
 
 namespace MOC.Resonance
 

@@ -2,8 +2,26 @@
 members = [
     "materia_commons",
     "crates/core",
-    "crates/engine"
-, "models/legalese-scopist"]
+    "crates/engine",
+    "crates/ace-scn-csc",
+    "crates/gut-pc",
+    "crates/xi-formal",
+    "crates/zmod",
+    "crates/prms",
+    "crates/echo-kernel",
+    "crates/resolvent-verify",
+    "crates/riemann-zeta",
+    "models/ataraxia",
+    "models/coding-commander",
+    "models/echobraid",
+    "models/finton",
+    "models/generalist",
+    "models/legalese-scopist",
+    "models/the-examiner",
+    "models/the-genius",
+    "models/the-guardian",
+    "models/the-publisher"
+, "docs/adr/RustADR"]
 [package]
 name = "multiplicity"
 version = "0.1.0"

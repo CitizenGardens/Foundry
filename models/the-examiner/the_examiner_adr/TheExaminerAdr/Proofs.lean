@@ -1,0 +1,18 @@
+import TheExaminerAdr.Core
+
+/-!
+# ADR Invariant Proofs
+-/
+
+namespace TheExaminerAdr
+
+theorem accepted_is_immutable (a1 a2 : ADR) (h_id : a1.id = a2.id) (h_acc : a1.status = Core.ADR.ADRStatus.Accepted) :
+  a1 = a2 ∨ (∃ id, a2.status = Core.ADR.ADRStatus.Superseded id) ∨ (a2.status = Core.ADR.ADRStatus.Deprecated) := by
+  sorry
+
+theorem consequence_entailment_example (adr : ADR) (h_valid : is_valid_entailment adr) 
+  (h_ctx : adr.context) (h_dec : adr.decision) : adr.consequences := by
+  unfold is_valid_entailment at h_valid
+  exact h_valid ⟨h_ctx, h_dec⟩
+
+end TheExaminerAdr

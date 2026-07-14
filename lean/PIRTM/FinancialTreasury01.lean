@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 import MOC.Moonshine
 import MOC.Hecke
 import PIRTM.Stability
@@ -29,7 +29,7 @@ def prime_pid : MOC.Prime := ⟨p_id, is_prime_pid⟩
   FT01 Transition Operator:
   Constructed as a 108-cycle refinement.
 --/
-def cycle_ft01 : MOC.OperatorWord :=
+def cycle_ft01 : Core.Spine.OperatorWord :=
   MOC.cycle108
 
 /-- 

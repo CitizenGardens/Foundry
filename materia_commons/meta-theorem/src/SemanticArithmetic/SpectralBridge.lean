@@ -4,11 +4,13 @@ Formal verification of the ZSD spectral density against the Python numerical sol
 -/
 
 import SemanticArithmetic.VerifyBasis
+import SemanticArithmetic.RealBasis
 import Lean.Data.Json
 import Lean.Data.Json.FromToJson
 
 open Lean.Json
 open SemanticArithmetic
+open SemanticArithmetic.RealBasis
 
 -- =============================================================================
 -- 1. Parameters (must match the Python experiment)
@@ -18,16 +20,19 @@ def γ : Float := 0.5
 def σ : Float := 2.0
 
 -- =============================================================================
--- 2. Mock state mapping for verification
+-- 2. Real (non-mock) state mapping, generated from basis_factors.json
+--    (see RealBasis.lean / gen_real_basis.py). 256 states over primes 2,3,5,7.
 -- =============================================================================
-def primes : List Nat := [2, 3, 5, 7]
+def primes : List Nat := RealBasis.primes
 
--- Mock a simple state system instead of Fintype
-def states : List Nat := List.range 256
+-- The actual basis integers n (sorted), e.g. 1,2,3,4,5,6,7,8,9,10,12,...
+def states : List Nat := RealBasis.basisNumbers
 
--- For the mock, we pretend state n has value n+1
-def number_of_state (s : Nat) : Nat := s + 1
-def valuations (s : Nat) : List Nat := [0, 0, 0, 0]
+-- In this bridge the state *is* its integer n, so the map is the identity.
+def number_of_state (s : Nat) : Nat := s
+
+-- Real valuations (exponent vectors) looked up from the certified basis.
+def valuations (s : Nat) : List Nat := RealBasis.valuationOf s
 
 -- =============================================================================
 -- 3. Formal matrix construction (K_gcd and Xi_simple)

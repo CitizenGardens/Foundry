@@ -1,4 +1,4 @@
-import MOC.Core
+import Core.Spine
 import MOC.Moonshine
 import MOC.Hecke
 import PIRTM.Stability
@@ -28,7 +28,7 @@ def prime_pid : MOC.Prime := ⟨p_id, is_prime_pid⟩
   ESI02 Transition Operator:
   Anchored to the 108-cycle.
 --/
-def cycle_esi02 : MOC.OperatorWord :=
+def cycle_esi02 : Core.Spine.OperatorWord :=
   MOC.cycle108
 
 /-- 
