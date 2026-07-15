@@ -2,13 +2,13 @@
 --
 -- v0.2.1 Lean 4 worked examples — parallel of the `foundation/examples/` directory. Each example compiles under `lake build` and mirrors a Rust example one-for-one. Every definition is total and reduces at elaboration — no `sorry`, `partial def`, or `native_decide` appear in this module.
 
-import UOR.Enforcement
-import UOR.Pipeline
+import Core.UOR.Enforcement
+import Core.UOR.Pipeline
 
 namespace UOR.Examples
 
-open UOR.Enforcement
-open UOR.Pipeline
+open Core.UOR.Enforcement
+open Core.UOR.Pipeline
 
 /-- Reference to the TowerCompletenessResolver façade constructor. -/
 def towerResolverNew : TowerCompletenessResolver :=

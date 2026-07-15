@@ -2,8 +2,8 @@
 --
 -- UOR Foundation — Observable individual constants.
 
-import UOR.Structures
-import UOR.Individuals.Op
+import Core.UOR.Structures
+import Core.UOR.Individuals.Op
 
 open Core.UOR
 

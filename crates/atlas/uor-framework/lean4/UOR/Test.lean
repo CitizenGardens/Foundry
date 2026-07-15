@@ -2,13 +2,13 @@
 --
 -- v0.2.1 Lean 4 test module. Every `example ... := by decide` assertion verifies at elaboration time that the decider under test reduces. A successful `lake build` of this file is proof that the pipeline is (a) pure-functional, (b) fuel-bounded, and (c) free of `sorry` / `partial def` / `native_decide`.
 
-import UOR.Enforcement
-import UOR.Pipeline
+import Core.UOR.Enforcement
+import Core.UOR.Pipeline
 
 namespace UOR.Test
 
-open UOR.Enforcement
-open UOR.Pipeline
+open Core.UOR.Enforcement
+open Core.UOR.Pipeline
 
 -- =========================================================
 -- Phase 7e.10: Reducibility assertions via `by decide`.

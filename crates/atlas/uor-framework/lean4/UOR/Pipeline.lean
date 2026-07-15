@@ -3,11 +3,11 @@
 -- v0.2.1 Reduction Pipeline — Lean 4 counterpart of `foundation/src/pipeline.rs`. Backs the four resolver `Certify` instances with real fuel-bounded decision logic that reduces at elaboration so `by decide` assertions succeed without `sorry`, `partial def`, or `native_decide`.
 
 import Core.UOR
-import UOR.Enforcement
+import Core.UOR.Enforcement
 
 namespace UOR.Pipeline
 
-open UOR.Enforcement
+open Core.UOR.Enforcement
 
 /-- Constraint reference carried by user `ConstrainedTypeShape` impls. Variants mirror the Rust `ConstraintRef` enum in `foundation/src/pipeline.rs`. -/
 inductive ConstraintRef where

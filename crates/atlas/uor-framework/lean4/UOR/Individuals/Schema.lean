@@ -2,7 +2,7 @@
 --
 -- UOR Foundation — Schema individual constants.
 
-import UOR.Structures
+import Core.UOR.Structures
 
 open Core.UOR
 

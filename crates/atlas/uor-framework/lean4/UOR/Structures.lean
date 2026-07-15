@@ -3,7 +3,7 @@
 -- UOR Foundation — all structure declarations (single compilation unit).
 
 import Core.UOR
-import UOR.Enums
+import Core.UOR.Enums
 
 open Core.UOR
 

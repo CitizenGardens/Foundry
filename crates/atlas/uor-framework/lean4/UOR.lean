@@ -3,11 +3,11 @@
 -- UOR Foundation — Lean 4 formalization root.
 
 import Core.UOR
-import UOR.Enums
-import UOR.Structures
-import UOR.Individuals
-import UOR.Enforcement
-import UOR.Pipeline
-import UOR.Examples
-import UOR.Test
-import UOR.Prelude
+import Core.UOR.Enums
+import Core.UOR.Structures
+import Core.UOR.Individuals
+import Core.UOR.Enforcement
+import Core.UOR.Pipeline
+import Core.UOR.Examples
+import Core.UOR.Test
+import Core.UOR.Prelude
