@@ -22,14 +22,7 @@ use serde::{Deserialize, Serialize, Serializer};
 use sha3::{Digest, Sha3_256};
 use std::sync::OnceLock;
 
-/// Kernel telemetry contract (mirrors the Lean `KernelTelemetry` structure).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct KernelTelemetry {
-    pub xn_kernel: f64,
-    pub wt_max_kernel: f64,
-    pub protection_zeta: f64,
-    pub is_valid_kernel: bool,
-}
+pub use ace_governance::KernelTelemetry;
 
 /// Arakelov normalization parameters produced by `gauge_fix`.
 #[derive(Debug, Clone, PartialEq)]
@@ -320,6 +313,7 @@ mod tests {
             wt_max_kernel: 0.5,
             protection_zeta: 0.25,
             is_valid_kernel: true,
+            telemetry_version: 1,
         };
         let p = gauge_fix(&kt);
         assert!((p.gamma - (-0.25f64).exp()).abs() < 1e-12);
@@ -392,6 +386,7 @@ mod tests {
             wt_max_kernel: 0.4,
             protection_zeta: 0.1,
             is_valid_kernel: true,
+            telemetry_version: 1,
         };
         let (delta, proposal) = certified_perturbation(&atlas, &basis(4), &kt, 1.0, 0.5);
         assert_eq!(delta.nrows(), 4);
