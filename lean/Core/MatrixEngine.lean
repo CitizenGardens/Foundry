@@ -42,4 +42,20 @@ theorem grade_preserved_under_composition (k₁ k₂ : TensorKernel) (m : PrimeM
     · contradiction
   · contradiction
 
+/-- 
+Prime-Indexed Multiplicative Matrix (PIMM)
+M_{ij} = p_i * p_j
+Using Nat for prime evaluation to maintain Axiom-Clean standard.
+-/
+def PIMM (prime : Nat → Nat) (i j : Nat) : Nat :=
+  prime i * prime j
+
+/--
+Recursive Feedback Matrix Step (RFM)
+M_{t+1} = f(M_t) + α * T(M_t)
+-/
+def RFMStep {M : Type} (add : M → M → M) (scale : Nat → M → M) 
+  (f : M → M) (T : M → M) (α : Nat) (M_t : M) : M :=
+  add (f M_t) (scale α (T M_t))
+
 end MatrixEngine

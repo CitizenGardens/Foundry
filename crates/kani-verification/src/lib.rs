@@ -12,3 +12,8 @@
 pub mod spectral_stability;
 pub mod interval_arithmetic;
 pub mod crmf_obligations;
+pub mod multiplicity_operators;
+pub mod matrix_engine;
+pub mod multiplicity_equations;
+pub mod universal_system;
+pub mod multiplicity_cell;

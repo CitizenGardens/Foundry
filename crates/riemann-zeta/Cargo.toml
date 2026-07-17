@@ -12,7 +12,6 @@ blake3 = "1.5"
 chrono = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
-kani = "0.0.1"
 tempfile = "3"
 assert_cmd = "2"
 predicates = "3"

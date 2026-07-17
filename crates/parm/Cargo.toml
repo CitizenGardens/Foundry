@@ -13,7 +13,6 @@ bytemuck = { version = "1.14", features = ["derive"] }
 archivum = { path = "../archivum", optional = true }
 
 [dev-dependencies]
-kani = "0.0.1"
 
 [features]
 # Enable Kani verification harnesses

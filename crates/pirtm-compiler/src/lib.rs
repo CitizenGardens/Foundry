@@ -2,6 +2,9 @@ use tree_sitter::{Language, Parser, Tree};
 
 pub mod walker;
 pub mod type_check;
+pub mod tensor_representation;
+pub mod universal_system;
+pub mod into_mocword;
 
 /// The Sig Library (Multiplicity Functor)
 /// Implements the Prime Successor Predicate with strict tree-sitter grammar integration.

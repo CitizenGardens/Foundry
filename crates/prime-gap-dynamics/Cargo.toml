@@ -11,4 +11,3 @@ serde = { version = "1.0", features = ["derive"] }
 # ndarray-ode-solvers might be useful, or a custom one
 
 [dev-dependencies]
-kani = "0.48.0"

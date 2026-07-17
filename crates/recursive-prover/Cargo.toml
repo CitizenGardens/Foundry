@@ -26,7 +26,6 @@ prover = { path = "../prover" }
 pasta-curves = { path = "../pasta-curves" }
 
 [dev-dependencies]
-kani = "0.0.1"
 
 [build-dependencies]
 sha2 = "0.10"

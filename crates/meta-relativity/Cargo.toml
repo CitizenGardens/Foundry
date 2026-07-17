@@ -10,7 +10,6 @@ anyhow = "1.0"
 thiserror = "2.0.18"
 
 [dev-dependencies]
-kani = "0.0.1"
 
 [dependencies.archivum]
 path = "../archivum"

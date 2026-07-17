@@ -17,7 +17,6 @@ blake3 = "1.5"
 hex = "0.4"
 
 [dev-dependencies]
-kani = "0.0.1"
 [features]
 default = []
 lean-gen = []

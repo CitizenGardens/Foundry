@@ -131,3 +131,5 @@ pub mod telemetry;
 pub mod types;
 pub mod uac_loss;
 pub mod r1cs_constants;
+pub mod telemetry_binding;
+pub mod tether_policy;

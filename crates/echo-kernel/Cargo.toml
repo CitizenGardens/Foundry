@@ -17,4 +17,3 @@ once_cell = "1"
 tempfile = "3"
 
 [dev-dependencies]
-kani = "0.0.1"

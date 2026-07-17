@@ -15,4 +15,3 @@ archivum = { path = "../archivum", optional = true }
 archivum = ["dep:archivum"]
 triple-lock = ["archivum"]
 [dev-dependencies]
-kani = "0.0.1"

@@ -9,4 +9,3 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
-kani = "0.0.1"

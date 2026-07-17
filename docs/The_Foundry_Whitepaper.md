@@ -129,9 +129,9 @@ In the current versioned artifact, `constraints.circom` functions as an accounti
 **Current Compiled Circuits.** To validate the structural logic without exhausting the hardware‑proving timeline, the current repository implements two concrete circuits:
 
 1. **`ace.circom` (Governance Prototype):** Compiles to exactly **133 constraints** (131 non‑linear + 2 linear). In this phase, the heavy Poseidon2 hash is replaced with a linear‑sum stub to validate the routing and governance logic independently of the hash arithmetic.
-2. **`langlandsCheck.circom`:** A separate, fully compiled and functional circuit bridging the generated Rust constants into Circom. This circuit compiles to exactly **170 constraints** (142 non‑linear + 28 linear; r1cs/wasm/sym fully generated) and serves as the executable proof of the mathematical invariant integration.
+2. **`langlandsCheck.circom`:** A separate, fully compiled and functional circuit bridging the generated Rust constants into Circom. This circuit compiles to exactly **170 constraints** (142 non‑linear + 28 linear; r1cs/wasm/sym fully generated) and serves as the executable proof of the mathematical invariant integration. Its verified per‑template constraint breakdown and known soundness gaps are documented in `circuits/LANGANDSCHECK_170_INVARIANT.md`.
 
-Future revisions (Action Item: full Poseidon2 instantiation) will close the gap between the 133‑constraint stub and the 5,087‑constraint architectural lock.
+Future revisions (Action Item: full Poseidon2 instantiation) will close the gap between the 133‑constraint stub and the 5,087‑constraint architectural lock. The phased, measurably‑gated integration plan (using shipped circomlib `Mix`/`Ark`/`Sigma` gates, with the 3,171/1,500 figures treated as *to‑be‑measured* rather than asserted) is tracked in `docs/adr/proposed/ADR-103-Poseidon2-Integration-Roadmap.md`.
 
 ---
 

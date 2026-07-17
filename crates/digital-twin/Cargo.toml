@@ -18,4 +18,3 @@ bitflags = "2.4"
 thiserror = "2.0.18"
 
 [dev-dependencies]
-kani = "0.0.1"

@@ -16,7 +16,6 @@ thiserror = "2.0.18"
 [dev-dependencies]
 rand = "0.8"
 criterion = "0.5"
-kani = "0.0.1"
 
 [[bench]]
 name = "field_ops"

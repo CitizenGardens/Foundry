@@ -75,6 +75,82 @@ impl LanglandsPublicInputs {
 }
 
 // ---------------------------------------------------------------------------
+// PETC / Galois → Circuit provenance bridge
+// ---------------------------------------------------------------------------
+
+/// Derive the full `langlandsCheck.circom` witness bundle (public + private)
+/// directly from a `GaloisRepresentation` and a truncated prime list.
+///
+/// This is the long-missing link between the PETC-upstream provenance
+/// layer (`crate::petc` prime-event ledger) and the ZK circuit: the
+/// `GaloisRepresentation` is the *mathematical* source of truth for the
+/// Frobenius traces/determinants, and this function binds them into the
+/// exact signal layout the circuit consumes — no silent reshapes.
+///
+/// # Fixed-point quantization
+/// `langlandsCheck.circom` does all arithmetic in fixed-point with
+/// `scale = 10^6` (see `circuits/LANGANDSCHECK_170_INVARIANT.md`).
+/// Traces and determinants are already integers (returned mod `ℓ` by
+/// `GaloisRepresentation::trace_at_prime` / `determinant_at_prime`), so
+/// they pass through unchanged as private witnesses.
+///
+/// The `claimed_L_value` is the one value that must be quantized: the
+/// circuit's `product[16]` equals `scale^num_primes * L(1, ρ_g)`, so we
+/// set `claimed_L_value = round(L(1, ρ_g) * scale^num_primes)`.
+/// **Precision caveat:** this is a faithful but lossy fixed-point encoding of
+/// the real-valued Euler product; the circuit verifies the *quantized* identity,
+/// not the analytic one. The gap is bounded by `0.5 / scale^num_primes`.
+pub struct LanglandsWitness {
+    pub public: LanglandsPublicInputs,
+    /// `traces[i]` private witness (Frob trace at `prime_list[i]`, mod ℓ)
+    pub traces: Vec<u64>,
+    /// `determinants[i]` private witness (det at `prime_list[i]`, mod ℓ)
+    pub determinants: Vec<u64>,
+}
+
+impl LanglandsPublicInputs {
+    /// Build the witness bundle from a Galois representation.
+    ///
+    /// `scale` must match the circuit's fixed-point factor (default `10^6`).
+    /// Returns `Err` if any prime is ramified in the representation
+    /// (trace lookup fails) — callers must supply unramified primes.
+    pub fn derive_from_galois(
+        repr: &GaloisRepresentation,
+        class_id: u64,
+        prime_list: Vec<u64>,
+        scale: u64,
+    ) -> std::result::Result<LanglandsWitness, GateFailure> {
+        let n = prime_list.len();
+        let mut traces = Vec::with_capacity(n);
+        let mut determinants = Vec::with_capacity(n);
+
+        for &p in &prime_list {
+            let trace = repr
+                .trace_at_prime(p)
+                .map_err(|e| GateFailure::GaloisError(class_id.to_string(), e.to_string()))?;
+            let det = repr.determinant_at_prime(p);
+            traces.push(trace);
+            determinants.push(det);
+        }
+
+        // Quantize the claimed L-value: scale^num_primes * L(1, ρ_g).
+        let l_value = crate::galois::LanglandsPairing::new(repr.clone())
+            .l_function_at_s()
+            .map_err(|e| GateFailure::GaloisError(class_id.to_string(), e.to_string()))?;
+        let scale_pow = scale
+            .checked_pow(n as u32)
+            .ok_or_else(|| GateFailure::GaloisError(
+                class_id.to_string(),
+                "scale^num_primes overflow".to_string(),
+            ))?;
+        let claimed = (l_value * scale_pow as f64).round() as u64;
+
+        let public = LanglandsPublicInputs::new(class_id, prime_list, claimed, scale);
+        Ok(LanglandsWitness { public, traces, determinants })
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Groth16 proof representation
 // ---------------------------------------------------------------------------
 

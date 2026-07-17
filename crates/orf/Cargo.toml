@@ -12,4 +12,3 @@ blake3 = "1.5.1"
 thiserror = "2.0.18"
 
 [dev-dependencies]
-kani = "0.0.1"

@@ -10,4 +10,3 @@ repository.workspace = true
 [dependencies]
 
 [dev-dependencies]
-kani = "0.48.0"

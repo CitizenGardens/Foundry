@@ -8,4 +8,3 @@ serde = { version = "1.0", features = ["derive"] }
 archivum = { path = "../archivum" }
 
 [dev-dependencies]
-kani = "0.0.1"
