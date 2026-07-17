@@ -312,6 +312,38 @@ def test_end_to_end_pipeline_accepts_shadow(engine_3x3):
     assert payload['gue_deviation'] == pytest.approx(telemetry.gue_deviation)
 
 
+def test_effective_eta_modulated_by_analytic_shadow(engine_3x3):
+    base = KernelTelemetry(
+        xn_kernel=0.1,
+        wt_max_kernel=0.9,
+        protection_zeta=2.0,
+        is_valid_kernel=True,
+        first_zero_approx=14.1347,
+        mean_spacing=1.0,
+        gue_deviation=0.0,
+        zeta_shadow=1.0,
+        telemetry_version=2,
+    )
+    shadow = KernelTelemetry(
+        xn_kernel=0.1,
+        wt_max_kernel=0.9,
+        protection_zeta=2.0,
+        is_valid_kernel=True,
+        first_zero_approx=14.1347,
+        mean_spacing=0.8,
+        gue_deviation=0.3,
+        zeta_shadow=1.0,
+        telemetry_version=2,
+    )
+    raw = np.random.rand(3, 3) + 1j * np.random.rand(3, 3)
+    _, payload_base = engine_3x3.run_control_pipeline(raw, base, mode=3, epsilon=1.0, eta=0.2)
+    _, payload_shadow = engine_3x3.run_control_pipeline(raw, shadow, mode=3, epsilon=1.0, eta=0.2)
+    assert payload_shadow['effective_eta'] < payload_base['effective_eta']
+    assert payload_shadow['effective_eta'] == pytest.approx(
+        0.2 / (1.0 + 1.0) * 0.8 * (1.0 - 0.3 * 0.15)
+    )
+
+
 # ---------------------------------------------------------------------------
 # 10. Constraint set respect (deterministic seeds)
 # ---------------------------------------------------------------------------

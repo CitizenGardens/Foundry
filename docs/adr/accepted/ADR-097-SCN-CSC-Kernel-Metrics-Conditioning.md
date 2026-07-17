@@ -14,7 +14,7 @@ The proposed PhaseMirror-HQ unification requires:
 Currently:
 - SCN feature map `ϕ(A, ĝ)` does not include drift/protection state.
 - CSC circuit verifies algebraic invariants and Poseidon2 commitments, but does not distinguish kernel-certified telemetry from legacy ACE-computed values.
-- The 5,087-constraint budget is already locked; any conditioning must fit within existing headroom (283 reserved constraints).
+- The 5,087-constraint *architectural* budget is the design target (384 + 3,171 + 1,500 + 32; see ADR-046); the current `ace.circom` prototype compiles to 133 constraints with the Poseidon2 hash stubbed. Any conditioning must fit within the existing headroom (283 reserved constraints *in the target*).
 
 ## Decision
 We will extend SCN conditioning and CSC witness binding to operate exclusively on **kernel-certified metrics**:
@@ -53,7 +53,7 @@ The circuit does not recompute `xn_kernel` or `protection_zeta`; it only verifie
 
 ### 4. Constraint Budget Enforcement
 - `csc.py` in Track A is the **canonical constraint-budget authority**.
-- Any modification to the Circom circuit must preserve the 5,087-constraint lock.
+- Any modification to the Circom circuit must preserve the 5,087-constraint *architectural* lock (design target; current compiled circuits are below this pending full Poseidon2 integration).
 - The Poseidon2 topology (t=9, r=8) is non-negotiable.
 - 283 constraints remain reserved for future guard-rails and audit hooks.
 
@@ -136,7 +136,7 @@ impl CSCWitnessBinding {
 pub enum CSCBindingError {
     #[error("telemetry mismatch on {field}: witness={witness}, kernel={kernel}")]
     TelemetryMismatch { field: &'static str, witness: f64, kernel: f64 },
-    #[error("constraint budget exceeded: {0} > 5087")]
+    #[error("constraint budget exceeded: {0} > 5087 (architectural target; current compiled circuits are below this)")]
     ConstraintBudgetExceeded(usize),
     #[error("Poseidon2 topology violation")]
     Poseidon2TopologyViolation,
@@ -210,10 +210,10 @@ theorem constraint_budget_lock
   (layout : CircuitLayout) :
   layout.total_constraints = 5087 ∧
   layout.poseidon2_topology = (t := 9, r := 8) := by
-  -- Proof: csc.py enforces the lock; any deviation is a build-time error.
+  -- Proof goal: csc.py enforces the lock against the 5087 architectural target.
+  -- NOTE: 5087 is the design target; the current ace.circom prototype compiles
+  -- to 133 constraints (Poseidon2 stubbed) and langlandsCheck.circom to 170.
   sorry
-
-end ADR.ACE.CSCWitnessBinding
 ```
 
 ### 3. Circom Topology Preservation
@@ -234,7 +234,7 @@ theorem circom_topology_unchanged
 ### Positive
 - **Unified conditioning**: SCN reacts to kernel-defined drift/protection states, closing the feedback loop between memory-kernel telemetry and spectral control.
 - **CSC simplification**: CSC no longer needs to verify semantic correctness of drift logic; it only verifies algebraic consistency of kernel-provided values.
-- **Budget compliance**: Telemetry fields fit within existing Poseidon2 witness slots and 5,087-constraint lock.
+- **Budget compliance**: Telemetry fields fit within existing Poseidon2 witness slots and the 5,087-constraint *architectural* lock (design target; current compiled circuits are below this pending full Poseidon2 integration).
 - **Audit trail**: Every SCN proposal and CSC certificate explicitly references kernel telemetry version, enabling deterministic replay.
 
 ### Negative / Constraints
@@ -250,7 +250,7 @@ theorem circom_topology_unchanged
 3. **Implement `crates/ace-scn-csc/src/witness_binding.rs`** with `CSCWitnessBinding::bind_telemetry` and tolerance checks.
 4. **Update SCN training pipeline** to consume `KernelTelemetry` as part of the feature vector.
 5. **Update Circom circuit** in `crates/ace-scn-csc/circom/` to map telemetry fields into Poseidon2 commitment.
-6. **Run constraint budget audit** using `csc.py` to confirm total remains at 5,087.
+6. **Run constraint budget audit** using `csc.py` to confirm total remains within the 5,087-constraint *architectural* target.
 7. **Add integration tests** verifying SCN conditioning produces valid proposals given kernel telemetry.
 8. **Update CI** to enforce `cargo test -p ace-scn-csc`, `lake build`, and Circom constraint verification.
 

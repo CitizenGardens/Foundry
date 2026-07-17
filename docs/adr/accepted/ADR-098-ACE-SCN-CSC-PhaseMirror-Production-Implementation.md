@@ -78,7 +78,7 @@ lean/Core/f1_square/Square/KernelArakelovBridge.lean     [NEW]
 reward = |{n ∈ [1..N] : λ_n > 0}|
 ```
 
-**SCN Proposal Schema** (R1CS-compatible, 5,087-constraint budget):
+**SCN Proposal Schema** (R1CS-compatible; *architectural* 5,087-constraint budget target):
 ```lean
 structure SCNProposal where
   delta_proposal : Float
@@ -94,7 +94,7 @@ structure SCNProposal where
 **Key Theorems**:
 - `scn_extended_feature_dimension`: extended vector has dim = base_dim + 5
 - `scn_reward_bounded`: reward ≤ N
-- `poseidon2_binding_preserves_budget`: 5,087-constraint lock preserved
+- `poseidon2_binding_preserves_budget`: 5,087-constraint *architectural* lock preserved (design target; current compiled circuits are below this pending full Poseidon2 integration)
 - `circom_adapter_preserves_budget`: adapter adds no new gadgets
 
 **Lean Interfaces**:
@@ -109,7 +109,7 @@ lean/projects/ACE–SCN-CSC/src/SCNConditioning.lean      [NEW]
 lean/projects/ACE–SCN-CSC/src/AtlasSCNBridge.lean       [NEW]
 ```
 
-### Risk Trajectory: 5,087-Constraint Lock vs Kernel Telemetry
+### Risk Trajectory: 5,087-Constraint *Architectural* Target vs Kernel Telemetry
 
 **Analysis**: Adding kernel telemetry fields (`xn_kernel`, `wt_max_kernel`, `protection_zeta`, `is_valid_kernel`) to the Circom witness does NOT increase the constraint count because:
 1. The Poseidon2 gamma gadget already has 5 input slots: `[h_commitment, X_n, R_t, max_wac_product, retry_nonce]`
@@ -133,12 +133,13 @@ cas_commitment <== poseidon_gamma.out;
 - After: 205 witness fields (xn_kernel replaces X_n, no new fields added)
 - **Result**: Input count UNCHANGED. Constraint count UNCHANGED.
 
-**Headroom Proof**:
-- Base circuit: 133 constraints
-- Poseidon2 hashing: 4,804 constraints  
+**Headroom Proof (architectural target, not current compiled state)**:
+- Base circuit (current `ace.circom` prototype with Poseidon2 stubbed): 133 constraints
+- Poseidon2 hashing (target, full `Poseidon2(t=9, r=8)` sponge): 4,804 constraints (design figure; NOT yet compiled)
 - Reserved: 150 constraints
-- **Total**: 5,087 constraints (LOCKED)
+- **Architectural total: 5,087 constraints (TARGET — full Poseidon2 not yet implemented)**
 - Kernel telemetry replacement adds 0 constraints (field substitution only)
+- Separate, fully compiled reference: `langlandsCheck.circom` compiles to 170 constraints (142 non-linear + 28 linear), bridging generated Rust constants into Circom.
 
 **SCALE Factor and Clamping Logic**:
 - The `SCALE` factor remains unchanged. `xn_kernel` is the kernel's certified normalized drift, directly replacing the legacy `X_n` computation.
@@ -187,7 +188,7 @@ theorem circom_budget_preserved :
 - ** atlasM indefiniteness resolved**: Mode 3 projection extracts a certified positive-definite subspace from indefinite atlasM when η is small
 - **Kernel authority unified**: protection_zeta is the single source of truth for archimedean weight γ
 - **SCN conditioning complete**: Feature vector extension allows SCN to react to kernel telemetry without recomputing drift
-- **Circuit budget preserved**: Zero additional constraints; field substitution only
+- **Circuit budget preserved**: Zero additional constraints from field substitution; the 5,087-constraint figure is the *architectural* target (current `ace.circom` = 133, `langlandsCheck.circom` = 170).
 - **Deterministic replay**: Versioned KernelTelemetry schema enables archival certificate validation
 
 ### Negative / Constraints
@@ -201,7 +202,7 @@ theorem circom_budget_preserved :
 1. **Target 1**: `AtlasMode3Wrapper.lean` — Complete `sorry` proofs for projection theorems
 2. **Target 2**: `KernelArakelovBridge.lean` — Wire `protection_zeta` into `ArakelovParams` construction
 3. **Target 3**: `SCNConditioning.lean` + `AtlasSCNBridge.lean` — Integrate SCN with λ_n pipeline
-4. **Risk**: Verify Circom constraint count remains at 5,087 via `csc.py` audit
+4. **Risk**: Verify Circom constraint count remains within the 5,087 *architectural* target via `csc.py` audit
 5. **CI**: Add `lake build` + `cargo test -p ace-scn-csc` to CI pipeline
 
 ## Exact Commit Path
@@ -229,7 +230,7 @@ git commit -m "feat: map F1 atlasM/gaugeFix/lambda_n to ACE-PhaseMirror four-lay
 - Target 1: atlasM Mode 3 feasibility wrapper (AtlasMode3Wrapper.lean)
 - Target 2: gaugeFix→KernelTelemetry→ArakelovParams bridge (KernelArakelovBridge.lean)
 - Target 3: SCN conditioning on lambda_n pipeline (SCNConditioning.lean, AtlasSCNBridge.lean)
-- Risk: 5,087-constraint lock preserved via field substitution (no new gadgets)
+- Risk: 5,087-constraint *architectural* lock preserved via field substitution (no new gadgets); current compiled circuits (`ace.circom` = 133, `langlandsCheck.circom` = 170) are below the target pending full Poseidon2 integration
 - ADR-095/096/097/098: governance and implementation plan"
 ```
 

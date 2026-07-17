@@ -381,7 +381,9 @@ class SpectralControlEngine:
         telemetry.validate()
 
         effective_epsilon = epsilon * max(0.0, 1.0 - telemetry.xn_kernel)
-        effective_eta = eta / (1.0 + telemetry.zeta_shadow)
+        spacing_factor = telemetry.mean_spacing
+        dissonance_damp = 1.0 - telemetry.gue_deviation * 0.15
+        effective_eta = eta / (1.0 + telemetry.zeta_shadow) * spacing_factor * dissonance_damp
 
         constrained_delta = self.enforce_feasibility_map(
             raw_proposal, mode, effective_epsilon, effective_eta

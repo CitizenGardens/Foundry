@@ -30,6 +30,14 @@ The document supplies a ready ADR package (ADR-001: FZS-MK/Zeno as single author
 
 Resulting Trajectory and New State
 The trajectory moves F1 from “integrated but semantically distributed” to “layered with single kernel semantic authority while preserving all mathematical invariants.”
+
+> **Correction / Clarification on the 5,087-constraint budget (applies to every "5,087-constraint lock / invariant" statement in this document):**
+> The figure **5,087** is the **architectural design target**, *not* the currently compiled output of any circuit in the repository. It is derived as `384 + 3,171 + 1,500 + 32 = 5,087` — the calculated cost of the full `Poseidon2(t=9, r=8)` sponge plus contraction-bound checks (see ADR-046). The actual compiled circuits today are:
+> - `constraints.circom` — an accounting stub asserting `total_cost === 5087` in Circom source; **compiles to 6 linear constraints** (it locks the budget as a design invariant, not a real circuit).
+> - `ace.circom` (governance prototype) — **compiles to 133 constraints** (131 non-linear + 2 linear); the heavy Poseidon2 hash is replaced by a linear-sum stub to validate routing/governance logic independently of hash arithmetic.
+> - `langlandsCheck.circom` (separate, functional circuit bridging generated Rust constants into Circom) — **compiles to 170 constraints** (142 non-linear + 28 linear; r1cs/wasm/sym fully generated).
+>
+> Future revisions (full Poseidon2 instantiation) close the gap between the 133-/170-constraint stubs and the 5,087-constraint architectural lock. The 5,087 number remains valid *prior art* as a documented design architecture; it must not be cited as a current compiled count.
 The new stable configuration is mathematically coherent (feasibility maps and commutator bounds still hold), operationally auditable (single source for drift/protection), and IP-protected via defensive disclosure.
 Impact Signals
 Internal (robustness, coherence, transferability):
@@ -242,7 +250,8 @@ mod verification {
         let dist = (delta - h).norm();
         assert!(dist <= eta + 1e-12);
     }
-    // Verify that witness fields fit within the 5,087 constraint budget
+    // Verify that witness fields fit within the 5,087-constraint *architectural* budget (design target;
+    // current compiled circuits: ace.circom = 133, langlandsCheck.circom = 170).
     // This is a stub: we check the number of Poseidon2 inputs stays ≤205
     #[kani::proof]
     fn verify_witness_budget() {
@@ -1098,3 +1107,7 @@ Add a soft constraint inside Mode 3 that modulates η from gue_deviation or loca
 Scale the zero window and switch on true FFT restructuring of the main sum for larger Odlyzko-style batches.
 
 The telemetry contract is now locked with both the arithmetic (Hecke / feasibility) and analytic (Riemann–Siegel / refined zeros / GUE proxy) sides under the single kernel authority.
+
+---
+
+> **Defensibility note (governs this entire document):** Every reference in the trajectory above to a "5,087-constraint lock / invariant / budget" describes the *original* framing and must be read as the **5,087 architectural design target**, not a current compiled count. No circuit in the repository compiles to 5,087 constraints today: `constraints.circom` (the budget-lock stub) compiles to 6 linear constraints, `ace.circom` (governance prototype) to 133, and `langlandsCheck.circom` (functional reference circuit) to 170. The 5,087 figure (384 + 3,171 + 1,500 + 32) remains valid prior art as a documented design architecture for the `Poseidon2(t=9, r=8)` topology, pending full Poseidon2 instantiation. See ADR-046.

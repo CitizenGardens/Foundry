@@ -4,14 +4,14 @@
 Accepted
 
 ## Context
-The Universal Atomic Calculator (UAC) architecture enforces a strict 5,087-constraint R1CS budget per individual FeMoco run proof (`attestation.circom`). As throughput demands scale (enabled by predictive thermal load management), verifying individual proofs on-chain per run limits scalability and incurs prohibitive gas costs.
+The Universal Atomic Calculator (UAC) architecture targets a strict **5,087-constraint architectural budget** per individual FeMoco run proof. This number is a *formal design target* derived from the calculated cost of integrating the full `Poseidon2(t=9, r=8)` sponge alongside the contraction-bound checks (384 + 3,171 + 1,500 + 32 = 5,087), **not** the currently compiled output of any circuit in the repository. As throughput demands scale (enabled by predictive thermal load management), verifying individual proofs on-chain per run limits scalability and incurs prohibitive gas costs.
 
 To maintain the constraint budget per simulation while amortizing verification costs, we require a recursive batching sidecar that aggregates multiple $N$ individual proofs into a single verifiable proof.
 
 ## Decision
 We will introduce a "Layer 2" sidecar to perform batch recursive aggregation using **Halo2 (Rust)** on the BN254 curve.
 
-1. **Base Layer Constraints**: `attestation.circom` remains locked at 5,087 constraints.
+1. **Base Layer Constraints**: `attestation.circom` targets the 5,087-constraint architectural lock. The current `ace.circom` prototype compiles to 133 constraints (Poseidon2 replaced by a linear-sum stub to validate governance/routing logic independently of hash arithmetic), and the separate `langlandsCheck.circom` compiles to 170 constraints (a fully functional circuit bridging generated Rust constants into Circom). Future revisions (full Poseidon2 instantiation) close the gap to the 5,087 lock.
 2. **Sidecar Aggregation**: The sidecar accumulates $N$ individual Groth16 proofs and their public inputs.
 3. **Halo2 Recursion Circuit**:
    - The circuit will internally verify the $N$ constituent Groth16 pairings.
@@ -22,7 +22,7 @@ We will introduce a "Layer 2" sidecar to perform batch recursive aggregation usi
 
 ## Consequences
 - **Positive**: We achieve $O(1)$ on-chain verification gas relative to the batch size.
-- **Positive**: The 5,087-constraint invariant of the L1 Sedona Spine is preserved.
+- **Positive**: The 5,087-constraint figure is preserved as the documented architectural target (L1 Sedona Spine), pending full Poseidon2 integration that the recursive sidecar enables.
 - **Negative**: Adds Rust/Halo2 proving complexity to the sidecar deployment.
 
 ## Public Input Structure (Halo2 Circuit)

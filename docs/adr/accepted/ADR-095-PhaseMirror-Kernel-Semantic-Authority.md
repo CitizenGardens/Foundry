@@ -173,7 +173,7 @@ pub enum GovernanceError {
 - **Single source of truth**: Drift and protection semantics are defined exactly once, eliminating semantic drift across pipelines.
 - **Audit clarity**: CSC certificates explicitly reference kernel-certified scalars with versioned schemas, enabling deterministic replay and compliance review.
 - **Modular migration**: Parity mode allows incremental deprecation of legacy ACE drift logic without breaking existing consumers.
-- **Circuit budget preserved**: Kernel telemetry fields fit within the existing 5,087-constraint budget and Poseidon2 witness binding topology.
+- **Circuit budget preserved**: Kernel telemetry fields fit within the existing 5,087-constraint *architectural* budget (design target: 384 + 3,171 + 1,500 + 32; see ADR-046) and Poseidon2 (t=9, r=8) witness-binding topology. The current `ace.circom` prototype compiles to 133 constraints with the Poseidon2 hash stubbed; the target is reached only after full Poseidon2 instantiation.
 
 ### Negative / Constraints
 - **Kernel coupling**: ACE runtime now depends on PhaseMirror-HQ kernel release cycles and availability.
@@ -187,7 +187,7 @@ pub enum GovernanceError {
 2. **Implement `crates/ace-governance/src/kernel_telemetry.rs`** with the `KernelTelemetry` struct, `get_drift_metrics`, and `certificate_payload`.
 3. **Add parity test suite** in `crates/ace-governance/tests/parity/` comparing kernel telemetry against legacy ACE drift logic on benchmark datasets.
 4. **Update `crates/ace-scn-csc/src/`** to condition SCN feature maps on `KernelTelemetry` without recomputing drift.
-5. **Wire Circom witness binding** to accept kernel telemetry fields (`xn_kernel`, `wt_max_kernel`, `protection_zeta`, `is_valid_kernel`) within the 5,087-constraint budget.
+5. **Wire Circom witness binding** to accept kernel telemetry fields (`xn_kernel`, `wt_max_kernel`, `protection_zeta`, `is_valid_kernel`) within the 5,087-constraint *architectural* budget (design target; current compiled circuits are below this pending full Poseidon2 integration).
 6. **Deprecate legacy drift functions** after parity is confirmed; follow up with ADR to remove `compute_legacy_xn`, `compute_wac`, etc.
 7. **Update CI** to enforce `cargo test -p ace-governance --test parity` and `lake build` on `PhaseMirrorKernelAuthority.lean`.
 

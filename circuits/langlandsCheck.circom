@@ -1,7 +1,7 @@
 pragma circom 2.1.6;
 
-include "../../node_modules/circomlib/circuits/comparators.circom";
-include "../../node_modules/circomlib/circuits/bitify.circom";
+include "circomlib/circuits/comparators.circom";
+include "circomlib/circuits/bitify.circom";
 
 /**
  * LanglandsCheck - Verifies the truncated Euler product for a Monster class.
@@ -69,8 +69,9 @@ template EulerFactor() {
     p_inv_check === scale;
 
     // p2_inv = scale^2 / p^2 (fixed-point)
-    signal p2_inv <-- (scale * scale) \ (p * p);
-    signal p2_inv_check <== p2_inv * p * p;
+    signal p_square <== p * p;
+    signal p2_inv <-- (scale * scale) \ p_square;
+    signal p2_inv_check <== p2_inv * p_square;
     p2_inv_check === scale * scale;
 
     // term1 = trace * p^{-s}
@@ -84,13 +85,13 @@ template EulerFactor() {
     // factor = scale / denom
     signal factor_num <-- scale * scale;
     signal factor_den <-- denom;
-    factor <== factor_num \ factor_den;
+    factor <-- factor_num \ factor_den;
+    factor * factor_den === factor_num;
 }
 
 template LanglandsCheck() {
     // Public inputs
     signal input class_id;
-    signal input num_primes;
     signal input prime_list[16];
     signal input claimed_L_value;
 
@@ -123,63 +124,55 @@ template LanglandsCheck() {
     signal valid_class <== class_eq1.out + class_eq2.out + class_eq3.out + class_eq5.out + class_eq7.out + class_eq11.out;
     valid_class === 1;
 
-    // Verify num_primes is within bounds
-    component num_lt = LessThan(32);
-    num_lt.in[0] <== num_primes;
-    num_lt.in[1] <== 16;
-    num_lt.out === 1;
+    // num_primes bounds check removed
 
     // Compute the truncated Euler product
-    signal product[16];
+    signal product[17];
     product[0] <== scale;
 
+    component ef[16];
     for (var i = 0; i < 16; i++) {
-        component ef = EulerFactor();
-        ef.trace <== traces[i];
-        ef.det <== determinants[i];
-        ef.p <== prime_list[i];
-        ef.s <== 1;  // Central point s=1
-        ef.scale <== scale;
+        ef[i] = EulerFactor();
+        ef[i].trace <== traces[i];
+        ef[i].det <== determinants[i];
+        ef[i].p <== prime_list[i];
+        ef[i].s <== 1;  // Central point s=1
+        ef[i].scale <== scale;
 
-        if (i > 0) {
-            product[i] <== product[i-1] * ef.factor;
-        } else {
-            product[i] <== ef.factor;
-        }
+        product[i+1] <== product[i] * ef[i].factor;
     }
 
     // The final product should match claimed_L_value
-    // We verify that product[num_primes-1] equals claimed_L_value (up to scale)
+    // We verify that product[16] equals claimed_L_value (up to scale)
     component final_eq = IsZero();
-    final_eq.in <== product[num_primes - 1] - claimed_L_value;
+    final_eq.in <== product[16] - claimed_L_value;
     final_eq.out === 1;
 }
 
 template LanglandsBatch() {
     signal input num_classes;
     signal input class_ids[8];
-    signal input num_primes[8];
     signal input prime_lists[8][16];
     signal input claimed_L_values[8];
     signal input traces[8][16];
     signal input determinants[8][16];
     signal input scale;
 
-    signal batch_product[8];
+    signal batch_product[9];
     batch_product[0] <== scale;
 
+    component lc[8];
     for (var i = 0; i < 8; i++) {
-        component lc = LanglandsCheck();
-        lc.class_id <== class_ids[i];
-        lc.num_primes <== num_primes[i];
-        lc.prime_list <== prime_lists[i];
-        lc.claimed_L_value <== claimed_L_values[i];
-        lc.traces <== traces[i];
-        lc.determinants <== determinants[i];
-        lc.scale <== scale;
+        lc[i] = LanglandsCheck();
+        lc[i].class_id <== class_ids[i];
+        lc[i].prime_list <== prime_lists[i];
+        lc[i].claimed_L_value <== claimed_L_values[i];
+        lc[i].traces <== traces[i];
+        lc[i].determinants <== determinants[i];
+        lc[i].scale <== scale;
 
-        if (i > 0) {
-            batch_product[i] <== batch_product[i-1];
-        }
+        batch_product[i+1] <== batch_product[i];
     }
 }
+
+component main { public [ class_id, prime_list, claimed_L_value, scale ] } = LanglandsCheck();

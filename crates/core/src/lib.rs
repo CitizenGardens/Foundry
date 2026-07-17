@@ -130,3 +130,4 @@ pub mod lambda_bridge;
 pub mod telemetry;
 pub mod types;
 pub mod uac_loss;
+pub mod r1cs_constants;

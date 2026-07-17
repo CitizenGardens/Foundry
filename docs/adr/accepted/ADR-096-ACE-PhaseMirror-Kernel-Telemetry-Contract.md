@@ -14,7 +14,7 @@ Without a contract:
 The kernel telemetry contract must satisfy:
 - **Determinism**: Given identical kernel state, the contract yields identical scalar values.
 - **Schema evolution**: A version field allows backward-compatible extensions without breaking existing circuits.
-- **Circuit compatibility**: All telemetry fields fit within the existing 5,087-constraint budget and Poseidon2 (t=9, r=8) topology.
+- **Circuit compatibility**: All telemetry fields fit within the existing 5,087-constraint *architectural* budget (design target: 384 + 3,171 + 1,500 + 32; see ADR-046) and Poseidon2 (t=9, r=8) topology. The current `ace.circom` prototype compiles to 133 constraints with the Poseidon2 hash stubbed.
 
 ## Decision
 We will define and adopt a **versioned `KernelTelemetry` schema** as the formal contract between PhaseMirror-HQ, ACE Track A, and ACE Track B (Circom). The contract specifies:
@@ -66,7 +66,7 @@ def certificate_payload(theta_base, telemetry: KernelTelemetry, outputs: bytes) 
 ```
 
 ### 3. Circom Witness Binding (Track B)
-Telemetry fields are bound into the existing Poseidon2 commitment topology without increasing the canonical 5,087-constraint budget:
+Telemetry fields are bound into the existing Poseidon2 commitment topology without increasing the canonical 5,087-constraint *architectural* budget (design target; current `ace.circom` uses a Poseidon2 stub and compiles to 133 constraints):
 
 ```circom
 component poseidon_gamma = Poseidon2(5, 9, 8);
@@ -195,8 +195,10 @@ theorem circom_witness_binding_preserves_budget
   (h_base : layout.base_constraints = 5087)
   (h_telemetry : layout.telemetry_fields = 5) :
   layout.total_constraints = 5087 := by
-  -- Proof: Poseidon2(5,9,8) witness binding is already budgeted into the base circuit;
-  -- telemetry fields replace existing witness slots, not add new ones.
+  -- Proof goal: Poseidon2(5,9,8) witness binding is budgeted into the base
+  -- circuit design (384 + 3171 + 1500 + 32 = 5087); telemetry fields replace
+  -- existing witness slots, not add new ones. NOTE: 5087 is the architectural
+  -- target, not the current compiled count (ace.circom = 133, langlandsCheck.circom = 170).
   sorry
 ```
 
@@ -204,14 +206,14 @@ theorem circom_witness_binding_preserves_budget
 
 ### Positive
 - **Deterministic replay**: Versioned schema allows archival certificates to be validated and replayed indefinitely.
-- **Circuit compatibility**: Telemetry fields reuse existing Poseidon2 witness slots, preserving the 5,087-constraint lock.
+- **Circuit compatibility**: Telemetry fields reuse existing Poseidon2 witness slots, preserving the 5,087-constraint *architectural* lock (design target; current compiled circuits are below this pending full Poseidon2 integration).
 - **Type safety**: Frozen `KernelTelemetry` dataclass and Rust struct enforce field immutability at compile time.
 - **Validation gate**: `validate_schema` rejects malformed or unsupported versions before they propagate to CSC or Archivum.
 
 ### Negative / Constraints
 - **Schema management overhead**: Every schema change requires a new version, updated validation logic, and potentially updated Circom witness bindings.
 - **Python/Rust sync**: The dataclass and Rust struct must be kept in sync manually or via code generation; drift here causes runtime serialization failures.
-- **Circom slot exhaustion**: If future metrics exceed the 5 Poseidon2 input slots reserved for telemetry, the circuit budget must be renegotiated.
+- **Circom slot exhaustion**: If future metrics exceed the 5 Poseidon2 input slots reserved for telemetry, the *architectural* 5,087-constraint budget (design target) must be renegotiated.
 - **Lean formalization gap**: `telemetry_determinism` depends on a formal model of the Zeno projection, which may not exist in `adr-governance` yet.
 
 ## Implementation Steps
