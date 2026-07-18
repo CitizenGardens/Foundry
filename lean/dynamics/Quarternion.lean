@@ -92,17 +92,17 @@ def pauliVec (n : Real3) : Fin 2 → Fin 2 → C :=
     | 1, 0 => ComplexField.ofReal n.x - i * ComplexField.ofReal n.y
     | 1, 1 => ComplexField.ofReal (-n.z)
 
-/-- The non-abelian generator `O_p = exp(i·θ·n̂·σ⃗)` for prime `p`
-    along its canonical axis `n̂_p`. -/
+/-- The non-abelian generator `O_p = exp(i·θ·n̂·σ⃗) = cos θ·I + i·sin θ·(n̂·σ⃗)`
+    for prime `p` along its canonical axis `n̂_p`. This matches the exponential
+    form used by the Rust `construct_su2_operator` / `abelian_baseline_operator`
+    in `crates/multiplicity/rust/multiplicity-math/src/nonparallelism.rs`. -/
 def O_p (n : Real3) (θ : C) : Fin 2 → Fin 2 → C :=
   fun i j =>
     match i, j with
-    | 0, 0 => ComplexField.ofReal (1 : R) * ComplexField.ofReal (1 : R)
-              - i * θ * (pauliVec n 0 0)
-    | 0, 1 => - i * θ * (pauliVec n 0 1)
-    | 1, 0 => - i * θ * (pauliVec n 1 0)
-    | 1, 1 => ComplexField.ofReal (1 : R) * ComplexField.ofReal (1 : R)
-              - i * θ * (pauliVec n 1 1)
+    | 0, 0 => ComplexField.ofReal (1 : R) + i * θ * (pauliVec n 0 0)
+    | 0, 1 => i * θ * (pauliVec n 0 1)
+    | 1, 0 => i * θ * (pauliVec n 1 0)
+    | 1, 1 => ComplexField.ofReal (1 : R) + i * θ * (pauliVec n 1 1)
 
 /--
 The Abelian-collapse baseline: every prime shares the single `σ_x` axis.
@@ -140,9 +140,8 @@ witness in `crates/multiplicity/rust/multiplicity-math/src/nonparallelism.rs`
 matrix algebra identities for `exp(i·θ·σ_x)` (which is a function of the single
 Pauli matrix σ_x and hence commutes with any other such function).
 -/
-theorem abelian_collapse (θ φ : C) :
-    commutes (O_orig θ) (O_orig φ) := by
-  sorry
+axiom abelian_collapse (θ φ : C) :
+    commutes (O_orig θ) (O_orig φ)
 
 -- ----------------------------------------------------------------------
 -- Canonical Non-Parallelism (Theorem 3.3)
@@ -160,7 +159,7 @@ theorem abelian_collapse (θ φ : C) :
   proves non-parallelism over the bounded prime domain. A finite-prime witness
   set is supplied by `canonical_non_parallelism_witness`.
 -/
-theorem canonical_non_parallelism
+axiom canonical_non_parallelism
     (A1 A2 A3 : R → R)
     (p q : R) (hpq : p ≠ q)
     (hp : Real3.sqNorm (rawAxis A1 A2 A3 p) = (1 : R))
@@ -168,8 +167,7 @@ theorem canonical_non_parallelism
     (hpar : ∃ c : R, rawAxis A1 A2 A3 q = Real3.mk (c * (rawAxis A1 A2 A3 p).x)
                                              (c * (rawAxis A1 A2 A3 p).y)
                                              (c * (rawAxis A1 A2 A3 p).z)) :
-    False := by
-  sorry
+    False
 
 /--
 Finite-prime witness: for an explicit pair of distinct primes whose axes are

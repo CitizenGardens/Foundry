@@ -84,3 +84,57 @@ impl MultiplicityCell for LinearMultiplicityCell {
         self.op_norm_sq.sqrt()
     }
 }
+
+/// Telemetry structure representing Cognitive Coherence Metrics (\Delta\Lambda^p)
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CognitiveTelemetry {
+    pub emotional_drift: f64,
+    pub cognitive_load: f64,
+    pub coherence_stability: f64,
+}
+
+/// A wrapper cell that translates pure topological arta_defect into cognitive metrics.
+pub struct CognitiveMultiplicityCell<C: MultiplicityCell> {
+    pub inner: C,
+    pub baseline_drift_tolerance: f64,
+    pub load_scaling_factor: f64,
+}
+
+impl<C: MultiplicityCell> CognitiveMultiplicityCell<C> {
+    pub fn new(inner: C, baseline_drift_tolerance: f64, load_scaling_factor: f64) -> Self {
+        Self { inner, baseline_drift_tolerance, load_scaling_factor }
+    }
+
+    /// Evaluates the underlying multiplicity logic and maps the absolute defect to semantic telemetry.
+    pub fn forward_cognitive(&self, state: &Array1<f64>) -> (f64, f64, CognitiveTelemetry) {
+        let (coherent, defect) = self.inner.forward(state);
+        
+        // The mathematical mapping: topological defect induces cognitive load and emotional drift.
+        // As defined in ADR-107, this mapping must be monotonic with respect to the defect.
+        let emotional_drift = defect * self.load_scaling_factor;
+        let cognitive_load = (defect.powi(2) / self.baseline_drift_tolerance).ln_1p(); // Monotonically increasing load
+        let coherence_stability = coherent / (1.0 + defect); // stability relies on high coherence, low defect
+
+        let telemetry = CognitiveTelemetry {
+            emotional_drift,
+            cognitive_load,
+            coherence_stability,
+        };
+
+        (coherent, defect, telemetry)
+    }
+}
+
+impl<C: MultiplicityCell> MultiplicityCell for CognitiveMultiplicityCell<C> {
+    fn dim(&self) -> usize {
+        self.inner.dim()
+    }
+
+    fn forward(&self, state: &Array1<f64>) -> (f64, f64) {
+        self.inner.forward(state)
+    }
+
+    fn op_norm(&self) -> f64 {
+        self.inner.op_norm()
+    }
+}

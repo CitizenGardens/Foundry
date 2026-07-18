@@ -5,3 +5,5 @@ pub mod renorm_alpha;
 pub mod quantum_force;
 pub mod viability_flow;
 pub mod vlasov;
+pub mod pmro;
+pub mod csl;

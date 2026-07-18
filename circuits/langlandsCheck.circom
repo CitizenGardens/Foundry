@@ -75,9 +75,9 @@ template EulerFactor() {
     p2_inv_check === scale * scale;
 
     // term1 = trace * p^{-s}
-    signal term1 <-- trace * p_inv;
+    signal term1 <== trace * p_inv;
     // term2 = det * p^{-2s}
-    signal term2 <-- det * p2_inv;
+    signal term2 <== det * p2_inv;
 
     // denom = 1 - term1 + term2 (all in fixed-point)
     signal denom <== scale - term1 + term2;

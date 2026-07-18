@@ -7,6 +7,7 @@ pub mod feedback;
 pub mod moonshine;
 pub mod langlands;
 pub mod moc;
+pub mod verification;
 
 pub use primes::generate_first_n_primes;
 pub use spectral::{SpectralTransform, compute_bin_energies};

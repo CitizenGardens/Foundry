@@ -74,7 +74,6 @@ impl ACEEnvelope {
 
 #[cfg(kani)]
 mod verification {
-    use super::*;
 
     #[kani::proof]
     fn proof_ace_preserves_invariants_and_budget() {
@@ -107,5 +106,88 @@ mod verification {
         } else {
             kani::assert(false, "Expected BudgetExceeded error");
         }
+    }
+}
+
+/// Fail-Closed RSA-mitigation gate (ADR-111 / Lean `SecurityGate.lean`).
+///
+/// The operator channel carries a `SecurityState`. When the mode is
+/// `GovernanceReview`, any RSA-based primitive (`primitive_id == 0`) is
+/// prohibited. The ACE guardian must verify `validate_contraction_gate` before
+/// executing any operator word; on failure it raises `SIG_GOV_KILL`
+/// (Fail-Closed), exactly mirroring the Lean `rsa_governance_fail_closed`
+/// theorem.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SecurityMode {
+    Normal,
+    GovernanceReview,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SecurityState {
+    pub mode: SecurityMode,
+    pub primitive_id: u32,
+}
+
+impl SecurityState {
+    /// `true` iff the channel is permitted to operate under the current mode.
+    /// Formal mirror of Lean `validate_contraction_gate` /
+    /// `is_lawful_operation`.
+    pub fn validate_contraction_gate(&self) -> bool {
+        match (&self.mode, self.primitive_id) {
+            (SecurityMode::GovernanceReview, 0) => false, // Fail-Closed
+            _ => true,
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum GateError {
+    #[error("RSA primitive prohibited in GovernanceReview mode (SIG_GOV_KILL)")]
+    SecurityViolation,
+}
+
+impl SecurityState {
+    /// Process an operator word under the Fail-Closed gate. Returns
+    /// `GateError::SecurityViolation` (which the guardian treats as
+    /// `SIG_GOV_KILL`) when the gate is violated.
+    pub fn process_operator_word(&self) -> Result<(), GateError> {
+        if !self.validate_contraction_gate() {
+            return Err(GateError::SecurityViolation);
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod security_gate_tests {
+    use super::*;
+
+    fn rsa_review() -> SecurityState {
+        SecurityState { mode: SecurityMode::GovernanceReview, primitive_id: 0 }
+    }
+    fn rsa_normal() -> SecurityState {
+        SecurityState { mode: SecurityMode::Normal, primitive_id: 0 }
+    }
+    fn prime_review() -> SecurityState {
+        SecurityState { mode: SecurityMode::GovernanceReview, primitive_id: 1 }
+    }
+
+    #[test]
+    fn fail_closed_blocks_rsa_in_review() {
+        assert!(!rsa_review().validate_contraction_gate());
+        assert_eq!(rsa_review().process_operator_word(), Err(GateError::SecurityViolation));
+    }
+
+    #[test]
+    fn legacy_rsa_allowed_in_normal() {
+        assert!(rsa_normal().validate_contraction_gate());
+        assert_eq!(rsa_normal().process_operator_word(), Ok(()));
+    }
+
+    #[test]
+    fn prime_indexed_allowed_in_review() {
+        assert!(prime_review().validate_contraction_gate());
+        assert_eq!(prime_review().process_operator_word(), Ok(()));
     }
 }

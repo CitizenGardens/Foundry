@@ -19,9 +19,18 @@ lean_lib ADR {
     `ADR.LambdaProofBinding,
     `ADR.SocioAtomic,
     `ADR.Test,
-    `Orf.Coherence,
-    `Orf.Stratification,
-    `Orf.Proofs, `MOC,  ]
+    `ADR.UAC.Constraints,
+    `ADR.UAC.Phases,
+    `ADR.UAC.Enhancement,
+    `ADR.UAC.Proofs,
+    `ADR.UAC.Examples,
+    `ADR.Kappa.PrimeIndex,
+    `ADR.Kappa.Oscillator,
+    `ADR.Kappa.KappaExp,
+    `ADR.Kappa.Stability,
+    `ADR.Kappa.Spectral,
+    `ADR.Kappa.Examples,
+  ]
 }
 
 lean_exe test {

@@ -5,6 +5,9 @@ pub mod type_check;
 pub mod tensor_representation;
 pub mod universal_system;
 pub mod into_mocword;
+pub mod sig;
+pub mod ace;
+pub mod unified_witness;
 
 /// The Sig Library (Multiplicity Functor)
 /// Implements the Prime Successor Predicate with strict tree-sitter grammar integration.

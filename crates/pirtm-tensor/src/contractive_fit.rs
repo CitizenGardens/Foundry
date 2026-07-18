@@ -1,22 +1,37 @@
 use ndarray::Array1;
 use crate::multiplicity_cell::MultiplicityCell;
+use crate::csl::Attractor;
 
 /// A contractive Fit operator that uses a MultiplicityCell to guide
 /// the state toward the Bindu (artaDefect = 0, coherentWeight maximal).
 ///
 /// The update rule is:
-///   state_new = state - learning_rate * cell.gradient(state)
+///   state_new = state - learning_rate * (cell.gradient(state) + lambda_csl * csl_gradient(state))
 /// where the gradient is computed from the cell's Jacobian such that
-/// the step is always contractive (operator norm ≤ 1).
-pub struct ContractiveFit<C: MultiplicityCell> {
+/// the step is always contractive (operator norm ≤ 1), bounded away from forbidden regions.
+pub struct ContractiveFit<'a, C: MultiplicityCell> {
     pub cell: C,
     learning_rate: f64,
     tolerance: f64,
+    pub lambda_csl: f64,
+    pub zeta_threshold: Option<f64>,
+    pub attractor: Option<&'a dyn Attractor>,
 }
 
-impl<C: MultiplicityCell> ContractiveFit<C> {
+impl<'a, C: MultiplicityCell> ContractiveFit<'a, C> {
     pub fn new(cell: C, learning_rate: f64, tolerance: f64) -> Self {
-        ContractiveFit { cell, learning_rate, tolerance }
+        ContractiveFit { cell, learning_rate, tolerance, lambda_csl: 0.0, zeta_threshold: None, attractor: None }
+    }
+    
+    pub fn with_csl(mut self, lambda_csl: f64, attractor: &'a dyn Attractor) -> Self {
+        self.lambda_csl = lambda_csl;
+        self.attractor = Some(attractor);
+        self
+    }
+
+    pub fn with_zeta_regularization(mut self, threshold: f64) -> Self {
+        self.zeta_threshold = Some(threshold);
+        self
     }
 
     /// Compute a descent direction for the state.
@@ -42,9 +57,24 @@ impl<C: MultiplicityCell> ContractiveFit<C> {
         grad
     }
 
-    /// Perform one Fit iteration. Returns the new state and the defect after update.
     pub fn step(&self, state: &Array1<f64>) -> (Array1<f64>, f64) {
-        let grad = self.gradient(state);
+        let mut grad = self.gradient(state);
+        
+        // Add CSL penalty gradient if configured
+        if let Some(attr) = self.attractor {
+            let csl_grad = attr.penalty_gradient(state);
+            grad = grad + &(self.lambda_csl * csl_grad);
+        }
+        
+        // Zeta-Regularization: Clamp divergent gradients
+        if let Some(zeta) = self.zeta_threshold {
+            let norm = grad.iter().map(|x| x.powi(2)).sum::<f64>().sqrt();
+            if norm > zeta && norm > 0.0 {
+                let scale = zeta / norm;
+                grad.mapv_inplace(|x| x * scale);
+            }
+        }
+        
         let new_state = state - self.learning_rate * &grad;
         let (_, defect) = self.cell.forward(&new_state);
         (new_state, defect)
