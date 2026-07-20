@@ -1,9 +1,9 @@
-use ndarray::Array2;
 use libm::jn;
+use ndarray::Array2;
 use std::f64::consts::PI;
 
 /// Moonshine Operator ℳ embeds modular features into DRMM tensor evolution.
-/// 
+///
 /// Parity with: drmm/src/moonshine.py -> MoonshineOperator
 pub struct MoonshineOperator {
     pub group_id: i32,
@@ -39,7 +39,7 @@ mod tests {
         let x = Array2::from_elem((2, 2), 0.5);
         let moon = MoonshineOperator::new(1, None);
         let result = moon.apply(&x, 1.0);
-        
+
         // J1(2*PI * 0.5) = J1(PI) approx 0.2846
         // Result = 0.5 * 0.2846 = 0.1423
         assert!(result[[0, 0]] < 0.5);

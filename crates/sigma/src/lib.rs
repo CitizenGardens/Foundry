@@ -19,8 +19,6 @@ pub struct StateTransition {
 include!(concat!(env!("OUT_DIR"), "/thresholds.rs"));
 
 impl Thresholds {
-
-
     pub fn from_json_file(path: &str) -> Result<Self, ArchivumError> {
         let contents = fs::read_to_string(path)?;
         let t: Self = serde_json::from_str(&contents)?;
@@ -50,10 +48,16 @@ impl Thresholds {
             return Err("lambda1_positive must be true".into());
         }
         if t.atlas_signature != (10, 14) {
-            return Err(format!("atlas_signature={:?} != (10,14)", t.atlas_signature));
+            return Err(format!(
+                "atlas_signature={:?} != (10,14)",
+                t.atlas_signature
+            ));
         }
         if !(t.contractivity_margin > 0.0 && t.contractivity_margin < 1.0) {
-            return Err(format!("contractivity_margin={} outside (0,1)", t.contractivity_margin));
+            return Err(format!(
+                "contractivity_margin={} outside (0,1)",
+                t.contractivity_margin
+            ));
         }
         Ok(())
     }
@@ -72,7 +76,7 @@ impl PolicyEngine {
     pub fn new() -> Self {
         Self
     }
-    
+
     pub fn run(&self, transition: &StateTransition, thresholds: &Thresholds) -> DissonanceCheck {
         DissonanceCheck {
             passes_tau_r: (transition.r_sc - thresholds.tau_r).abs() < 1e-6,
@@ -112,20 +116,29 @@ impl SigmaKernel {
         }
     }
 
-    pub fn from_lean_export(engine: PolicyEngine, ledger: WitnessLedger, postcard_path: &str, json_path: &str) -> Self {
+    pub fn from_lean_export(
+        engine: PolicyEngine,
+        ledger: WitnessLedger,
+        postcard_path: &str,
+        json_path: &str,
+    ) -> Self {
         match std::fs::read(postcard_path) {
-            Ok(bytes) => {
-                match Thresholds::from_postcard(&bytes) {
-                    Ok(thresholds) => {
-                        log_threshold_load!("✅", "postcard zero-copy");
-                        Self::new(engine, ledger, thresholds)
-                    }
-                    Err(e) => {
-                        log_deser_detail!(Level::ERROR, e, postcard_path, bytes.len(), "zero-copy failure");
-                        Self::load_json_fallback(engine, ledger, json_path)
-                    }
+            Ok(bytes) => match Thresholds::from_postcard(&bytes) {
+                Ok(thresholds) => {
+                    log_threshold_load!("✅", "postcard zero-copy");
+                    Self::new(engine, ledger, thresholds)
                 }
-            }
+                Err(e) => {
+                    log_deser_detail!(
+                        Level::ERROR,
+                        e,
+                        postcard_path,
+                        bytes.len(),
+                        "zero-copy failure"
+                    );
+                    Self::load_json_fallback(engine, ledger, json_path)
+                }
+            },
             Err(_) => {
                 info!("Postcard file missing, falling back to JSON");
                 Self::load_json_fallback(engine, ledger, json_path)
@@ -147,11 +160,14 @@ impl SigmaKernel {
         }
     }
 
-    pub fn evaluate(&mut self, transition: StateTransition) -> Result<TransitionBlock, DissonanceError> {
+    pub fn evaluate(
+        &mut self,
+        transition: StateTransition,
+    ) -> Result<TransitionBlock, DissonanceError> {
         log_governed_transition!(&transition.id, "pending");
-        
+
         let check = self.engine.run(&transition, &self.thresholds);
-        
+
         // 1. Construct the SpectralState from the evaluated transitions.
         let state = SpectralState {
             resonance_functional: check.r_sc,
@@ -173,14 +189,36 @@ impl SigmaKernel {
                 let _ = self.ledger.stamp_sigma_proof(&proof);
 
                 let block = TransitionBlock::new_ratified(transition.id);
-                self.ledger.append_block(&block).map_err(|_| DissonanceError::ThresholdViolation { r_sc: check.r_sc, l_eff: check.l_eff })?;
+                self.ledger.append_block(&block).map_err(|_| {
+                    DissonanceError::ThresholdViolation {
+                        r_sc: check.r_sc,
+                        l_eff: check.l_eff,
+                    }
+                })?;
                 Ok(block)
             }
             Err(SigmaViolation::InvariantBreach { l_eff, drift }) => {
-                let breach_type = if l_eff >= 1.0 { "LipschitzContraction".to_string() } else { "ResonanceDelta".to_string() };
-                log_dissonance_trap!(transition.id, breach_type, format!("R_sc={}, L_eff={}, drift={}", check.r_sc, check.l_eff, drift));
-                let log = ConflictLogSchema::new(&transition.id, check.r_sc, check.l_eff, self.thresholds.tau_r, breach_type);
-                
+                let breach_type = if l_eff >= 1.0 {
+                    "LipschitzContraction".to_string()
+                } else {
+                    "ResonanceDelta".to_string()
+                };
+                log_dissonance_trap!(
+                    transition.id,
+                    breach_type,
+                    format!(
+                        "R_sc={}, L_eff={}, drift={}",
+                        check.r_sc, check.l_eff, drift
+                    )
+                );
+                let log = ConflictLogSchema::new(
+                    &transition.id,
+                    check.r_sc,
+                    check.l_eff,
+                    self.thresholds.tau_r,
+                    breach_type,
+                );
+
                 let md_log = mirror_dissonance::schemas::ConflictLogSchema {
                     receipt_hash: log.receipt_hash.clone(),
                     r_sc: log.r_sc,
@@ -193,7 +231,10 @@ impl SigmaKernel {
                 if !violations.is_empty() {
                     let _ = self.ledger.stamp_pweh(&log);
                 }
-                Err(DissonanceError::ThresholdViolation { r_sc: check.r_sc, l_eff: check.l_eff })
+                Err(DissonanceError::ThresholdViolation {
+                    r_sc: check.r_sc,
+                    l_eff: check.l_eff,
+                })
             }
         }
     }
@@ -286,26 +327,23 @@ pub enum SigmaViolation {
     InvariantBreach { l_eff: f64, drift: f64 },
 }
 
-pub fn sigma_check(
-    state: &SpectralState,
-    tau_r: f64,
-) -> Result<SigmaWitness, SigmaViolation> {
+pub fn sigma_check(state: &SpectralState, tau_r: f64) -> Result<SigmaWitness, SigmaViolation> {
     let invariant_holds = state.effective_lipschitz < 1.0 && state.drift <= tau_r;
-    
+
     let dissonance = match () {
         _ if state.effective_lipschitz >= 1.0 => DissonanceLevel::Critical,
         _ if state.drift > tau_r => DissonanceLevel::Critical,
         _ if state.drift > 0.9 * tau_r => DissonanceLevel::Warning,
         _ => DissonanceLevel::Safe,
     };
-    
+
     if !invariant_holds {
         return Err(SigmaViolation::InvariantBreach {
             l_eff: state.effective_lipschitz,
             drift: state.drift,
         });
     }
-    
+
     let witness = SigmaWitness {
         state_hash: blake3::hash(&serde_json::to_vec(state).unwrap()).into(),
         invariant_holds,
@@ -326,27 +364,44 @@ mod verification {
         let drift: f64 = kani::any();
         let l_eff: f64 = kani::any();
         let tau_r: f64 = kani::any();
-        
-        kani::assume(r_sc.is_finite() && drift.is_finite() && l_eff.is_finite() && tau_r.is_finite());
+
+        kani::assume(
+            r_sc.is_finite() && drift.is_finite() && l_eff.is_finite() && tau_r.is_finite(),
+        );
         kani::assume(tau_r > 0.0);
-        
+
         let state = SpectralState {
             resonance_functional: r_sc,
             drift,
             effective_lipschitz: l_eff,
         };
-        
+
         let result = sigma_check(&state, tau_r);
-        
+
         match result {
             Ok(witness) => {
-                kani::assert(l_eff < 1.0, "Effective Lipschitz must be strictly less than 1.0 on success");
-                kani::assert(drift <= tau_r, "Drift must be less than or equal to tau_r on success");
-                kani::assert(witness.invariant_holds, "Witness must correctly record that invariants hold");
-                kani::assert(witness.dissonance_level != DissonanceLevel::Critical, "Witness cannot record Critical on success");
+                kani::assert(
+                    l_eff < 1.0,
+                    "Effective Lipschitz must be strictly less than 1.0 on success",
+                );
+                kani::assert(
+                    drift <= tau_r,
+                    "Drift must be less than or equal to tau_r on success",
+                );
+                kani::assert(
+                    witness.invariant_holds,
+                    "Witness must correctly record that invariants hold",
+                );
+                kani::assert(
+                    witness.dissonance_level != DissonanceLevel::Critical,
+                    "Witness cannot record Critical on success",
+                );
             }
             Err(_) => {
-                kani::assert(l_eff >= 1.0 || drift > tau_r, "Sigma Kernel rejected a valid state transition");
+                kani::assert(
+                    l_eff >= 1.0 || drift > tau_r,
+                    "Sigma Kernel rejected a valid state transition",
+                );
             }
         }
     }

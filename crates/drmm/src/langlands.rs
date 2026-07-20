@@ -1,10 +1,10 @@
 use ndarray::Array2;
-use num_prime::nt_funcs::is_prime;
 use num_prime::Primality;
+use num_prime::nt_funcs::is_prime;
 
 /// Base automorphic form on GL(2) mod Z.
 /// Encodes modular symmetries over tensor domains.
-/// 
+///
 /// Parity with: drmm/src/langland.py -> AutomorphicForm
 pub struct AutomorphicForm {
     pub transform: Box<dyn Fn(f64) -> f64>,
@@ -23,7 +23,7 @@ impl AutomorphicForm {
 
 /// Galois Representation over a prime field.
 /// Encodes irreducible structure as recursive symmetry.
-/// 
+///
 /// Parity with: drmm/src/langland.py -> GaloisTensor
 pub struct GaloisTensor {
     pub p: u64,
@@ -49,7 +49,7 @@ impl GaloisTensor {
 }
 
 /// Realize Langlands dual via automorphic ↔ Galois correspondence.
-/// 
+///
 /// Parity with: drmm/src/langland.py -> langlands_bridge
 pub fn langlands_bridge(t: &Array2<f64>, prime: u64) -> Array2<f64> {
     let auto = AutomorphicForm::new(Box::new(|v| v.cos()));
@@ -65,7 +65,7 @@ mod tests {
     fn test_langlands_bridge_parity() {
         let t = Array2::from_shape_vec((2, 2), vec![1.0, 2.0, 3.0, 4.0]).unwrap();
         let result = langlands_bridge(&t, 7);
-        
+
         // Galois twist for p=7:
         // 1^7 % 7 = 1
         // 2^7 % 7 = 128 % 7 = 2

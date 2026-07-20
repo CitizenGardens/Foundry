@@ -25,13 +25,7 @@ pub const SCALE: u64 = 10000;
 pub struct XiFormalEngine;
 
 impl XiFormalEngine {
-    pub fn is_contraction(
-        &self,
-        f: &dyn Fn(u64) -> u64,
-        x: u64,
-        y: u64,
-        kappa: u64,
-    ) -> bool {
+    pub fn is_contraction(&self, f: &dyn Fn(u64) -> u64, x: u64, y: u64, kappa: u64) -> bool {
         if kappa >= SCALE {
             return false;
         }
@@ -39,7 +33,7 @@ impl XiFormalEngine {
         let fx = f(x);
         let fy = f(y);
         let dy = if fx >= fy { fx - fy } else { fy - fx };
-        
+
         // Check for overflow before multiplying
         if let Some(dy_scaled) = dy.checked_mul(SCALE) {
             if let Some(kappa_dx) = kappa.checked_mul(dx) {
@@ -49,7 +43,12 @@ impl XiFormalEngine {
         false
     }
 
-    pub fn is_stable_attractor(&self, t: &dyn Fn(u64) -> u64, domain_samples: &[u64], kappa: u64) -> bool {
+    pub fn is_stable_attractor(
+        &self,
+        t: &dyn Fn(u64) -> u64,
+        domain_samples: &[u64],
+        kappa: u64,
+    ) -> bool {
         // Checking contraction for all x, y pairs in the samples (O(n²))
         for &x in domain_samples {
             for &y in domain_samples {
@@ -81,7 +80,8 @@ impl XiFormalEngine {
                 .unwrap_or_default()
                 .as_secs() as i64,
         };
-        let proof = XiFormalProof::new(witness.function_hash, witness.kappa, witness.is_contraction);
+        let proof =
+            XiFormalProof::new(witness.function_hash, witness.kappa, witness.is_contraction);
         ledger
             .stamp_xi_formal_proof(&proof)
             .map_err(|e| XiFormalError::ArchivumError(e.to_string()))?;
@@ -105,7 +105,7 @@ mod verification {
         kani::assume(kappa >= SCALE);
         let x: u64 = kani::any();
         let y: u64 = kani::any();
-        
+
         let res = engine.is_contraction(&dummy_f, x, y, kappa);
         kani::assert(!res, "Rejects kappa >= SCALE");
     }
@@ -117,10 +117,10 @@ mod verification {
         let kappa: u64 = 5000; // 0.5 * 10000
         let x: u64 = kani::any();
         let y: u64 = kani::any();
-        
+
         // Assume small values to avoid overflow in checking
         kani::assume(x < 100000 && y < 100000);
-        
+
         let res = engine.is_contraction(&dummy_f, x, y, kappa);
         kani::assert(res, "Dummy f is a contraction");
     }

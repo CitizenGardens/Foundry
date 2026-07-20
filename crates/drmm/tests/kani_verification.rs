@@ -6,7 +6,7 @@ mod drmm_production_proofs {
     // To ensure Kani can verify without unbounded allocations or loops timing out,
     // we formally test the core scalar transitions that guarantee the stability
     // and compactness of the entire optimizer's state (Theorems 2 and 4 from Lean).
-    
+
     fn update_lambda_ema(lambda_ema: f64, ema_beta: f64, lambda_raw: f64) -> f64 {
         lambda_ema * ema_beta + lambda_raw * (1.0 - ema_beta)
     }
@@ -55,7 +55,7 @@ mod drmm_production_proofs {
         // Verifies the momentum buffer remains absolutely bounded if the gradient spectrum is bounded.
         let momentum_beta: f64 = kani::any();
         kani::assume(momentum_beta >= 0.0 && momentum_beta < 1.0);
-        
+
         let max_contracted: f64 = kani::any();
         kani::assume(max_contracted > 1e-5 && max_contracted < 1e5);
 

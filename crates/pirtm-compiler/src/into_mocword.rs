@@ -1,6 +1,6 @@
 //! Translates PIRTM AST to MOCWord ensembles.
 //!
-//! Anchors the structural components of the Multiplicity Equations into 
+//! Anchors the structural components of the Multiplicity Equations into
 //! deterministic prime-indexed tensor operations.
 
 // In a full implementation, this module would depend on pirtm-stdlib for MOCWord.
@@ -30,7 +30,9 @@ impl MOCWordSimulator {
 pub mod ast {
     pub struct UniversalConstant;
     pub struct DynamicOperator;
-    pub struct MultiplicityFunction { pub prime: u64 }
+    pub struct MultiplicityFunction {
+        pub prime: u64,
+    }
     pub struct GradientProjection;
 }
 
@@ -72,19 +74,19 @@ mod verification {
         // Because of the structural bounds enforced by the UniversalSystemCompiler,
         // we can prove that mapping the structural atoms results in a predictable
         // sequence of prime-indexed MOCWords.
-        
+
         let constant = ast::UniversalConstant;
         let dyn_op = ast::DynamicOperator;
-        
+
         let moc_constant = constant.to_mocword().unwrap();
         let moc_dyn = dyn_op.to_mocword().unwrap();
-        
+
         if let MOCWordSimulator::Atom(prime1) = moc_constant {
             assert_eq!(prime1, 2);
         } else {
             unreachable!();
         }
-        
+
         if let MOCWordSimulator::Atom(prime2) = moc_dyn {
             assert_eq!(prime2, 3);
         } else {

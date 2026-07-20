@@ -68,7 +68,11 @@ pub fn tau_r(r: &RVector) -> u64 {
 pub fn delta_r_sc(r: &RVector) -> u64 {
     let rs = r_sc(r);
     let tr = tau_r(r);
-    if rs >= tr { rs - tr } else { tr - rs }
+    if rs >= tr {
+        rs - tr
+    } else {
+        tr - rs
+    }
 }
 
 /// Effective Lipschitz contraction L_eff.
@@ -147,7 +151,10 @@ pub struct CircuitBreakerConfig {
 
 impl Default for CircuitBreakerConfig {
     fn default() -> Self {
-        CircuitBreakerConfig { failure_threshold: 3, recovery_timeout: 5 }
+        CircuitBreakerConfig {
+            failure_threshold: 3,
+            recovery_timeout: 5,
+        }
     }
 }
 
@@ -247,7 +254,9 @@ pub struct CSLProjector {
 
 impl CSLProjector {
     pub fn new() -> Self {
-        CSLProjector { ratification_log: Vec::new() }
+        CSLProjector {
+            ratification_log: Vec::new(),
+        }
     }
 
     pub fn ratify(&mut self, entry: ConflictLogEntry) {
@@ -264,7 +273,11 @@ pub fn evaluate_sigma_kernel(
 ) -> (DissonanceTrigger, bool, CircuitBreaker) {
     let t = triggers_dissonance(r);
     let route = should_route_dissonance(cb, &t);
-    let new_cb = if route { cb.record_failure(now) } else { cb.record_success() };
+    let new_cb = if route {
+        cb.record_failure(now)
+    } else {
+        cb.record_success()
+    };
     let ratified = route && cb.state == CircuitBreakerState::Closed;
     (t, ratified, new_cb)
 }

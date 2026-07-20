@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -57,4 +57,3 @@ pub struct ConflictLogSchema {
     pub breach_type: String, // e.g., "ResonanceDelta", "LipschitzContraction"
     pub timestamp: String,
 }
-

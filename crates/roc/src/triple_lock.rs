@@ -6,7 +6,7 @@
 //! Publisher → signs ROC configuration into Archivum
 //! ```
 
-use super::{RocDynamicsWitness};
+use super::RocDynamicsWitness;
 
 #[cfg(feature = "archivum")]
 use archivum::{RocDynamicsProof, WitnessLedger};

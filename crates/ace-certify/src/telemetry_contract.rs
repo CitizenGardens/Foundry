@@ -21,11 +21,7 @@ pub struct ACECertificate {
 }
 
 impl ACECertificate {
-    pub fn from_telemetry(
-        theta: &[u8],
-        telemetry: KernelTelemetry,
-        outputs: &[u8],
-    ) -> Self {
+    pub fn from_telemetry(theta: &[u8], telemetry: KernelTelemetry, outputs: &[u8]) -> Self {
         Self {
             theta: theta.to_vec(),
             xn_kernel: telemetry.xn_kernel,

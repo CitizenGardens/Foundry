@@ -22,10 +22,10 @@ mod f1_square_proofs {
         let x: f32 = kani::any();
         let t: f32 = kani::any();
         kani::assume(x > 0.0 && t > 0.0);
-        
+
         let tail_bound = x / t; // simplified mock bound
         let abs_val = 0.0; // placeholder for `abs (sorry)`
-        
+
         assert!(abs_val <= tail_bound + 0.001 || tail_bound < 0.0);
     }
 }

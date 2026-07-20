@@ -1,9 +1,8 @@
 /// Trace serialization with frozen column order for deterministic STARK proving
-/// 
+///
 /// Spec-defined column order (20 columns):
 /// round, step, is_round_start, is_mul, is_square, is_end,
 /// a, d, s, bit, acc, base, t_lo, t_hi, q, r, mu_lo, mu_hi, hit_nm1, witness_flag
-
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 use std::io::Write;
@@ -37,10 +36,10 @@ pub const COLUMN_ORDER: &[&str] = &[
 pub struct TraceRow {
     pub round: u64,
     pub step: u64,
-    pub is_round_start: u64,  // boolean: 0 or 1
-    pub is_mul: u64,          // boolean: 0 or 1
-    pub is_square: u64,       // boolean: 0 or 1
-    pub is_end: u64,          // boolean: 0 or 1
+    pub is_round_start: u64, // boolean: 0 or 1
+    pub is_mul: u64,         // boolean: 0 or 1
+    pub is_square: u64,      // boolean: 0 or 1
+    pub is_end: u64,         // boolean: 0 or 1
     pub a: u64,
     pub d: u64,
     pub s: u64,
@@ -53,8 +52,8 @@ pub struct TraceRow {
     pub r: u64,
     pub mu_lo: u64,
     pub mu_hi: u64,
-    pub hit_nm1: u64,         // boolean: 0 or 1
-    pub witness_flag: u64,    // boolean: 0 or 1
+    pub hit_nm1: u64,      // boolean: 0 or 1
+    pub witness_flag: u64, // boolean: 0 or 1
 }
 
 /// Full execution trace with frozen column order
@@ -82,49 +81,56 @@ impl ExecutionTrace {
     pub fn to_json(&self) -> anyhow::Result<String> {
         // Use canonical JSON with sorted keys
         let mut map = serde_json::Map::new();
-        map.insert("column_order".to_string(), serde_json::json!(self.column_order));
-        
+        map.insert(
+            "column_order".to_string(),
+            serde_json::json!(self.column_order),
+        );
+
         // Serialize rows
-        let rows_json: Vec<Vec<u64>> = self.rows.iter().map(|row| {
-            vec![
-                row.round,
-                row.step,
-                row.is_round_start,
-                row.is_mul,
-                row.is_square,
-                row.is_end,
-                row.a,
-                row.d,
-                row.s,
-                row.bit,
-                row.acc,
-                row.base,
-                row.t_lo,
-                row.t_hi,
-                row.q,
-                row.r,
-                row.mu_lo,
-                row.mu_hi,
-                row.hit_nm1,
-                row.witness_flag,
-            ]
-        }).collect();
-        
+        let rows_json: Vec<Vec<u64>> = self
+            .rows
+            .iter()
+            .map(|row| {
+                vec![
+                    row.round,
+                    row.step,
+                    row.is_round_start,
+                    row.is_mul,
+                    row.is_square,
+                    row.is_end,
+                    row.a,
+                    row.d,
+                    row.s,
+                    row.bit,
+                    row.acc,
+                    row.base,
+                    row.t_lo,
+                    row.t_hi,
+                    row.q,
+                    row.r,
+                    row.mu_lo,
+                    row.mu_hi,
+                    row.hit_nm1,
+                    row.witness_flag,
+                ]
+            })
+            .collect();
+
         map.insert("rows".to_string(), serde_json::json!(rows_json));
-        
+
         Ok(serde_json::to_string_pretty(&map)?)
     }
 
     /// Serialize to binary format (little-endian u64 values)
     pub fn to_binary(&self) -> anyhow::Result<Vec<u8>> {
         let mut buf = Vec::new();
-        
+
         // Write number of rows (8 bytes)
         buf.write_all(&(self.rows.len() as u64).to_le_bytes())?;
-        
+
         // Write number of columns (8 bytes)
         buf.write_all(&(COLUMN_ORDER.len() as u64).to_le_bytes())?;
-        
+
         // Write each row in column order
         for row in &self.rows {
             buf.write_all(&row.round.to_le_bytes())?;
@@ -148,7 +154,7 @@ impl ExecutionTrace {
             buf.write_all(&row.hit_nm1.to_le_bytes())?;
             buf.write_all(&row.witness_flag.to_le_bytes())?;
         }
-        
+
         Ok(buf)
     }
 
@@ -204,14 +210,14 @@ impl TranscriptGenerator {
     pub fn generate_transcript(trace_commitment: &[u8; 32]) -> Vec<u8> {
         let mut transcript = Self::new();
         transcript.absorb_trace_commitment(trace_commitment);
-        
+
         // Generate deterministic challenges
         let alpha = transcript.squeeze(32);
         transcript.absorb_challenge(&alpha);
-        
+
         let beta = transcript.squeeze(32);
         transcript.absorb_challenge(&beta);
-        
+
         // Return binary transcript
         let mut result = Vec::new();
         result.extend_from_slice(trace_commitment);
@@ -241,7 +247,7 @@ mod tests {
     #[test]
     fn test_trace_serialization() {
         let mut trace = ExecutionTrace::new();
-        
+
         trace.push(TraceRow {
             round: 0,
             step: 0,
@@ -273,7 +279,7 @@ mod tests {
     #[test]
     fn test_binary_serialization() {
         let mut trace = ExecutionTrace::new();
-        
+
         trace.push(TraceRow {
             round: 0,
             step: 0,
@@ -298,7 +304,7 @@ mod tests {
         });
 
         let binary = trace.to_binary().unwrap();
-        
+
         // Header: 8 bytes (num_rows) + 8 bytes (num_cols)
         // Data: 1 row * 20 columns * 8 bytes = 160 bytes
         assert_eq!(binary.len(), 16 + 160);
@@ -308,10 +314,10 @@ mod tests {
     fn test_deterministic_hash() {
         let trace1 = ExecutionTrace::new();
         let trace2 = ExecutionTrace::new();
-        
+
         let hash1 = trace1.column_order_hash();
         let hash2 = trace2.column_order_hash();
-        
+
         assert_eq!(hash1, hash2);
     }
 
@@ -319,7 +325,7 @@ mod tests {
     fn test_transcript_generation() {
         let commitment = [0u8; 32];
         let transcript = TranscriptGenerator::generate_transcript(&commitment);
-        
+
         // Should contain commitment + 2 challenges (32 + 32 + 32 = 96 bytes)
         assert_eq!(transcript.len(), 96);
     }

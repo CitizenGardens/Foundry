@@ -1,4 +1,4 @@
-use crate::{GoldilocksField, ConvergencePublicInputsPro};
+use crate::{ConvergencePublicInputsPro, GoldilocksField};
 
 /// Lever 5 — Spectral Witness (Normative)
 /// Preserves the full spectral evidence required for Tier 4 recovery.
@@ -6,11 +6,11 @@ use crate::{GoldilocksField, ConvergencePublicInputsPro};
 pub struct SpectralWitness {
     /// Scalar gap to the GUE floor.
     pub delta_pz: GoldilocksField,
-    
+
     /// Full array of nearest-neighbor spacings.
     /// MUST be preserved for Tier 4 Kolmogorov-Smirnov checks.
     pub zero_spacings: Vec<GoldilocksField>,
-    
+
     /// Trend of the spectral gap (positive = widening).
     pub gap_trend: i64,
 }
@@ -34,7 +34,11 @@ pub struct FormalStabilityCertificate {
 }
 
 impl FormalStabilityCertificate {
-    pub fn new(status: CertificationStatus, rho_bound: GoldilocksField, lambda_m: GoldilocksField) -> Self {
+    pub fn new(
+        status: CertificationStatus,
+        rho_bound: GoldilocksField,
+        lambda_m: GoldilocksField,
+    ) -> Self {
         Self {
             status,
             spectral: None,
@@ -60,7 +64,7 @@ impl FormalStabilityCertificate {
             // Placeholder for KS-test logic against GUE distribution
             let is_gue_like = !witness.zero_spacings.is_empty();
             let is_trending_up = witness.gap_trend >= 0;
-            
+
             if is_gue_like && is_trending_up {
                 CertificationStatus::CONDITIONAL
             } else {
@@ -82,10 +86,18 @@ impl FormalStabilityCertificate {
         ConvergencePublicInputsPro {
             prime_mask: mask,
             resonance_word,
-            delta_pz: self.spectral.as_ref().map(|w| w.delta_pz).unwrap_or(GoldilocksField::ZERO),
+            delta_pz: self
+                .spectral
+                .as_ref()
+                .map(|w| w.delta_pz)
+                .unwrap_or(GoldilocksField::ZERO),
             rho_bound: self.rho_bound,
             lambda_m: self.lambda_m,
-            veto_flag: if self.status == CertificationStatus::VETO { GoldilocksField(1) } else { GoldilocksField(0) },
+            veto_flag: if self.status == CertificationStatus::VETO {
+                GoldilocksField(1)
+            } else {
+                GoldilocksField(0)
+            },
         }
     }
 }

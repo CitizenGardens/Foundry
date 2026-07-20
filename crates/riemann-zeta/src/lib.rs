@@ -9,11 +9,7 @@
 //! - Interval arithmetic for rigorous bounds on zero locations
 //! - Verification that non-trivial zeros lie on the critical line ℜ(s) = 1/2
 
-use rug::{
-    Complex,
-    Float,
-    integer::Order,
-};
+use rug::{Complex, Float, integer::Order};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -21,7 +17,7 @@ mod interval;
 mod zeros;
 
 pub use interval::{Interval, IntervalError, VerifiedBound};
-pub use zeros::{ZeroVerifier, ZeroLocation, VerificationResult};
+pub use zeros::{VerificationResult, ZeroLocation, ZeroVerifier};
 
 #[derive(Error, Debug)]
 pub enum RiemannError {
@@ -144,7 +140,8 @@ impl RiemannZeta {
 
         // Euler-Maclaurin remainder bound: R_n ≤ |s| / (n * (n + |t|))
         let s_norm = s.real().clone().hypot(s.imag().clone());
-        let remainder = s_norm / (n_float.clone() * (n_float.clone() + Float::with_val(precision, t)));
+        let remainder =
+            s_norm / (n_float.clone() * (n_float.clone() + Float::with_val(precision, t)));
 
         Ok(remainder)
     }

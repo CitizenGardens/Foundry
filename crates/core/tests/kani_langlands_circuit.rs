@@ -1,22 +1,22 @@
 #[cfg(kani)]
 mod langlands_circuit_proof {
-    use pirtm_rs::langlands_zk::{GoldilocksField, compute_euler_product};
+    use pirtm_rs::langlands_zk::{compute_euler_product, GoldilocksField};
     use std::collections::HashMap;
 
     // The constant matrices (filled by extraction script)
     // We import them from the generated module via the crate.
-    use pirtm_rs::r1cs_constants::{A, B, C, NUM_WIRES, NUM_CONSTRAINTS};
+    use pirtm_rs::r1cs_constants::{A, B, C, NUM_CONSTRAINTS, NUM_WIRES};
 
     const MAX_PRIMES: usize = 16;
 
     // Wire indices (0‑based, corresponding to 1‑based circuit wires)
-    const WIRE_CONSTANT_1: usize = 0;   // wire 1
-    const WIRE_CLASS_ID: usize = 1;     // wire 2 (public)
-    const WIRE_PRIMES_BASE: usize = 2;  // wires 3..18 (public)
-    const WIRE_CLAIMED_L: usize = 18;   // wire 19 (public)
-    const WIRE_SCALE: usize = 19;       // wire 20 (public)
-    const WIRE_TRACE_BASE: usize = 20;  // wires 21..36 (private)
-    const WIRE_DET_BASE: usize = 36;    // wires 37..52 (private)
+    const WIRE_CONSTANT_1: usize = 0; // wire 1
+    const WIRE_CLASS_ID: usize = 1; // wire 2 (public)
+    const WIRE_PRIMES_BASE: usize = 2; // wires 3..18 (public)
+    const WIRE_CLAIMED_L: usize = 18; // wire 19 (public)
+    const WIRE_SCALE: usize = 19; // wire 20 (public)
+    const WIRE_TRACE_BASE: usize = 20; // wires 21..36 (private)
+    const WIRE_DET_BASE: usize = 36; // wires 37..52 (private)
 
     /// Check if a given witness satisfies all R1CS constraints.
     fn satisfies_all_constraints(w: &[GoldilocksField; NUM_WIRES]) -> bool {

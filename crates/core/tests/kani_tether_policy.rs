@@ -1,6 +1,6 @@
 #[cfg(kani)]
 mod tether_policy_proofs {
-    use pirtm_rs::tether_policy::{TetherPolicy, NodeState};
+    use pirtm_rs::tether_policy::{NodeState, TetherPolicy};
 
     #[kani::proof]
     fn tether_state_never_jumps_from_kill_to_execution() {
@@ -20,7 +20,10 @@ mod tether_policy_proofs {
             kani::assume(worse_drift >= drift);
             kani::assume(worse_coverage >= 0.0 && worse_drift <= 1.0);
             let next_state = policy.process_telemetry(worse_coverage, worse_drift).1;
-            assert!(next_state != NodeState::Execution, "SigGovKill must not transition to Execution");
+            assert!(
+                next_state != NodeState::Execution,
+                "SigGovKill must not transition to Execution"
+            );
         }
     }
 

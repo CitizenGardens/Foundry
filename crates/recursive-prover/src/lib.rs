@@ -2,7 +2,7 @@
 //!
 //! This crate provides the production-grade implementation of ADR-069.
 //! It handles the safe wrapping and aggregation of Zero-Knowledge proofs
-//! into a single Aggregated Proof Object (APO) for high-throughput 
+//! into a single Aggregated Proof Object (APO) for high-throughput
 //! formal verification inside the PhaseMirror environment.
 
 #![forbid(unsafe_code)]
@@ -82,7 +82,10 @@ fn compute_apo_root_hash(proofs: &[RecursiveProof]) -> String {
 impl RecursiveProver {
     /// Instantiates a new `RecursiveProver` with safety bounds.
     pub fn new(max_depth: usize, max_proofs: usize) -> Self {
-        Self { max_depth, max_proofs }
+        Self {
+            max_depth,
+            max_proofs,
+        }
     }
 
     /// Wraps a standard proof inside a recursive wrapper circuit.
@@ -94,19 +97,22 @@ impl RecursiveProver {
         if proof.proof_bytes.len() > 1024 * 1024 {
             return Err(ProverError::SizeLimitExceeded);
         }
-        Ok(RecursiveProof { inner_proof: proof, wrapper_circuit_id: wrapper_circuit })
+        Ok(RecursiveProof {
+            inner_proof: proof,
+            wrapper_circuit_id: wrapper_circuit,
+        })
     }
 
     /// Aggregates multiple recursive proofs into a single `APO`.
-    pub fn aggregate(
-        &self,
-        proofs: Vec<RecursiveProof>,
-    ) -> Result<APO, ProverError> {
+    pub fn aggregate(&self, proofs: Vec<RecursiveProof>) -> Result<APO, ProverError> {
         if proofs.len() > self.max_proofs {
             return Err(ProverError::DepthExceeded);
         }
         let root_hash = compute_apo_root_hash(&proofs);
-        Ok(APO { aggregated_proofs: proofs, root_hash })
+        Ok(APO {
+            aggregated_proofs: proofs,
+            root_hash,
+        })
     }
 
     /// Verifies the structural integrity and root hash of an `APO`.
@@ -141,8 +147,14 @@ mod verification {
             proof_bytes: vec![1, 2, 3],
         };
         let r = prover.wrap(p.clone(), 2).unwrap();
-        kani::assert(r.inner_proof.circuit_id == p.circuit_id, "Wrap altered circuit id");
-        kani::assert(r.wrapper_circuit_id == 2, "Wrap failed to set wrapper circuit id");
+        kani::assert(
+            r.inner_proof.circuit_id == p.circuit_id,
+            "Wrap altered circuit id",
+        );
+        kani::assert(
+            r.wrapper_circuit_id == 2,
+            "Wrap failed to set wrapper circuit id",
+        );
     }
 
     #[kani::proof]
@@ -155,9 +167,9 @@ mod verification {
         };
         let r = prover.wrap(p, 2).unwrap();
         let mut apo = prover.aggregate(vec![r]).unwrap();
-        
+
         kani::assert(prover.verify_apo(&apo).unwrap(), "Valid APO rejected");
-        
+
         // Mutate the APO
         apo.root_hash = "invalid".to_string();
         kani::assert(!prover.verify_apo(&apo).unwrap(), "Invalid APO accepted");

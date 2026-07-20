@@ -1,4 +1,4 @@
-use crate::{GoldilocksField, PrimeMask, ResonanceWord, MODULUS};
+use crate::{GoldilocksField, MODULUS, PrimeMask, ResonanceWord};
 use std::collections::HashMap;
 
 /// Lever 4 — Hamiltonian (Normative)
@@ -13,10 +13,10 @@ pub struct Hamiltonian {
 pub struct HamiltonianTerm {
     /// Lever 2 Prime Mask gating this term.
     pub mask: PrimeMask,
-    
+
     /// Base coefficient (as a field element).
     pub coeff: GoldilocksField,
-    
+
     /// Resonance class modulation (Lever 3).
     /// If Some, the term is multiplied by the resonance word's payload.
     pub resonance_class: Option<u8>,
@@ -30,7 +30,12 @@ impl Hamiltonian {
         }
     }
 
-    pub fn add_term(&mut self, mask: PrimeMask, coeff: GoldilocksField, resonance_class: Option<u8>) {
+    pub fn add_term(
+        &mut self,
+        mask: PrimeMask,
+        coeff: GoldilocksField,
+        resonance_class: Option<u8>,
+    ) {
         self.terms.push(HamiltonianTerm {
             mask,
             coeff,
@@ -39,9 +44,13 @@ impl Hamiltonian {
     }
 
     /// Evaluate the effective Hamiltonian coefficients given an active mask and resonance state.
-    pub fn evaluate(&self, active_mask: PrimeMask, resonance_state: &HashMap<u8, ResonanceWord>) -> Vec<GoldilocksField> {
+    pub fn evaluate(
+        &self,
+        active_mask: PrimeMask,
+        resonance_state: &HashMap<u8, ResonanceWord>,
+    ) -> Vec<GoldilocksField> {
         let mut effective_coeffs = Vec::with_capacity(self.terms.len());
-        
+
         for term in &self.terms {
             // Prime gating: only include terms whose mask intersects with active_mask
             let intersection = term.mask.and(active_mask);
@@ -61,7 +70,7 @@ impl Hamiltonian {
 
             effective_coeffs.push(val);
         }
-        
+
         effective_coeffs
     }
 }
@@ -75,7 +84,10 @@ pub struct ZetaCell {
 
 impl ZetaCell {
     pub fn new(hamiltonian: Hamiltonian, initial_state: Vec<GoldilocksField>) -> Self {
-        Self { hamiltonian, state: initial_state }
+        Self {
+            hamiltonian,
+            state: initial_state,
+        }
     }
 
     /// Apply one step of Hamiltonian evolution to the spectral state.

@@ -1,4 +1,4 @@
-use riemann_zeta::{RiemannZeta, RiemannConfig, ZeroVerifier};
+use riemann_zeta::{RiemannConfig, RiemannZeta, ZeroVerifier};
 use rug::Complex;
 use std::time::Instant;
 
@@ -32,7 +32,10 @@ fn main() {
     ];
 
     println!("Verifying known non-trivial zeros...");
-    println!("{:<20} {:<20} {:<20} {:<10}", "Imag(t)", "Real Lower", "Real Upper", "Verified");
+    println!(
+        "{:<20} {:<20} {:<20} {:<10}",
+        "Imag(t)", "Real Lower", "Real Upper", "Verified"
+    );
     println!("{}", "-".repeat(70));
 
     for (i, &t) in known_zeros.iter().enumerate() {
@@ -43,7 +46,9 @@ fn main() {
 
         println!(
             "{:<20.15} {:<20.15} {:<20.15} {:<10} {:?}",
-            t, result.real_part_lower, result.real_part_upper,
+            t,
+            result.real_part_lower,
+            result.real_part_upper,
             if result.is_zero { "YES" } else { "NO" },
             elapsed
         );

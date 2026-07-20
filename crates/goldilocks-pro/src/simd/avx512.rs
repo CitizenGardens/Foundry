@@ -1,5 +1,5 @@
 use crate::GoldilocksField;
-use std::ops::{Add, Sub, Mul};
+use std::ops::{Add, Mul, Sub};
 
 #[cfg(target_feature = "avx512f")]
 use std::arch::x86_64::*;
@@ -20,15 +20,15 @@ pub fn vec_add(a: &[GoldilocksField], b: &[GoldilocksField], out: &mut [Goldiloc
             unsafe {
                 let va = _mm512_loadu_si512(a[i..].as_ptr() as *const _);
                 let vb = _mm512_loadu_si512(b[i..].as_ptr() as *const _);
-                
+
                 let sum = _mm512_add_epi64(va, vb);
                 let sum_eps = _mm512_add_epi64(sum, eps);
-                
+
                 // carry occurred if sum_eps < sum (unsigned comparison)
-                // AVX-512 does not have a direct "unsigned less than" for i64, 
+                // AVX-512 does not have a direct "unsigned less than" for i64,
                 // but we can use _mm512_cmp_epu64_mask with _MM_CMPINT_LT
                 let mask = _mm512_cmp_epu64_mask(sum_eps, sum, 1 /* _MM_CMPINT_LT */);
-                
+
                 let res = _mm512_mask_mov_epi64(sum, mask, sum_eps);
                 _mm512_storeu_si512(out[i..].as_mut_ptr() as *mut _, res);
             }

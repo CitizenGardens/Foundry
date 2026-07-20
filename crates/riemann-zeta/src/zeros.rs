@@ -3,8 +3,8 @@
 //! Implements rigorous verification that non-trivial zeros lie on the critical line
 //! ℜ(s) = 1/2, using interval arithmetic and the Odlyzko–Schönhage algorithm.
 
-use rug::{Float, Complex};
-use crate::{Interval, RiemannZeta, RiemannConfig, RiemannError, Result};
+use crate::{Interval, Result, RiemannConfig, RiemannError, RiemannZeta};
+use rug::{Complex, Float};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ZeroLocation {
@@ -41,7 +41,8 @@ impl ZeroVerifier {
         let real_upper = interval.high.to_f64();
         let imag = s.imag().to_f64();
 
-        let is_zero = interval.contains_zero() && interval.width().to_f64() < self.config.zero_verification_threshold;
+        let is_zero = interval.contains_zero()
+            && interval.width().to_f64() < self.config.zero_verification_threshold;
 
         Ok(VerificationResult {
             is_zero,

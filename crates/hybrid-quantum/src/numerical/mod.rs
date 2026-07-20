@@ -18,9 +18,7 @@ pub fn compute_eigenvalues(matrix: &DMatrix<f64>) -> Vec<f64> {
 
     // Symmetrize: compute (A + A^T) / 2 for spectral analysis.
     // The symmetric part captures the contractive/expansive behavior.
-    let sym = Mat::from_fn(dim, dim, |i, j| {
-        (matrix[(i, j)] + matrix[(j, i)]) / 2.0
-    });
+    let sym = Mat::from_fn(dim, dim, |i, j| (matrix[(i, j)] + matrix[(j, i)]) / 2.0);
 
     // Perform eigendecomposition using faer's self-adjoint eigensolver.
     // `Side::Lower` tells faer to read the lower triangle (sufficient for symmetric).
@@ -30,7 +28,11 @@ pub fn compute_eigenvalues(matrix: &DMatrix<f64>) -> Vec<f64> {
             // eig.values is a Diag containing the eigenvalues on its diagonal.
             let mut eigenvalues: Vec<f64> = eig.S().column_vector().iter().copied().collect();
             // Sort by absolute value descending for spectral radius analysis.
-            eigenvalues.sort_by(|a, b| b.abs().partial_cmp(&a.abs()).unwrap_or(std::cmp::Ordering::Equal));
+            eigenvalues.sort_by(|a, b| {
+                b.abs()
+                    .partial_cmp(&a.abs())
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
             eigenvalues
         }
         Err(_) => {
@@ -50,9 +52,7 @@ pub fn compute_eigenvalues(matrix: &DMatrix<f64>) -> Vec<f64> {
 /// - I4: spectral radius consistent across prime-indexed decompositions
 pub fn spectral_radius_approximation(matrix: &DMatrix<f64>) -> f64 {
     let eigenvalues = compute_eigenvalues(matrix);
-    eigenvalues.iter()
-        .map(|e| e.abs())
-        .fold(0.0_f64, f64::max)
+    eigenvalues.iter().map(|e| e.abs()).fold(0.0_f64, f64::max)
 }
 
 #[cfg(test)]
@@ -86,7 +86,11 @@ mod tests {
         // Diagonal matrix with entries > 1.0 — should be non-contractive
         let m = DMatrix::from_diagonal(&nalgebra::DVector::from_vec(vec![0.5, 1.2, 0.3]));
         let sr = spectral_radius_approximation(&m);
-        assert!(sr >= 1.0, "Expected non-contractive, got spectral radius {}", sr);
+        assert!(
+            sr >= 1.0,
+            "Expected non-contractive, got spectral radius {}",
+            sr
+        );
         assert!((sr - 1.2).abs() < 1e-10);
     }
 

@@ -2,8 +2,8 @@
 //!
 //! Strictly conforms to MetaRelativityFormalized/Dissipative.lean
 
-use nalgebra::DMatrix;
 use crate::operators::OperatorBlock;
+use nalgebra::DMatrix;
 
 /// Trait to check if an operator satisfies Positivity
 pub trait Positivity {
@@ -22,7 +22,12 @@ impl PositivityCheck for DMatrix<f64> {
         if !self.is_square() {
             return false;
         }
-        match self.complex_eigenvalues().iter().map(|c| c.re).min_by(|a, b| a.partial_cmp(b).unwrap()) {
+        match self
+            .complex_eigenvalues()
+            .iter()
+            .map(|c| c.re)
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
+        {
             Some(min_eig) => min_eig >= -1e-9,
             None => false,
         }
@@ -43,7 +48,7 @@ mod tests {
     fn test_positivity() {
         let pos_mat = DMatrix::from_row_slice(2, 2, &[1.0, 0.0, 0.0, 1.0]);
         let neg_mat = DMatrix::from_row_slice(2, 2, &[1.0, 0.0, 0.0, -1.0]);
-        
+
         assert!(pos_mat.is_positive_semidefinite());
         assert!(!neg_mat.is_positive_semidefinite());
     }

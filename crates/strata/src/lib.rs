@@ -29,10 +29,26 @@ pub struct ResourceBudget {
 
 pub fn budget_for_stratum(s: Stratum) -> ResourceBudget {
     match s {
-        Stratum::S0 => ResourceBudget { max_compute_cycles: 1000, max_memory_bytes: 1024, max_latency_ns: 500000 },
-        Stratum::S2 => ResourceBudget { max_compute_cycles: 10000, max_memory_bytes: 8192, max_latency_ns: 5000000 },
-        Stratum::S4 => ResourceBudget { max_compute_cycles: 100000, max_memory_bytes: 65536, max_latency_ns: 50000000 },
-        Stratum::S6 => ResourceBudget { max_compute_cycles: 1000000, max_memory_bytes: 524288, max_latency_ns: 500000000 },
+        Stratum::S0 => ResourceBudget {
+            max_compute_cycles: 1000,
+            max_memory_bytes: 1024,
+            max_latency_ns: 500000,
+        },
+        Stratum::S2 => ResourceBudget {
+            max_compute_cycles: 10000,
+            max_memory_bytes: 8192,
+            max_latency_ns: 5000000,
+        },
+        Stratum::S4 => ResourceBudget {
+            max_compute_cycles: 100000,
+            max_memory_bytes: 65536,
+            max_latency_ns: 50000000,
+        },
+        Stratum::S6 => ResourceBudget {
+            max_compute_cycles: 1000000,
+            max_memory_bytes: 524288,
+            max_latency_ns: 500000000,
+        },
     }
 }
 
@@ -53,9 +69,15 @@ pub struct StratumTransition {
 }
 
 impl StratumTransition {
-    pub fn new(from: Stratum, to: Stratum, guardian_signature: String) -> Result<Self, StratumError> {
+    pub fn new(
+        from: Stratum,
+        to: Stratum,
+        guardian_signature: String,
+    ) -> Result<Self, StratumError> {
         if from.next() != Some(to) {
-            return Err(StratumError::InvalidTransition("Target stratum must be immediately next stratum".into()));
+            return Err(StratumError::InvalidTransition(
+                "Target stratum must be immediately next stratum".into(),
+            ));
         }
         Ok(Self {
             from,
@@ -85,7 +107,7 @@ impl BudgetTracker {
 
     pub fn consume(&mut self, cycles: u64, memory: u64, latency: u64) -> Result<(), StratumError> {
         let budget = budget_for_stratum(self.stratum);
-        
+
         let new_cycles = self.consumed_cycles.saturating_add(cycles);
         let new_memory = self.consumed_memory.saturating_add(memory);
         let new_latency = self.consumed_latency.saturating_add(latency);
@@ -125,10 +147,12 @@ impl<'a> StratumGuard<'a> {
     pub fn new(tracker: &'a mut BudgetTracker) -> Self {
         Self { tracker }
     }
-    
+
     pub fn assert_authority(&self, req_stratum: Stratum) -> Result<(), StratumError> {
         if self.tracker.stratum < req_stratum {
-            return Err(StratumError::InvalidTransition("Insufficient authority for stratum".into()));
+            return Err(StratumError::InvalidTransition(
+                "Insufficient authority for stratum".into(),
+            ));
         }
         Ok(())
     }
@@ -147,28 +171,37 @@ mod verification {
             2 => Stratum::S4,
             _ => Stratum::S6,
         };
-        
+
         let mut tracker = BudgetTracker::new(stratum);
-        
+
         let cycles: u64 = kani::any();
         let memory: u64 = kani::any();
         let latency: u64 = kani::any();
-        
+
         let budget = budget_for_stratum(stratum);
-        
+
         match tracker.consume(cycles, memory, latency) {
             Ok(_) => {
-                kani::assert(tracker.consumed_cycles <= budget.max_compute_cycles, "Budget enforcement failed on cycles");
-                kani::assert(tracker.consumed_memory <= budget.max_memory_bytes, "Budget enforcement failed on memory");
-                kani::assert(tracker.consumed_latency <= budget.max_latency_ns, "Budget enforcement failed on latency");
+                kani::assert(
+                    tracker.consumed_cycles <= budget.max_compute_cycles,
+                    "Budget enforcement failed on cycles",
+                );
+                kani::assert(
+                    tracker.consumed_memory <= budget.max_memory_bytes,
+                    "Budget enforcement failed on memory",
+                );
+                kani::assert(
+                    tracker.consumed_latency <= budget.max_latency_ns,
+                    "Budget enforcement failed on latency",
+                );
             }
             Err(_) => {
                 // Should only fail if it would exceed bounds
                 kani::assert(
-                    tracker.consumed_cycles.saturating_add(cycles) > budget.max_compute_cycles ||
-                    tracker.consumed_memory.saturating_add(memory) > budget.max_memory_bytes ||
-                    tracker.consumed_latency.saturating_add(latency) > budget.max_latency_ns,
-                    "Rejected valid consumption"
+                    tracker.consumed_cycles.saturating_add(cycles) > budget.max_compute_cycles
+                        || tracker.consumed_memory.saturating_add(memory) > budget.max_memory_bytes
+                        || tracker.consumed_latency.saturating_add(latency) > budget.max_latency_ns,
+                    "Rejected valid consumption",
                 );
             }
         }

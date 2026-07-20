@@ -1,10 +1,10 @@
-use unicode_segmentation::UnicodeSegmentation;
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use unicode_segmentation::UnicodeSegmentation;
 
 pub mod admission {
-    use serde::{Deserialize, Serialize};
     use schemars::JsonSchema;
+    use serde::{Deserialize, Serialize};
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
     pub struct AdmissibilityReport {
         pub allowed: bool,
@@ -13,12 +13,14 @@ pub mod admission {
 }
 pub struct PolicyEngine;
 impl PolicyEngine {
-    pub fn new<T, U, V>(_constitution: T, _config: Option<U>, _tier: V) -> Self { PolicyEngine }
-    
+    pub fn new<T, U, V>(_constitution: T, _config: Option<U>, _tier: V) -> Self {
+        PolicyEngine
+    }
+
     pub fn validate_action(
-        &self, 
-        action: &Action, 
-        trust: &multiplicity_common::types::TrustLevel
+        &self,
+        action: &Action,
+        trust: &multiplicity_common::types::TrustLevel,
     ) -> Result<admission::AdmissibilityReport, anyhow::Error> {
         let mut violations = Vec::new();
         let payload_str = action.payload.to_string();
@@ -33,15 +35,23 @@ impl PolicyEngine {
         }
 
         if let Some(ref binding) = action.server_binding {
-            if binding.contains("external") && matches!(trust, multiplicity_common::types::TrustLevel::External) {
+            if binding.contains("external")
+                && matches!(trust, multiplicity_common::types::TrustLevel::External)
+            {
                 violations.push("L0-PRIVACY: external trust requires prime-gated server binding");
             }
         }
 
         if violations.is_empty() {
-            Ok(admission::AdmissibilityReport { allowed: true, reason: "Admitted".to_string() })
+            Ok(admission::AdmissibilityReport {
+                allowed: true,
+                reason: "Admitted".to_string(),
+            })
         } else {
-            Ok(admission::AdmissibilityReport { allowed: false, reason: violations.join("; ") })
+            Ok(admission::AdmissibilityReport {
+                allowed: false,
+                reason: violations.join("; "),
+            })
         }
     }
 }
@@ -51,8 +61,8 @@ pub mod policy {
 
 // --- ADR-101: native ALP/CNL inference path (replaces LLM on the control path) ---
 pub mod cnl;
-pub mod llm;
 pub mod engine;
+pub mod llm;
 pub use engine::AlpEngine;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Action {
@@ -103,7 +113,12 @@ impl GraphemeDecomposer {
             *total_components.entry(dim).or_insert(0.0) += 1.0;
         }
 
-        (all_units, PETCVector { components: total_components })
+        (
+            all_units,
+            PETCVector {
+                components: total_components,
+            },
+        )
     }
 
     pub fn reassemble(&self, units: &[UnitIdentity]) -> String {
@@ -132,9 +147,13 @@ fn generate_primes(n: usize) -> Vec<u64> {
                 is_prime = false;
                 break;
             }
-            if p * p > candidate { break; }
+            if p * p > candidate {
+                break;
+            }
         }
-        if is_prime { primes.push(candidate); }
+        if is_prime {
+            primes.push(candidate);
+        }
         candidate += 1;
     }
     primes
@@ -163,8 +182,8 @@ mod tests {
 }
 
 // --- Policy evaluation wrapper for WASM and CLI ---
-use serde_json;
 use anyhow::Result;
+use serde_json;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PolicyInput {
@@ -183,7 +202,11 @@ pub fn evaluate_preservation(json_input: &str) -> Result<String, anyhow::Error> 
     // Derive trust level from the action's server binding BEFORE moving fields.
     // If the binding references an "external" server, trust is External;
     // otherwise default to Internal (the local governance boundary).
-    let trust = if input.server_binding.as_deref().map_or(false, |b| b.contains("external")) {
+    let trust = if input
+        .server_binding
+        .as_deref()
+        .map_or(false, |b| b.contains("external"))
+    {
         multiplicity_common::types::TrustLevel::External
     } else {
         multiplicity_common::types::TrustLevel::Internal
@@ -235,7 +258,11 @@ pub enum EvalError {
 }
 
 impl PolicyEngine {
-    pub fn evaluate(&self, policy: &AlpPolicy, state: &SystemState) -> std::result::Result<RtaMetric, EvalError> {
+    pub fn evaluate(
+        &self,
+        policy: &AlpPolicy,
+        state: &SystemState,
+    ) -> std::result::Result<RtaMetric, EvalError> {
         let mut has_increase = false;
         let mut has_decrease = false;
         let mut has_noop = false;
@@ -262,7 +289,9 @@ impl PolicyEngine {
             }
         }
 
-        Ok(RtaMetric { value: new_state.multiplicity_measure - new_state.arta_defect })
+        Ok(RtaMetric {
+            value: new_state.multiplicity_measure - new_state.arta_defect,
+        })
     }
 
     pub fn check(&self, state: &SystemState) -> std::result::Result<bool, EvalError> {
@@ -296,7 +325,10 @@ mod verification {
 
         let engine = PolicyEngine;
         if let Ok(new_rta) = engine.evaluate(&policy, &state) {
-            kani::assert(new_rta.value >= initial_rta, "Rta must be preserved or improved");
+            kani::assert(
+                new_rta.value >= initial_rta,
+                "Rta must be preserved or improved",
+            );
         }
     }
 
@@ -347,6 +379,9 @@ mod verification {
         let engine = AlpEngine;
         let (p1, m1) = engine.evaluate_cnl(&state, cnl).unwrap();
         let (p2, m2) = engine.evaluate_cnl(&state, cnl).unwrap();
-        kani::assert(p1 == p2 && m1 == m2, "engine is deterministic on identical inputs");
+        kani::assert(
+            p1 == p2 && m1 == m2,
+            "engine is deterministic on identical inputs",
+        );
     }
 }

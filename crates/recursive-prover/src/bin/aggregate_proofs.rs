@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
-use std::{env, fs};
-use recursive_prover::verifier_gadget::{RecursiveProofObject, StarkVerifierGadget};
 use num_bigint::BigUint;
+use recursive_prover::verifier_gadget::{RecursiveProofObject, StarkVerifierGadget};
+use std::{env, fs};
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -21,13 +21,13 @@ fn main() -> Result<()> {
 
     println!("=== Starting Multi-RPO Aggregation POC ===");
     println!("  Aggregating {} proofs...", rpos.len());
-    
+
     let gadget = StarkVerifierGadget::new();
     let blinding = BigUint::from(1122334455u64);
-    
+
     println!("Step 1: Computing Aggregate Seal...");
     let apo = gadget.aggregate_rpos(&rpos, &blinding)?;
-    
+
     println!("  Aggregate Root: 0x{}", hex::encode(&apo.aggregate_root));
     println!("  Aggregate Seal (Affine):");
     println!("    X: 0x{}", apo.seal_x);

@@ -28,8 +28,11 @@ mod verification {
         kani::assert(l >= 0.0, "Lyapunov functional must be non-negative");
 
         let dl_dtau = lyapunov_derivative(lambda_m, lambda_star, eta, var_p);
-        kani::assert(dl_dtau <= 0.0, "Derivative of Lyapunov functional must be non-positive");
-        
+        kani::assert(
+            dl_dtau <= 0.0,
+            "Derivative of Lyapunov functional must be non-positive",
+        );
+
         if lambda_m == lambda_star {
             kani::assert(dl_dtau == 0.0, "Derivative must be 0 at fixed point");
         }

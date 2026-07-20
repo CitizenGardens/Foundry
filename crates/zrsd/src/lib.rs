@@ -1,16 +1,20 @@
-pub mod core;
 pub mod algebra;
-pub mod speculative;
-pub mod observables;
+pub mod core;
 pub mod fock;
 pub mod noise;
+pub mod observables;
+pub mod speculative;
 
-pub use crate::core::{get_prime_factors, PrimeAnchor};
-pub use crate::speculative::{lindblad_rhs, euler_step, rk4_step, get_h_zeta, evaluate_zrsd_step, ZrsdCertificate};
-pub use crate::observables::{expectation, purity, entropy_vn};
 pub use crate::algebra::{get_binary_basis, get_creation_annihilation, multiplicity_operator};
-pub use crate::fock::{FockSpace, EvolutionOperator, ContractivityProof, Violation};
-pub use crate::noise::{NoiseChannel, NoiseDecayProfile, DynamicPrimeSelector, SelectionError, NoiseSuppressionWitness};
+pub use crate::core::{PrimeAnchor, get_prime_factors};
+pub use crate::fock::{ContractivityProof, EvolutionOperator, FockSpace, Violation};
+pub use crate::noise::{
+    DynamicPrimeSelector, NoiseChannel, NoiseDecayProfile, NoiseSuppressionWitness, SelectionError,
+};
+pub use crate::observables::{entropy_vn, expectation, purity};
+pub use crate::speculative::{
+    ZrsdCertificate, euler_step, evaluate_zrsd_step, get_h_zeta, lindblad_rhs, rk4_step,
+};
 
 #[cfg(test)]
 mod tests {
@@ -22,7 +26,7 @@ mod tests {
         let basis = get_binary_basis(2);
         let m = multiplicity_operator(&primes, &basis);
         assert_eq!(m.nrows(), 4);
-        
+
         let diag = m.diagonal();
         assert!((diag[0].re - 0.0).abs() < 1e-10);
         assert!((diag[1].re - 3.0f64.ln()).abs() < 1e-10);
@@ -34,7 +38,10 @@ mod tests {
     fn test_euler_step() {
         use nalgebra::{DMatrix, DVector};
         use num_complex::Complex64;
-        let rho = DMatrix::from_diagonal(&DVector::from_vec(vec![Complex64::new(1.0, 0.0), Complex64::new(0.0, 0.0)]));
+        let rho = DMatrix::from_diagonal(&DVector::from_vec(vec![
+            Complex64::new(1.0, 0.0),
+            Complex64::new(0.0, 0.0),
+        ]));
         let h = DMatrix::from_element(2, 2, Complex64::new(0.0, 0.0));
         let ls = vec![];
         let rho_next = euler_step(&rho, &h, &ls, 0.1);

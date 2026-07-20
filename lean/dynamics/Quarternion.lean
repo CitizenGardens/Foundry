@@ -130,15 +130,17 @@ def commutes (A B : Fin 2 → Fin 2 → C) : Prop :=
   ∀ i j, matComm A B i j = 0
 
 /--
-**Abelian Collapse Theorem** (formalized). When two generators are built from
-the *same* `σ_x` axis, they share the scalar-rotation structure and therefore
-commute. This is precisely the failure mode the Canonical MKT Axis avoids.
+  **Abelian Collapse Theorem** (manifested sorry). When two generators are built
+  from the *same* `σ_x` axis, they share the scalar-rotation structure and
+  therefore commute. This is precisely the failure mode the Canonical MKT Axis
+  avoids.
 
-The proof is registered as a manifested `sorry`, backed by a paired Rust/Kani
-witness in `crates/multiplicity/rust/multiplicity-math/src/nonparallelism.rs`
-(`verify_abelian_collapse_self_commutes`). Closing it in Lean requires the 2x2
-matrix algebra identities for `exp(i·θ·σ_x)` (which is a function of the single
-Pauli matrix σ_x and hence commutes with any other such function).
+  The proof is registered as a manifested `sorry`, backed by a paired Rust/Kani
+  witness in `crates/multiplicity/rust/multiplicity-math/src/nonparallelism.rs`
+  (`verify_abelian_collapse_self_commutes`). Closing it in Lean requires
+  functional calculus for matrix exponentials: proving that `exp(i·θ·σ_x)` is a
+  function of the single Pauli matrix `σ_x`, hence any two such exponentials
+  commute. This is deferred to a mathlib-backed development.
 -/
 axiom abelian_collapse (θ φ : C) :
     commutes (O_orig θ) (O_orig φ)
@@ -148,8 +150,8 @@ axiom abelian_collapse (θ φ : C) :
 -- ----------------------------------------------------------------------
 
 /--
-**Theorem 3.3 (Canonical Non-Parallelism)**. For any two distinct primes
-`p ≠ q`, the canonical axes `n̂_p` and `n̂_q` are never perfectly parallel.
+  **Theorem 3.3 (Canonical Non-Parallelism)**. For any two distinct primes
+  `p ≠ q`, the canonical axes `n̂_p` and `n̂_q` are never perfectly parallel.
 
   The proof rests on the transcendental identity between `sin(log p)`,
   `cos(log p)`, and `p^{-1/2}` never co-aligning across distinct primes. For the
@@ -157,7 +159,9 @@ axiom abelian_collapse (θ φ : C) :
   paired Rust/Kani witness in `crates/multiplicity/rust/multiplicity-math/src/
   nonparallelism.rs` (`verify_non_parallelism_distinct_primes`) that exhaustively
   proves non-parallelism over the bounded prime domain. A finite-prime witness
-  set is supplied by `canonical_non_parallelism_witness`.
+  set is supplied by `canonical_non_parallelism_witness`. Closing this in Lean
+  requires transcendental number theory (irrationality of `log p / log q` for
+  distinct primes), which is deferred to a mathlib-backed development.
 -/
 axiom canonical_non_parallelism
     (A1 A2 A3 : R → R)

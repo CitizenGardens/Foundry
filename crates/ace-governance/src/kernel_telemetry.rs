@@ -33,7 +33,9 @@ pub struct ACECertificate {
 pub struct LegacyDriftEngine;
 
 impl LegacyDriftEngine {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
     pub fn compute_xn(&self, state: &StepState) -> f64 {
         state.xn
     }
@@ -71,7 +73,10 @@ impl ACEGovernanceLayer {
         }
     }
 
-    pub fn get_drift_metrics(&self, step_state: &StepState) -> Result<KernelTelemetry, GovernanceError> {
+    pub fn get_drift_metrics(
+        &self,
+        step_state: &StepState,
+    ) -> Result<KernelTelemetry, GovernanceError> {
         match self.source {
             TelemetrySource::PhaseMirrorKernel => {
                 let kt = zeno::compute_kernel_telemetry(step_state)?;
@@ -89,7 +94,11 @@ impl ACEGovernanceLayer {
         }
     }
 
-    pub fn certificate_payload(&self, telemetry: KernelTelemetry, outputs: &[u8]) -> ACECertificate {
+    pub fn certificate_payload(
+        &self,
+        telemetry: KernelTelemetry,
+        outputs: &[u8],
+    ) -> ACECertificate {
         ACECertificate {
             xn_kernel: telemetry.xn_kernel,
             wt_max_kernel: telemetry.wt_max_kernel,

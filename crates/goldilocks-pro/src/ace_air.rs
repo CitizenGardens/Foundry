@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use num_bigint::BigInt;
 use crate::GoldilocksField;
+use num_bigint::BigInt;
+use serde::{Deserialize, Serialize};
 
 pub const N0: usize = 64;
 
@@ -39,36 +39,55 @@ pub struct AceAir {
 
 impl AceAir {
     pub fn new() -> Self {
-        Self {
-            n0: N0,
-        }
+        Self { n0: N0 }
     }
 
-    pub fn check_mu_step_constraint(&self, mu: &[GoldilocksField], step_n: GoldilocksField, h_hat: &[GoldilocksField]) -> Result<(), String> {
+    pub fn check_mu_step_constraint(
+        &self,
+        mu: &[GoldilocksField],
+        step_n: GoldilocksField,
+        h_hat: &[GoldilocksField],
+    ) -> Result<(), String> {
         for i in 0..self.n0 {
             let lhs = mu[i] * step_n;
             let rhs = h_hat[i];
             if lhs != rhs {
-                return Err(format!("mu_step_n[{}] violation: lhs={:?}, rhs={:?}", i, lhs, rhs));
+                return Err(format!(
+                    "mu_step_n[{}] violation: lhs={:?}, rhs={:?}",
+                    i, lhs, rhs
+                ));
             }
         }
         Ok(())
     }
 
-    pub fn check_xn_contraction_constraint(&self, x_n_witness: GoldilocksField, sigma_norm: GoldilocksField, x_n_public: GoldilocksField, scale: GoldilocksField) -> Result<(), String> {
+    pub fn check_xn_contraction_constraint(
+        &self,
+        x_n_witness: GoldilocksField,
+        sigma_norm: GoldilocksField,
+        x_n_public: GoldilocksField,
+        scale: GoldilocksField,
+    ) -> Result<(), String> {
         let lhs = x_n_witness * sigma_norm;
         let rhs = x_n_public * scale;
         if lhs != rhs {
-            return Err(format!("xn_contraction violation: lhs={:?}, rhs={:?}", lhs, rhs));
+            return Err(format!(
+                "xn_contraction violation: lhs={:?}, rhs={:?}",
+                lhs, rhs
+            ));
         }
         Ok(())
     }
 
-    pub fn check_rt_relu_constraint(&self, r_t: GoldilocksField, r_raw: GoldilocksField) -> Result<(), String> {
+    pub fn check_rt_relu_constraint(
+        &self,
+        r_t: GoldilocksField,
+        r_raw: GoldilocksField,
+    ) -> Result<(), String> {
         let diff = r_raw - r_t;
         let res = r_t * diff;
         if res != GoldilocksField::ZERO {
-             return Err(format!("rt_relu violation: lhs={:?}", res));
+            return Err(format!("rt_relu violation: lhs={:?}", res));
         }
         Ok(())
     }

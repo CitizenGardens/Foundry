@@ -6,8 +6,8 @@
 //! All production invariants are verified here with Kani model checking.
 //! The Lean 4 modules provide type-level specifications only.
 
-pub mod identity;
 pub mod dissonance;
+pub mod identity;
 
-pub use identity::*;
 pub use dissonance::*;
+pub use identity::*;

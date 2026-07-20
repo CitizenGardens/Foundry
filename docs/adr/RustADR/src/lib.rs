@@ -71,7 +71,10 @@ pub mod examples {
             status: ADRStatus::Proposed,
             context: "Requirement for computing large fundamental solutions.",
             decision: "Implement cyclic continued fractions algorithm with big integer support.",
-            consequences: &["Exact integer computation", "High memory usage for massive D"],
+            consequences: &[
+                "Exact integer computation",
+                "High memory usage for massive D",
+            ],
             supersedes: None,
             links: &[],
         }
@@ -84,7 +87,10 @@ pub mod examples {
             status: ADRStatus::Accepted,
             context: "Need to enforce Prime Successor Predicate via programmable language.",
             decision: "Implement the Sig library (Multiplicity Functor) in crates/pirtm-compiler.",
-            consequences: &["Requires strict tree-sitter integration", "Enables ACE invariant checks"],
+            consequences: &[
+                "Requires strict tree-sitter integration",
+                "Enables ACE invariant checks",
+            ],
             supersedes: None,
             links: &[],
         }
@@ -153,7 +159,7 @@ mod verification {
         // From proposed, we can go to any valid status
         assert!(is_valid_transition(old_status, new_status));
     }
-    
+
     #[kani::proof]
     fn proof_superseded_is_terminal() {
         let old_status = ADRStatus::Superseded;

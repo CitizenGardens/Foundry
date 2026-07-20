@@ -1,6 +1,6 @@
 // examples/spectral_bridge.rs
 use materia_commons::hamiltonian::build_hamiltonians;
-use materia_commons::spectral_bridge::{trace_delta_h, formal_correlation};
+use materia_commons::spectral_bridge::{formal_correlation, trace_delta_h};
 use nalgebra::DMatrix;
 use std::fs;
 
@@ -23,7 +23,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let eig2 = h2.symmetric_eigen();
     let evals1 = eig1.eigenvalues;
     let evals2 = eig2.eigenvalues;
-    let delta_e: Vec<f64> = evals2.iter().zip(evals1.iter()).map(|(a, b)| a - b).collect();
+    let delta_e: Vec<f64> = evals2
+        .iter()
+        .zip(evals1.iter())
+        .map(|(a, b)| a - b)
+        .collect();
 
     let rho = formal_correlation(&delta_e, KAPPA, GAMMA, SIGMA);
     println!("Pearson correlation ρ (formal) = {:.6}", rho);

@@ -19,12 +19,19 @@ pub fn formal_correlation(delta_e: &[f64], kappa: f64, gamma: f64, sigma: f64) -
     let mean_d = delta_e.iter().sum::<f64>() / n;
     let mean_s = diag_vals.iter().sum::<f64>() / n;
 
-    let cov = delta_e.iter().zip(&diag_vals)
+    let cov = delta_e
+        .iter()
+        .zip(&diag_vals)
         .map(|(d, s)| (d - mean_d) * (s - mean_s))
-        .sum::<f64>() / n;
+        .sum::<f64>()
+        / n;
 
     let var_d = delta_e.iter().map(|d| (d - mean_d).powi(2)).sum::<f64>() / n;
     let var_s = diag_vals.iter().map(|s| (s - mean_s).powi(2)).sum::<f64>() / n;
 
-    if var_d * var_s == 0.0 { 0.0 } else { cov / (var_d * var_s).sqrt() }
+    if var_d * var_s == 0.0 {
+        0.0
+    } else {
+        cov / (var_d * var_s).sqrt()
+    }
 }

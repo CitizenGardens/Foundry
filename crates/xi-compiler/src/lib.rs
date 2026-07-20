@@ -43,11 +43,11 @@ pub enum XiExpr {
 pub enum TypeError {
     /// Indicates that an expression's type did not match the expected type.
     #[error("type mismatch: expected {expected:?}, got {actual:?}")]
-    TypeMismatch { 
+    TypeMismatch {
         /// The type that was expected.
-        expected: XiType, 
+        expected: XiType,
         /// The type that was actually provided.
-        actual: XiType 
+        actual: XiType,
     },
     /// Indicates that a value expected to be prime is not a valid prime number.
     #[error("not a prime: {0}")]
@@ -68,15 +68,12 @@ fn is_prime(n: u64) -> bool {
 }
 
 /// Evaluates a `XiExpr` within a given context and infers or validates its `XiType`.
-/// 
+///
 /// Returns `Ok(XiType)` if the expression is well-typed, or a `TypeError` if a
 /// type mismatch or invalid structural invariant (like a composite number passed
 /// to a prime literal) is detected.
 #[allow(clippy::only_used_in_recursion)]
-pub fn type_check(
-    ctx: &[(String, XiType)],
-    expr: &XiExpr,
-) -> Result<XiType, TypeError> {
+pub fn type_check(ctx: &[(String, XiType)], expr: &XiExpr) -> Result<XiType, TypeError> {
     match expr {
         XiExpr::Const(_) => Ok(XiType::Contraction(1.0)),
         XiExpr::PrimeLit(p) => {

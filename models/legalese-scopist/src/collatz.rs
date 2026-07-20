@@ -26,7 +26,7 @@ fn next_collatz(n: u128) -> Option<u128> {
 fn compute_trajectory(mut n: u128) -> Option<(u32, u128)> {
     let mut steps = 0;
     let mut max_val = n;
-    
+
     while n > 1 {
         n = next_collatz(n)?;
         if n > max_val {
@@ -34,27 +34,29 @@ fn compute_trajectory(mut n: u128) -> Option<(u32, u128)> {
         }
         steps += 1;
     }
-    
+
     Some((steps, max_val))
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn verify_range(start: u128, end: u128) -> CollatzResult {
+    use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
     use std::sync::{Arc, Mutex};
-    use std::sync::atomic::{AtomicU32, AtomicBool, Ordering};
     use std::thread;
 
     let chunk_size = 10_000;
-    // We use a Mutex since AtomicU128 is not stabilized in Rust yet. 
+    // We use a Mutex since AtomicU128 is not stabilized in Rust yet.
     // With chunk_size = 10_000, lock contention overhead is strictly zero relative to compute.
     let current = Arc::new(Mutex::new(start));
-    
+
     let max_steps = Arc::new(AtomicU32::new(0));
     let max_value = Arc::new(Mutex::new(0u128));
     let cycle_detected = Arc::new(AtomicBool::new(false));
     let verified = Arc::new(AtomicBool::new(true));
 
-    let num_threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
+    let num_threads = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(4);
     let mut handles = vec![];
 
     for _ in 0..num_threads {
@@ -76,7 +78,7 @@ pub fn verify_range(start: u128, end: u128) -> CollatzResult {
                     *curr = curr.saturating_add(chunk_size);
                     s
                 };
-                
+
                 let chunk_end = end.min(chunk_start.saturating_add(chunk_size - 1));
 
                 let mut local_max_steps = 0;
@@ -86,8 +88,12 @@ pub fn verify_range(start: u128, end: u128) -> CollatzResult {
 
                 for n in chunk_start..=chunk_end {
                     if let Some((s, v)) = compute_trajectory(n) {
-                        if s > local_max_steps { local_max_steps = s; }
-                        if v > local_max_val { local_max_val = v; }
+                        if s > local_max_steps {
+                            local_max_steps = s;
+                        }
+                        if v > local_max_val {
+                            local_max_val = v;
+                        }
                     } else {
                         local_cycle = true;
                         local_verified = false;
@@ -95,7 +101,7 @@ pub fn verify_range(start: u128, end: u128) -> CollatzResult {
                 }
 
                 steps_clone.fetch_max(local_max_steps, Ordering::Relaxed);
-                
+
                 if local_max_val > 0 {
                     let mut g_val = val_clone.lock().unwrap();
                     if local_max_val > *g_val {
@@ -141,8 +147,12 @@ pub fn verify_range(start: u128, end: u128) -> CollatzResult {
 
     for n in start..=end {
         if let Some((steps, val)) = compute_trajectory(n) {
-            if steps > max_steps { max_steps = steps; }
-            if val > max_value { max_value = val; }
+            if steps > max_steps {
+                max_steps = steps;
+            }
+            if val > max_value {
+                max_value = val;
+            }
         } else {
             verified = false;
         }
@@ -167,10 +177,13 @@ mod verification {
         let n: u128 = kani::any();
         // Assume n won't overflow 3n+1
         kani::assume(n <= (u128::MAX - 1) / 3);
-        
+
         let result = next_collatz(n);
-        
-        kani::assert(result.is_some(), "Next collatz step should not overflow and return Some");
+
+        kani::assert(
+            result.is_some(),
+            "Next collatz step should not overflow and return Some",
+        );
     }
 
     #[kani::proof]
@@ -179,8 +192,11 @@ mod verification {
         // If n is odd and greater than the safe limit, it should return None to indicate overflow
         kani::assume(n > (u128::MAX - 1) / 3);
         kani::assume(n & 1 != 0);
-        
+
         let result = next_collatz(n);
-        kani::assert(result.is_none(), "Next collatz step should return None on overflow");
+        kani::assert(
+            result.is_none(),
+            "Next collatz step should return None on overflow",
+        );
     }
 }

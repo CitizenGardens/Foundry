@@ -1,13 +1,13 @@
+pub mod graph_energetics;
 pub mod groups;
 pub mod spectra;
-pub mod unitary;
-pub mod graph_energetics;
 pub mod transformer;
+pub mod unitary;
 
+pub use graph_energetics::*;
 pub use groups::*;
 pub use spectra::*;
 pub use unitary::*;
-pub use graph_energetics::*;
 
 #[cfg(test)]
 mod tests {
@@ -32,7 +32,7 @@ mod tests {
         // 4*(x-3) = 4*x - 12 = 4*x - 5 = 4*x + 2 mod 7
         assert_eq!(g_inv.u, 4);
         assert_eq!(g_inv.k, 2);
-        
+
         let identity = g.compose(&g_inv);
         assert_eq!(identity.u, 1);
         assert_eq!(identity.k, 0);

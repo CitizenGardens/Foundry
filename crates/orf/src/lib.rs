@@ -20,7 +20,20 @@ pub struct CoherenceWitness {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Stratum {
-    S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, Meta,
+    S0,
+    S1,
+    S2,
+    S3,
+    S4,
+    S5,
+    S6,
+    S7,
+    S8,
+    S9,
+    S10,
+    S11,
+    S12,
+    Meta,
 }
 
 impl Stratum {
@@ -92,10 +105,10 @@ impl CoherenceMonitor {
         if lambda_hat >= 1.0 {
             return Err(FragmentationError::ThresholdViolated { actual: lambda_hat });
         }
-        
+
         let state_bytes = serde_json::to_vec(state).unwrap();
         let hash = blake3::hash(&state_bytes);
-        
+
         Ok(CoherenceWitness {
             state_hash: *hash.as_bytes(),
             in_coherence_manifold: self.threshold.manifold(state),
@@ -112,7 +125,11 @@ pub struct StratumProof {
 pub struct StratumManager;
 
 impl StratumManager {
-    pub fn transition(current: Stratum, target: Stratum, proof: StratumProof) -> Result<Stratum, TransitionError> {
+    pub fn transition(
+        current: Stratum,
+        target: Stratum,
+        proof: StratumProof,
+    ) -> Result<Stratum, TransitionError> {
         if proof.digest.is_empty() {
             return Err(TransitionError::InvalidProof);
         }
@@ -122,7 +139,7 @@ impl StratumManager {
                 return Ok(target);
             }
         }
-        
+
         Err(TransitionError::InvalidTransition(current, target))
     }
 }
@@ -152,10 +169,12 @@ mod verification {
     fn proof_stratum_no_skip() {
         let current = Stratum::S0;
         let target = Stratum::S2; // Trying to skip S1
-        
-        let proof = StratumProof { digest: "valid".to_string() };
+
+        let proof = StratumProof {
+            digest: "valid".to_string(),
+        };
         let res = StratumManager::transition(current, target, proof);
-        
+
         kani::assert(res.is_err(), "Skipping strata must be rejected");
     }
 }

@@ -82,8 +82,8 @@ fn e2e_rta_preserved_or_improved() {
         multiplicity_measure: 5.0,
     };
     let engine = AlpEngine;
-    let policy = AlpEngine::load_policy("policy up\nincrease multiplicity by 2.0")
-        .expect("well-formed CNL");
+    let policy =
+        AlpEngine::load_policy("policy up\nincrease multiplicity by 2.0").expect("well-formed CNL");
     let rta = engine.evaluate(&policy, &state).expect("no contradiction");
     assert!(rta.value >= (state.multiplicity_measure - state.arta_defect));
 }

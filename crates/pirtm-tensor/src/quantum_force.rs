@@ -1,6 +1,6 @@
 /// Quantum Force and Two-Prime Acceleration Renormalization.
 ///
-/// Implements the macroscopic renormalization scalar `Sigma` and the 
+/// Implements the macroscopic renormalization scalar `Sigma` and the
 /// exponential renormalization factor `Phi = exp(alpha_M * Sigma)`.
 
 pub struct QuantumForceRenormalizer {
@@ -15,8 +15,8 @@ impl QuantumForceRenormalizer {
     }
 
     /// Computes the exponential renormalization factor Phi given the scalar invariant Sigma.
-    /// 
-    /// The exponential form is the unique functional form that satisfies 
+    ///
+    /// The exponential form is the unique functional form that satisfies
     /// the multiplicative factorization of independent multiplicity sectors:
     /// Phi(Sigma_1 + Sigma_2) = Phi(Sigma_1) * Phi(Sigma_2)
     pub fn compute_phi(&self, sigma: f64) -> f64 {
@@ -37,7 +37,7 @@ mod quantum_force_proofs {
 
         let sigma1: f64 = kani::any();
         let sigma2: f64 = kani::any();
-        
+
         // Constrain sigmas to avoid large magnitude precision loss during exp()
         kani::assume(sigma1 > -1.0 && sigma1 < 1.0);
         kani::assume(sigma2 > -1.0 && sigma2 < 1.0);

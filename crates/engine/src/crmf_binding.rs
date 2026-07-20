@@ -1,6 +1,6 @@
 use crate::sigma_layer::ZeroModeQuantities;
+use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
-use sha2::{Sha256, Digest};
 
 /// Represents the raw hardware telemetry from the AXI-Stream interface
 #[derive(Debug, Clone)]
@@ -16,12 +16,12 @@ impl AxiTelemetry {
     pub fn from_tdata(tdata: u32) -> Self {
         let rho_violation = (tdata & 1) != 0;
         let drift_warning = (tdata & 2) != 0;
-        
+
         let timestamp_ns = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos() as u64;
-            
+
         Self {
             drift_warning,
             rho_violation,
@@ -46,28 +46,29 @@ impl CrmfRequest {
     /// (Using SHA-256 here to bootstrap the binding; ideally swapped for a ZK-friendly hash like Poseidon2 in full production)
     pub fn generate_lawful_recursion_hash(&self) -> String {
         let mut hasher = Sha256::new();
-        
+
         let bincode_opts = bincode::DefaultOptions::new()
             .with_little_endian()
             .with_fixint_encoding();
-            
-        let state_bytes = bincode_opts.serialize(&self.security_state)
+
+        let state_bytes = bincode_opts
+            .serialize(&self.security_state)
             .expect("SecurityState serialization must not fail");
         hasher.update(&state_bytes);
-        
+
         // Bind the hardware fault bits
         hasher.update(self.telemetry.raw_tdata.to_le_bytes());
         hasher.update(self.telemetry.timestamp_ns.to_le_bytes());
-        
+
         // Bind the pre-halt state snapshot if available
         if let Some(zm) = &self.zm_snapshot {
             hasher.update(zm.xi_magnitude.to_le_bytes());
             hasher.update(zm.lipschitz_t.to_le_bytes());
-            
+
             // Sort primes to ensure deterministic hashing
             let mut primes: Vec<_> = zm.prime_weights.keys().copied().collect();
             primes.sort_unstable();
-            
+
             for p in primes {
                 if let Some(w) = zm.prime_weights.get(&p) {
                     hasher.update(p.to_le_bytes());
@@ -75,7 +76,7 @@ impl CrmfRequest {
                 }
             }
         }
-        
+
         let hash_bytes = hasher.finalize();
         hex::encode(hash_bytes)
     }
@@ -131,4 +132,3 @@ mod tests {
         println!("Generated CRMF LawfulRecursionHash: {}", hash);
     }
 }
-

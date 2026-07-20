@@ -1,14 +1,21 @@
 use multiplicity_common::identity::CivicProfile;
 use std::time::Instant;
 
-
-
+#[derive(Debug, Clone, Copy)]
+pub enum SocioAtomicRole {
+    Proton,
+    Neutron,
+    Electron,
+    Nucleus,
+}
 
 #[derive(Debug, Clone, Copy)]
-pub enum SocioAtomicRole { Proton, Neutron, Electron, Nucleus }
-
-#[derive(Debug, Clone, Copy)]
-pub enum IndexedFactor { Resonance, Agency, Integrity, Viability }
+pub enum IndexedFactor {
+    Resonance,
+    Agency,
+    Integrity,
+    Viability,
+}
 
 pub struct Multiplicity {
     pub reciprocity: f64,
@@ -49,11 +56,13 @@ impl AtomicCivicAggregator {
         let len = active_profiles.len();
         while i < len {
             let profile = &active_profiles[i];
-            factor_sum += profile.resonance + profile.agency + profile.integrity + profile.viability;
+            factor_sum +=
+                profile.resonance + profile.agency + profile.integrity + profile.viability;
             i += 1;
         }
         let n = active_profiles.len() as f64;
-        let result = self.lambda_m * (factor_sum / n) * self.ecosystem_reciprocity * self.embodied_viability;
+        let result =
+            self.lambda_m * (factor_sum / n) * self.ecosystem_reciprocity * self.embodied_viability;
         let elapsed = start.elapsed();
         eprintln!("[Profiling] Civic aggregation took {:.2?}", elapsed);
         result
@@ -89,8 +98,18 @@ mod tests {
             ecosystem_reciprocity: 2.0,
         };
         let profiles = vec![
-            CivicProfile { resonance: 1.0, agency: 1.0, integrity: 1.0, viability: 1.0 },
-            CivicProfile { resonance: 3.0, agency: 3.0, integrity: 3.0, viability: 3.0 },
+            CivicProfile {
+                resonance: 1.0,
+                agency: 1.0,
+                integrity: 1.0,
+                viability: 1.0,
+            },
+            CivicProfile {
+                resonance: 3.0,
+                agency: 3.0,
+                integrity: 3.0,
+                viability: 3.0,
+            },
         ];
         // Average resonance = 2.0, agency = 2.0, integrity = 2.0, viability = 2.0
         // factor_sum = 8.0
@@ -106,12 +125,14 @@ mod tests {
             ecosystem_reciprocity: 2.0,
         };
         // Simulate a network of 1000 nodes
-        let profiles: Vec<CivicProfile> = (0..1000).map(|i| CivicProfile {
-            resonance: 1.0 + (i as f64 * 0.01 % 2.0),
-            agency: 1.0,
-            integrity: 1.0,
-            viability: 1.0,
-        }).collect();
+        let profiles: Vec<CivicProfile> = (0..1000)
+            .map(|i| CivicProfile {
+                resonance: 1.0 + (i as f64 * 0.01 % 2.0),
+                agency: 1.0,
+                integrity: 1.0,
+                viability: 1.0,
+            })
+            .collect();
 
         let iterations = 20_000;
         let start = std::time::Instant::now();
@@ -120,9 +141,15 @@ mod tests {
         }
         let duration = start.elapsed();
         let ns_per_iter = (duration.as_nanos() as f64) / (iterations as f64);
-        
-        println!("BENCHMARK: Aggregator latency for 1000 nodes: {:.2} ns", ns_per_iter);
-        assert!(ns_per_iter <= 12000.0, "Latency exceeded 12000ns target! Measured: {:.2}ns", ns_per_iter);
+
+        println!(
+            "BENCHMARK: Aggregator latency for 1000 nodes: {:.2} ns",
+            ns_per_iter
+        );
+        assert!(
+            ns_per_iter <= 12000.0,
+            "Latency exceeded 12000ns target! Measured: {:.2}ns",
+            ns_per_iter
+        );
     }
 }
-

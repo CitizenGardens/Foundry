@@ -28,10 +28,10 @@ pub fn power_iteration_limit(matrix: &Array2<f64>) -> f64 {
     if n == 0 {
         return 0.0;
     }
-    
+
     let mut v = vec![1.0; n];
     let mut v_new = vec![0.0; n];
-    
+
     for _ in 0..100 {
         for i in 0..n {
             let mut sum: f64 = 0.0;
@@ -40,7 +40,7 @@ pub fn power_iteration_limit(matrix: &Array2<f64>) -> f64 {
             }
             v_new[i] = sum;
         }
-        
+
         let norm: f64 = v_new.iter().map(|x| x * x).sum::<f64>().sqrt();
         if norm > 0.0 {
             for i in 0..n {
@@ -48,7 +48,7 @@ pub fn power_iteration_limit(matrix: &Array2<f64>) -> f64 {
             }
         }
     }
-    
+
     let mut rayleigh: f64 = 0.0;
     for i in 0..n {
         let mut sum: f64 = 0.0;
@@ -57,7 +57,7 @@ pub fn power_iteration_limit(matrix: &Array2<f64>) -> f64 {
         }
         rayleigh += v[i] * sum;
     }
-    
+
     rayleigh.abs()
 }
 
@@ -95,8 +95,8 @@ pub fn l0_contractivity_preserved(spectral_rad: f64, epsilon: f64) -> bool {
 #[cfg(kani)]
 mod verification {
     use super::*;
-    use ndarray::Array2;
     use kani::proof;
+    use ndarray::Array2;
 
     #[proof]
     fn proof_gershgorin_bound_nonnegative() {
@@ -139,7 +139,10 @@ mod verification {
         }
         let bound = gershgorin_bound(&matrix);
         let max_diag: f64 = (0..n).map(|i| matrix[[i, i]].abs()).fold(0.0, f64::max);
-        kani::assert((bound - max_diag).abs() < 1e-10, "Diagonal Gershgorin exact");
+        kani::assert(
+            (bound - max_diag).abs() < 1e-10,
+            "Diagonal Gershgorin exact",
+        );
     }
 
     #[proof]

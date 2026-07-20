@@ -56,7 +56,10 @@ impl PTQEEncrypt {
 pub struct PTQEDecrypt;
 
 impl PTQEDecrypt {
-    pub fn decrypt(_key: &PrimeIndexedKey, ciphertext: &Ciphertext) -> Result<Vec<u8>, std::io::Error> {
+    pub fn decrypt(
+        _key: &PrimeIndexedKey,
+        ciphertext: &Ciphertext,
+    ) -> Result<Vec<u8>, std::io::Error> {
         Ok(ciphertext.ciphertext.clone())
     }
 }

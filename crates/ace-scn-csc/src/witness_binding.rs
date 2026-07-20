@@ -11,10 +11,7 @@ pub struct CSCWitnessBinding {
 }
 
 impl CSCWitnessBinding {
-    pub fn bind_telemetry(
-        &self,
-        telemetry: &KernelTelemetry,
-    ) -> Result<Self, CSCBindingError> {
+    pub fn bind_telemetry(&self, telemetry: &KernelTelemetry) -> Result<Self, CSCBindingError> {
         // Verify that witness fields match kernel telemetry within quantization tolerance.
         let xn_tolerance = 1e-9;
         if (self.xn_kernel - telemetry.xn_kernel).abs() > xn_tolerance {
@@ -35,7 +32,11 @@ impl CSCWitnessBinding {
 #[derive(Debug, thiserror::Error, PartialEq)]
 pub enum CSCBindingError {
     #[error("telemetry mismatch on {field}: witness={witness}, kernel={kernel}")]
-    TelemetryMismatch { field: &'static str, witness: f64, kernel: f64 },
+    TelemetryMismatch {
+        field: &'static str,
+        witness: f64,
+        kernel: f64,
+    },
     #[error("constraint budget exceeded: {0} > 5087")]
     ConstraintBudgetExceeded(usize),
     #[error("Poseidon2 topology violation")]

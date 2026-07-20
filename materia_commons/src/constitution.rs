@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 use std::fmt;
+use thiserror::Error;
 
 // --- Constants ---
 pub const LAMBDA_M_THRESHOLD: f64 = 0.3; // MTPI bound delta(t) <= 0.3
@@ -11,16 +11,26 @@ pub const CIVIC_STATE_MINIMUM: f64 = 1.0;
 
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema, PartialEq, Eq)]
 pub enum L0Invariant {
-    #[serde(rename = "L0-1")] L0_1,
-    #[serde(rename = "L0-2")] L0_2,
-    #[serde(rename = "L0-3")] L0_3,
-    #[serde(rename = "L0-4")] L0_4,
-    #[serde(rename = "L0-5")] L0_5,
-    #[serde(rename = "L0-6")] L0_6,
-    #[serde(rename = "L0-7")] L0_7,
-    #[serde(rename = "L0-8")] L0_8,
-    #[serde(rename = "L0-9")] L0_9,
-    #[serde(rename = "L0-10")] L0_10,
+    #[serde(rename = "L0-1")]
+    L0_1,
+    #[serde(rename = "L0-2")]
+    L0_2,
+    #[serde(rename = "L0-3")]
+    L0_3,
+    #[serde(rename = "L0-4")]
+    L0_4,
+    #[serde(rename = "L0-5")]
+    L0_5,
+    #[serde(rename = "L0-6")]
+    L0_6,
+    #[serde(rename = "L0-7")]
+    L0_7,
+    #[serde(rename = "L0-8")]
+    L0_8,
+    #[serde(rename = "L0-9")]
+    L0_9,
+    #[serde(rename = "L0-10")]
+    L0_10,
 }
 
 impl fmt::Display for L0Invariant {
@@ -101,7 +111,10 @@ impl ConstitutionModel {
         if !self.state_norm.is_finite() || self.state_norm <= 0.0 {
             return Err(ConstitutionViolation {
                 invariant: L0Invariant::L0_1,
-                detail: format!("state_norm is not finite or non-positive: {}", self.state_norm),
+                detail: format!(
+                    "state_norm is not finite or non-positive: {}",
+                    self.state_norm
+                ),
             });
         }
         Ok(())
@@ -122,7 +135,10 @@ impl ConstitutionModel {
         if self.critique_results.len() != 10 {
             return Err(ConstitutionViolation {
                 invariant: L0Invariant::L0_3,
-                detail: format!("Expected 10 critique results, found {}", self.critique_results.len()),
+                detail: format!(
+                    "Expected 10 critique results, found {}",
+                    self.critique_results.len()
+                ),
             });
         }
         let failed: Vec<_> = self.critique_results.iter().filter(|r| !r.passed).collect();
@@ -138,7 +154,9 @@ impl ConstitutionModel {
 
     fn l0_4_prime_gates_satisfied(&self) -> Result<(), ConstitutionViolation> {
         fn mod_pow(mut base: u128, mut exp: u128, modulus: u128) -> u128 {
-            if modulus == 1 { return 0; }
+            if modulus == 1 {
+                return 0;
+            }
             let mut result = 1;
             base %= modulus;
             while exp > 0 {
@@ -152,9 +170,15 @@ impl ConstitutionModel {
         }
 
         fn is_prime(n: u64) -> bool {
-            if n < 2 { return false; }
-            if n == 2 || n == 3 { return true; }
-            if n % 2 == 0 { return false; }
+            if n < 2 {
+                return false;
+            }
+            if n == 2 || n == 3 {
+                return true;
+            }
+            if n % 2 == 0 {
+                return false;
+            }
 
             let mut d = n - 1;
             let mut s = 0;
@@ -167,7 +191,9 @@ impl ConstitutionModel {
             let n_u128 = n as u128;
 
             for &a in bases.iter() {
-                if a >= n { continue; }
+                if a >= n {
+                    continue;
+                }
                 let mut x = mod_pow(a as u128, d as u128, n_u128);
                 if x == 1 || x == n_u128 - 1 {
                     continue;
@@ -187,7 +213,9 @@ impl ConstitutionModel {
             true
         }
 
-        let violations: Vec<_> = self.prime_gates.iter()
+        let violations: Vec<_> = self
+            .prime_gates
+            .iter()
             .filter(|g| !is_prime(g.gate_value))
             .map(|g| g.action_name.clone())
             .collect();
@@ -195,7 +223,10 @@ impl ConstitutionModel {
         if !violations.is_empty() {
             return Err(ConstitutionViolation {
                 invariant: L0Invariant::L0_4,
-                detail: format!("Actions {:?} failed MTPI Miller-Rabin primality test.", violations),
+                detail: format!(
+                    "Actions {:?} failed MTPI Miller-Rabin primality test.",
+                    violations
+                ),
             });
         }
         Ok(())
@@ -211,7 +242,10 @@ impl ConstitutionModel {
         if self.contractivity_score > CONTRACTIVITY_UPPER {
             return Err(ConstitutionViolation {
                 invariant: L0Invariant::L0_5,
-                detail: format!("contractivity_score {} > {}", self.contractivity_score, CONTRACTIVITY_UPPER),
+                detail: format!(
+                    "contractivity_score {} > {}",
+                    self.contractivity_score, CONTRACTIVITY_UPPER
+                ),
             });
         }
         Ok(())
@@ -231,7 +265,10 @@ impl ConstitutionModel {
         if self.consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD {
             return Err(ConstitutionViolation {
                 invariant: L0Invariant::L0_7,
-                detail: format!("consecutive_failures={} >= threshold", self.consecutive_failures),
+                detail: format!(
+                    "consecutive_failures={} >= threshold",
+                    self.consecutive_failures
+                ),
             });
         }
         Ok(())
@@ -254,7 +291,10 @@ impl ConstitutionModel {
             if state < CIVIC_STATE_MINIMUM {
                 return Err(ConstitutionViolation {
                     invariant: L0Invariant::L0_10,
-                    detail: format!("Civic State {} is below the critical threshold of {}", state, CIVIC_STATE_MINIMUM),
+                    detail: format!(
+                        "Civic State {} is below the critical threshold of {}",
+                        state, CIVIC_STATE_MINIMUM
+                    ),
                 });
             }
         }
@@ -272,7 +312,13 @@ mod tests {
             state_norm: 1.0,
             drift_rate: 0.05,
             dynamic_lambda_m: Some(0.1),
-            critique_results: (0..10).map(|i| CritiqueResult { critique_id: i, passed: true, reason: None }).collect(),
+            critique_results: (0..10)
+                .map(|i| CritiqueResult {
+                    critique_id: i,
+                    passed: true,
+                    reason: None,
+                })
+                .collect(),
             prime_gates: vec![],
             contractivity_score: 0.5,
             kill_switch_active: false,

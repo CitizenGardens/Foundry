@@ -39,16 +39,16 @@ impl ZeroModeQuantities {
 /// The certification gate that will be integrated into the main engine
 pub fn certify_state(zm_quantities: &ZeroModeQuantities) -> Result<(), CertificationError> {
     let rho = zm_quantities.compute_rho();
-    
+
     if rho >= SEDONA_CONTRACTION_MARGIN {
         return Err(CertificationError::ContractivityViolation {
             rho,
             margin: SEDONA_CONTRACTION_MARGIN,
         });
     }
-    
+
     // Additional policy checks can be wired here (e.g. tracking inert policies)
-    
+
     Ok(())
 }
 
@@ -62,19 +62,22 @@ mod tests {
         let mut prime_weights = HashMap::new();
         prime_weights.insert(2, 0.05);
         prime_weights.insert(3, 0.05);
-        
+
         let adversarial_zm = ZeroModeQuantities {
-            xi_magnitude: 0.90,     // Base skeleton
-            lipschitz_t: 1.0,       // L_T
-            prime_weights,          // Sum = 0.10. Total rho = 0.90 + 0.10 = 1.0
+            xi_magnitude: 0.90, // Base skeleton
+            lipschitz_t: 1.0,   // L_T
+            prime_weights,      // Sum = 0.10. Total rho = 0.90 + 0.10 = 1.0
         };
 
         // This MUST return a ContractivityViolation
         let result = certify_state(&adversarial_zm);
-        
+
         assert!(
-            matches!(result, Err(CertificationError::ContractivityViolation { .. })),
-            "Expected ContractivityViolation, but got {:?}", 
+            matches!(
+                result,
+                Err(CertificationError::ContractivityViolation { .. })
+            ),
+            "Expected ContractivityViolation, but got {:?}",
             result
         );
     }

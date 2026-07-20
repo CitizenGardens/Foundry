@@ -1,4 +1,6 @@
-use multiplicity_common::constitution::{ConstitutionModel, ConstitutionViolation, CritiqueResult, PrimeGate, L0Invariant};
+use multiplicity_common::constitution::{
+    ConstitutionModel, ConstitutionViolation, CritiqueResult, L0Invariant, PrimeGate,
+};
 use multiplicity_common::identity::{
     ExternalIssuerConfig, IdentityOnboardingConfig, UniquenessAnchor, UniquenessAnchorInput,
     ValidatedIdToken, VerifiedVerifiableCredential,
@@ -7,8 +9,8 @@ use multiplicity_common::ledger::{LedgerHistoryEntry, ProposalEntry};
 use multiplicity_common::replication::{ReplicationConfig, ReplicationRole};
 use multiplicity_common::task::{Task, Workflow};
 use multiplicity_common::types::{
-    McpRegistry, McpServerDescriptor, ProposalRequest, SignedAdmissionToken, ToolResponse,
-    TrustLevel, UnifiedWitness, VetoStatus, CompilationResult, SpoliationRiskLevel,
+    CompilationResult, McpRegistry, McpServerDescriptor, ProposalRequest, SignedAdmissionToken,
+    SpoliationRiskLevel, ToolResponse, TrustLevel, UnifiedWitness, VetoStatus,
 };
 use schemars::schema_for;
 use std::fs;
@@ -23,11 +25,11 @@ fn test_schema_drift() {
         ($type:ty, $name:expr) => {
             let schema = schema_for!($type);
             let expected_json = serde_json::to_string_pretty(&schema).unwrap();
-            
+
             let file_path = schemas_dir.join(format!("{}.json", $name));
             let actual_json = fs::read_to_string(&file_path)
                 .unwrap_or_else(|_| format!("Missing schema file for {}", $name));
-            
+
             assert_eq!(
                 expected_json, actual_json,
                 "Schema drift detected for type '{}'. Please run `cargo run --bin export_schemas` to update.",

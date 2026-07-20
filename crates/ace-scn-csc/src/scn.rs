@@ -36,8 +36,8 @@ pub struct ArakelovParams {
 /// plus a commitment hash binding the proposal to its inputs.
 #[derive(Debug, Clone)]
 pub struct SCNProposal {
-    pub alpha: DVector<f64>, // Hecke-span coefficients
-    pub beta: DVector<f64>,  // random-projection coefficients
+    pub alpha: DVector<f64>,      // Hecke-span coefficients
+    pub beta: DVector<f64>,       // random-projection coefficients
     pub commitment_hash: Vec<u8>, // SHA3-256 commitment (Poseidon2 placeholder)
 }
 
@@ -275,13 +275,26 @@ pub fn mode3_feasibility_2x2(m: [[f64; 2]; 2], epsilon: f64, eta: f64) -> [[f64;
     let h = [[s, 0.0], [0.0, s]];
     // Residual (traceless) + clip to eta.
     let r = [[herm[0][0] - s, herm[0][1]], [herm[1][0], herm[1][1] - s]];
-    let r_norm = (r[0][0] * r[0][0] + r[0][1] * r[0][1] + r[1][0] * r[1][0] + r[1][1] * r[1][1]).sqrt();
+    let r_norm =
+        (r[0][0] * r[0][0] + r[0][1] * r[0][1] + r[1][0] * r[1][0] + r[1][1] * r[1][1]).sqrt();
     let scale_r = if r_norm > eta { eta / r_norm } else { 1.0 };
-    let r_clipped = [[r[0][0] * scale_r, r[0][1] * scale_r], [r[1][0] * scale_r, r[1][1] * scale_r]];
+    let r_clipped = [
+        [r[0][0] * scale_r, r[0][1] * scale_r],
+        [r[1][0] * scale_r, r[1][1] * scale_r],
+    ];
     // x1 = h + r'.
-    let x1 = [[h[0][0] + r_clipped[0][0], h[0][1] + r_clipped[0][1]], [h[1][0] + r_clipped[1][0], h[1][1] + r_clipped[1][1]]];
-    let x1_norm = (x1[0][0] * x1[0][0] + x1[0][1] * x1[0][1] + x1[1][0] * x1[1][0] + x1[1][1] * x1[1][1]).sqrt();
-    let scale_x = if x1_norm > epsilon { epsilon / x1_norm } else { 1.0 };
+    let x1 = [
+        [h[0][0] + r_clipped[0][0], h[0][1] + r_clipped[0][1]],
+        [h[1][0] + r_clipped[1][0], h[1][1] + r_clipped[1][1]],
+    ];
+    let x1_norm =
+        (x1[0][0] * x1[0][0] + x1[0][1] * x1[0][1] + x1[1][0] * x1[1][0] + x1[1][1] * x1[1][1])
+            .sqrt();
+    let scale_x = if x1_norm > epsilon {
+        epsilon / x1_norm
+    } else {
+        1.0
+    };
     [
         [x1[0][0] * scale_x, x1[0][1] * scale_x],
         [x1[1][0] * scale_x, x1[1][1] * scale_x],
@@ -327,7 +340,8 @@ mod tests {
             4,
             4,
             &[
-                0.3, 0.1, -0.2, 0.05, 0.1, 0.4, 0.0, 0.1, -0.2, 0.0, 0.5, -0.1, 0.05, 0.1, -0.1, 0.2,
+                0.3, 0.1, -0.2, 0.05, 0.1, 0.4, 0.0, 0.1, -0.2, 0.0, 0.5, -0.1, 0.05, 0.1, -0.1,
+                0.2,
             ],
         );
         let epsilon = 1.0;
@@ -360,16 +374,17 @@ mod tests {
 
     #[test]
     fn test_project_residual_is_traceless() {
-        let raw = DMatrix::<f64>::from_row_slice(
-            3,
-            3,
-            &[0.1, 0.5, -0.3, 0.2, -0.4, 0.6, 0.7, 0.1, -0.2],
-        );
+        let raw =
+            DMatrix::<f64>::from_row_slice(3, 3, &[0.1, 0.5, -0.3, 0.2, -0.4, 0.6, 0.7, 0.1, -0.2]);
         let b = basis(3);
         let h = project_onto_hecke_span(&raw, &b);
         let r = &raw - &h;
         let inner = (r.transpose() * &h).trace();
-        assert!(inner.abs() < 1e-6, "residual not orthogonal to span: {}", inner);
+        assert!(
+            inner.abs() < 1e-6,
+            "residual not orthogonal to span: {}",
+            inner
+        );
     }
 
     #[test]
@@ -399,9 +414,13 @@ mod tests {
     fn test_2x2_reference_symmetric_and_bounded() {
         let m = [[0.7, -0.3], [0.2, 0.5]];
         let out = mode3_feasibility_2x2(m, 0.9, 0.3);
-        let norm = (out[0][0].powi(2) + out[0][1].powi(2) + out[1][0].powi(2) + out[1][1].powi(2)).sqrt();
+        let norm =
+            (out[0][0].powi(2) + out[0][1].powi(2) + out[1][0].powi(2) + out[1][1].powi(2)).sqrt();
         assert!(norm <= 0.9 + 1e-9, "2x2 F3 norm {} exceeds epsilon", norm);
-        assert!((out[0][1] - out[1][0]).abs() < 1e-9, "2x2 F3 output not symmetric");
+        assert!(
+            (out[0][1] - out[1][0]).abs() < 1e-9,
+            "2x2 F3 output not symmetric"
+        );
     }
 }
 

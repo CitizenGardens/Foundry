@@ -18,7 +18,11 @@ pub fn gcd_log(i: usize, j: usize) -> f64 {
     let a = number_of_state(i);
     let b = number_of_state(j);
     let g = gcd(a, b);
-    if g == 1 { 0.0 } else { (g as f64).ln() }
+    if g == 1 {
+        0.0
+    } else {
+        (g as f64).ln()
+    }
 }
 
 pub fn xi_simple(i: usize, j: usize) -> f64 {

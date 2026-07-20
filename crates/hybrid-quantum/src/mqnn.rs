@@ -42,7 +42,12 @@ pub struct MQNN {
 }
 
 fn compute_fidelity(state: &QuditState) -> f64 {
-    state.amplitudes.iter().map(|c| c.norm_sqr()).sum::<f64>().sqrt()
+    state
+        .amplitudes
+        .iter()
+        .map(|c| c.norm_sqr())
+        .sum::<f64>()
+        .sqrt()
 }
 
 fn extract_classical_embedding(state: &QuditState) -> Vec<f64> {
@@ -70,7 +75,8 @@ impl MQNN {
                 cdim: classical_input.len(),
             });
         }
-        let combined: Vec<f64> = qudit_output.iter()
+        let combined: Vec<f64> = qudit_output
+            .iter()
             .zip(classical_input.iter())
             .map(|(q, c)| q * c)
             .collect();
@@ -85,7 +91,11 @@ impl MQNN {
                 threshold: self.hsec_threshold,
             });
         }
-        Ok(HSECReport { fidelity, threshold: self.hsec_threshold, passed: true })
+        Ok(HSECReport {
+            fidelity,
+            threshold: self.hsec_threshold,
+            passed: true,
+        })
     }
 }
 
@@ -95,28 +105,34 @@ mod verification {
 
     #[kani::proof]
     fn proof_hsec_sound() {
-        let mqnn = MQNN::new(MultiplicityLayer {
-            input_dim: 2,
-            output_dim: 2,
-            weights: vec![0.5, 0.5, 0.5, 0.5],
-        }, 0.99);
+        let mqnn = MQNN::new(
+            MultiplicityLayer {
+                input_dim: 2,
+                output_dim: 2,
+                weights: vec![0.5, 0.5, 0.5, 0.5],
+            },
+            0.99,
+        );
 
         let amplitudes = vec![
             num_complex::Complex64::new(kani::any(), kani::any()),
             num_complex::Complex64::new(kani::any(), kani::any()),
         ];
-        
+
         let state = QuditState {
             dimension: 2,
             amplitudes,
         };
-        
+
         let fidelity = compute_fidelity(&state);
         kani::assume(fidelity >= 0.0 && fidelity <= 1.0);
-        
+
         let res = mqnn.apply_hsec(&state);
         if fidelity < 0.99 {
-            kani::assert(res.is_err(), "HSEC should detect decoherence below threshold");
+            kani::assert(
+                res.is_err(),
+                "HSEC should detect decoherence below threshold",
+            );
         } else {
             kani::assert(res.is_ok(), "HSEC should pass above threshold");
         }

@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use nalgebra::DMatrix;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct AffineElement {
@@ -23,13 +23,21 @@ impl AffineElement {
         assert_eq!(self.p, other.p, "Modulus mismatch");
         let new_u = (self.u * other.u) % self.p;
         let new_k = (self.u * other.k + self.k) % self.p;
-        AffineElement { u: new_u, k: new_k, p: self.p }
+        AffineElement {
+            u: new_u,
+            k: new_k,
+            p: self.p,
+        }
     }
 
     pub fn inverse(&self) -> AffineElement {
         let u_inv = self.mod_inverse(self.u, self.p);
         let k_inv = (self.p - (u_inv * self.k % self.p)) % self.p;
-        AffineElement { u: u_inv, k: k_inv, p: self.p }
+        AffineElement {
+            u: u_inv,
+            k: k_inv,
+            p: self.p,
+        }
     }
 
     pub fn act_index(&self, i: u64) -> u64 {

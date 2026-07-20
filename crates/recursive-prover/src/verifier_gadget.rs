@@ -1,9 +1,9 @@
+use anyhow::{anyhow, Result};
 use goldilocks::GoldilocksField;
-use pasta_curves::{AffinePoint, PastaField, PedersenCommitment, get_pallas_params};
-use prover::StarkProof;
 use num_bigint::BigUint;
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
+use pasta_curves::{get_pallas_params, AffinePoint, PastaField, PedersenCommitment};
+use prover::StarkProof;
+use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 
 /// Recursive Proof Object (RPO) v1 (ADR-036 §1).
@@ -42,16 +42,16 @@ impl Default for StarkVerifierGadget {
 impl StarkVerifierGadget {
     pub fn new() -> Self {
         let (p, _q, a, b) = get_pallas_params();
-        
+
         let g = AffinePoint::<32>::Point {
             x: PastaField::new(p.clone() - BigUint::from(1u64), p.clone()),
             y: PastaField::new(BigUint::from(2u64), p.clone()),
             a: PastaField::new(a.clone(), p.clone()),
             b: PastaField::new(b.clone(), p.clone()),
         };
-        
+
         let h = g.double();
-        
+
         Self {
             pedersen: PedersenCommitment::new(g, h),
         }
@@ -72,8 +72,10 @@ impl StarkVerifierGadget {
         // 2. Generate Recursive Seal (Pedersen)
         let inner_root_biguint = BigUint::from_bytes_le(&proof.trace_commitment);
         let seal = self.pedersen.commit(&inner_root_biguint, blinding);
-        
-        let (sx, sy) = seal.to_affine().ok_or_else(|| anyhow!("Seal is identity"))?;
+
+        let (sx, sy) = seal
+            .to_affine()
+            .ok_or_else(|| anyhow!("Seal is identity"))?;
 
         // 3. Construct RPO v1
         Ok(RecursiveProofObject {
@@ -99,7 +101,10 @@ impl StarkVerifierGadget {
         // 1. Verify all member RPOs (software check for POC)
         for rpo in rpos {
             if rpo.protocol_v != 1 {
-                return Err(anyhow!("Unsupported RPO protocol version: {}", rpo.protocol_v));
+                return Err(anyhow!(
+                    "Unsupported RPO protocol version: {}",
+                    rpo.protocol_v
+                ));
             }
         }
 
@@ -113,7 +118,9 @@ impl StarkVerifierGadget {
         // 3. Generate Aggregate Seal (Pedersen)
         let agg_root_biguint = BigUint::from_bytes_le(&aggregate_root);
         let seal = self.pedersen.commit(&agg_root_biguint, blinding);
-        let (sx, sy) = seal.to_affine().ok_or_else(|| anyhow!("Seal is identity"))?;
+        let (sx, sy) = seal
+            .to_affine()
+            .ok_or_else(|| anyhow!("Seal is identity"))?;
 
         // 4. Construct APO v1
         Ok(AggregatedProofObject {
@@ -148,17 +155,19 @@ mod tests {
     #[test]
     fn test_recursive_wrap_poc() {
         let gadget = StarkVerifierGadget::new();
-        
+
         let mock_proof = StarkProof {
             trace_commitment: [0u8; 32],
             fri_commitments: vec![[0u8; 32]],
             query_openings: vec![],
             fri_final_poly: vec![GoldilocksField::ONE],
         };
-        
+
         let blinding = BigUint::from(12345u64);
-        let rpo = gadget.wrap_stark(&mock_proof, vec![1, 2, 3], &blinding).unwrap();
-        
+        let rpo = gadget
+            .wrap_stark(&mock_proof, vec![1, 2, 3], &blinding)
+            .unwrap();
+
         assert_eq!(rpo.protocol_v, 1);
         assert_eq!(rpo.inputs, vec![1, 2, 3]);
         assert!(!rpo.seal_x.is_empty());
@@ -178,8 +187,10 @@ mod tests {
             seal_y: "0".to_string(),
         };
 
-        let apo = gadget.aggregate_rpos(&[mock_rpo.clone(), mock_rpo], &blinding).unwrap();
-        
+        let apo = gadget
+            .aggregate_rpos(&[mock_rpo.clone(), mock_rpo], &blinding)
+            .unwrap();
+
         assert_eq!(apo.protocol_v, 1);
         assert_eq!(apo.member_roots.len(), 2);
         assert!(!apo.seal_x.is_empty());
@@ -193,11 +204,12 @@ mod tests {
             GoldilocksField::new(3),
             GoldilocksField::new(4),
         ];
-        
+
         let packed = StarkVerifierGadget::pack_goldilocks(&elements);
         assert_eq!(packed.len(), 2);
-        
-        let expected0 = BigUint::from(1u64) | (BigUint::from(2u64) << 64) | (BigUint::from(3u64) << 128);
+
+        let expected0 =
+            BigUint::from(1u64) | (BigUint::from(2u64) << 64) | (BigUint::from(3u64) << 128);
         assert_eq!(packed[0], expected0);
     }
 }

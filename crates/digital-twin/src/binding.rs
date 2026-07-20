@@ -7,7 +7,10 @@ pub enum TwinBindingError {
     InadmissibleContraction { q: f64, max_threshold: f64 },
 
     #[error("Trajectory Dissonance: Educational trajectory {edu_trajectory} does not match Health trajectory {health_trajectory}")]
-    TrajectoryDissonance { edu_trajectory: String, health_trajectory: String },
+    TrajectoryDissonance {
+        edu_trajectory: String,
+        health_trajectory: String,
+    },
 
     #[error("Provenance Gap: TEE quote is missing or invalid for twin binding")]
     ProvenanceGap,
@@ -47,7 +50,10 @@ pub struct TwinBindingContract {
 
 impl TwinBindingContract {
     pub fn new(max_q_threshold: f64, min_eeg_coherence: f64) -> Self {
-        Self { max_q_threshold, min_eeg_coherence }
+        Self {
+            max_q_threshold,
+            min_eeg_coherence,
+        }
     }
 
     /// Evaluates cross-domain resonance between the incoming educational state and the current health twin state.
@@ -92,7 +98,11 @@ mod tests {
             state_root_hash: "state_hash".to_string(),
             timestamp: 123456789,
             q,
-            tee_quote: if tee { Some("TEE_QUOTE".to_string()) } else { None },
+            tee_quote: if tee {
+                Some("TEE_QUOTE".to_string())
+            } else {
+                None
+            },
             trajectory_id: trajectory.to_string(),
             protocol_v: 1,
             signer_id: Some("signer".to_string()),

@@ -13,7 +13,9 @@ pub struct A<T> {
 
 impl<T> A<T> {
     pub fn new() -> Self {
-        A { _carrier: PhantomData }
+        A {
+            _carrier: PhantomData,
+        }
     }
 }
 
@@ -37,7 +39,9 @@ pub struct D<T> {
 
 impl<T> D<T> {
     pub fn new() -> Self {
-        D { _phantom: PhantomData }
+        D {
+            _phantom: PhantomData,
+        }
     }
 }
 
@@ -70,18 +74,30 @@ pub struct PrimeMoc {
 impl PrimeMoc {
     pub fn new(prime_val: u64, word_length: u64) -> Option<Self> {
         if prime_val > 1 && is_prime(prime_val) {
-            Some(PrimeMoc { prime_val, word_length, h_prime: true })
+            Some(PrimeMoc {
+                prime_val,
+                word_length,
+                h_prime: true,
+            })
         } else {
             None
         }
     }
 
     pub fn prime_2() -> Self {
-        PrimeMoc { prime_val: 2, word_length: 0, h_prime: true }
+        PrimeMoc {
+            prime_val: 2,
+            word_length: 0,
+            h_prime: true,
+        }
     }
 
     pub fn prime_3() -> Self {
-        PrimeMoc { prime_val: 3, word_length: 0, h_prime: true }
+        PrimeMoc {
+            prime_val: 3,
+            word_length: 0,
+            h_prime: true,
+        }
     }
 }
 
@@ -112,7 +128,11 @@ pub fn l_eff(resonance_score: u64) -> u64 {
 
 /// ACE bound for an operator word.
 pub fn ace_bound(word_length: u64) -> u64 {
-    if word_length == 2 { 6000 } else { 10000 }
+    if word_length == 2 {
+        6000
+    } else {
+        10000
+    }
 }
 
 /// Contractivity predicate.

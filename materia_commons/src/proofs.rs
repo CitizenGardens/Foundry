@@ -1,8 +1,8 @@
 #[cfg(kani)]
 mod verification {
+    use crate::generated_vals_array::VALS;
     use crate::hamiltonian::*;
     use crate::spectral_bridge::*;
-    use crate::generated_vals_array::VALS;
 
     const KAPPA: f64 = 0.1;
     const GAMMA: f64 = 0.5;
@@ -65,7 +65,7 @@ mod verification {
         let inv = crate::spectral_resolvent::resolvent_matrix(z, &h2);
         let n = h2.nrows();
         let mut product = (z * DMatrix::identity(n, n) - h2) * inv;
-        
+
         // Assert that the product is close to the identity matrix
         for i in 0..n {
             for j in 0..n {

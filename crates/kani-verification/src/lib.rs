@@ -9,11 +9,11 @@
 //! - `interval_arithmetic` — Interval operations with correctness proofs
 //! - `crmf_obligations` — State transition lemmas for CRMF
 
-pub mod spectral_stability;
-pub mod interval_arithmetic;
 pub mod crmf_obligations;
-pub mod multiplicity_operators;
+pub mod interval_arithmetic;
 pub mod matrix_engine;
-pub mod multiplicity_equations;
-pub mod universal_system;
 pub mod multiplicity_cell;
+pub mod multiplicity_equations;
+pub mod multiplicity_operators;
+pub mod spectral_stability;
+pub mod universal_system;

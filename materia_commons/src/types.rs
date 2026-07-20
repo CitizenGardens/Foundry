@@ -68,7 +68,7 @@ pub struct UnifiedWitness {
 
 impl UnifiedWitness {
     pub fn compute_hash(&self) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(&self.witness_id);
         hasher.update(&self.action_id);
@@ -89,7 +89,9 @@ impl UnifiedWitness {
         veto_status: VetoStatus,
     ) -> Result<Self, anyhow::Error> {
         if witness_id.trim().is_empty() {
-            return Err(anyhow::anyhow!("L0-1 Violation: witness_id cannot be empty"));
+            return Err(anyhow::anyhow!(
+                "L0-1 Violation: witness_id cannot be empty"
+            ));
         }
         if action_id.trim().is_empty() {
             return Err(anyhow::anyhow!("L0-1 Violation: action_id cannot be empty"));
@@ -158,7 +160,7 @@ pub struct SignedAdmissionToken {
 
 impl SignedAdmissionToken {
     pub fn compute_payload_hash(&self) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(&self.token_id);
         if let Some(ref tid) = self.task_id {

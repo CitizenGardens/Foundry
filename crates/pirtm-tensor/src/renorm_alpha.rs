@@ -2,7 +2,7 @@ use ndarray::Array1;
 
 /// The Multiplicity-Renormalizing Alpha Operator.
 ///
-/// Implements the prime-indexed RG flow on multiplicity profiles using 
+/// Implements the prime-indexed RG flow on multiplicity profiles using
 /// the exact, tridiagonal Toeplitz diffusion matrix.
 pub struct RenormalizationAlpha {
     pub gamma: f64,
@@ -18,7 +18,7 @@ impl RenormalizationAlpha {
     }
 
     /// Determines if the operator sits exactly on the critical manifold.
-    /// In physical regimes, `2 * beta == gamma` defines the threshold where 
+    /// In physical regimes, `2 * beta == gamma` defines the threshold where
     /// the fundamental mode is marginally stable (lambda_max = 1).
     pub fn is_critical_manifold(&self) -> bool {
         (2.0 * self.beta - self.gamma).abs() < 1e-9
@@ -40,7 +40,7 @@ impl RenormalizationAlpha {
     pub fn step(&self, state: &Array1<f64>) -> Array1<f64> {
         let n = state.len();
         let mut next_state = Array1::zeros(n);
-        
+
         for i in 0..n {
             let mut val = (1.0 - self.gamma) * state[i];
             if i > 0 {
@@ -65,10 +65,10 @@ mod renorm_alpha_proofs {
     fn verify_filter_phase_is_contractive() {
         let gamma: f64 = kani::any();
         let beta: f64 = kani::any();
-        
+
         kani::assume(gamma > 0.0 && gamma < 1.0);
         kani::assume(beta > 0.0);
-        
+
         // Force strict Filter Phase: 2*beta < gamma
         kani::assume(2.0 * beta <= gamma - 0.001);
 
@@ -78,13 +78,13 @@ mod renorm_alpha_proofs {
         let s0: f64 = kani::any();
         let s1: f64 = kani::any();
         let s2: f64 = kani::any();
-        
+
         let state_norm_sq = s0 * s0 + s1 * s1 + s2 * s2;
         kani::assume(state_norm_sq <= 100.0);
-        
+
         let state = arr1(&[s0, s1, s2]);
         let next_state = alpha.step(&state);
-        
+
         let next_norm_sq = next_state.dot(&next_state);
 
         // Filter Phase guarantees contraction: ||v'||^2 < ||v||^2

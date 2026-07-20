@@ -14,11 +14,14 @@ pub fn get_binary_basis(num_primes: usize) -> Vec<Vec<u8>> {
     basis
 }
 
-pub fn get_creation_annihilation(num_primes: usize, basis: &Vec<Vec<u8>>) -> (Vec<DMatrix<Complex64>>, Vec<DMatrix<Complex64>>) {
+pub fn get_creation_annihilation(
+    num_primes: usize,
+    basis: &Vec<Vec<u8>>,
+) -> (Vec<DMatrix<Complex64>>, Vec<DMatrix<Complex64>>) {
     let dim = basis.len();
     let mut a_dag_list = Vec::with_capacity(num_primes);
     let mut a_list = Vec::with_capacity(num_primes);
-    
+
     for i in 0..num_primes {
         let mut a_dag = DMatrix::from_element(dim, dim, Complex64::new(0.0, 0.0));
         let mut a = DMatrix::from_element(dim, dim, Complex64::new(0.0, 0.0));
@@ -38,7 +41,7 @@ pub fn get_creation_annihilation(num_primes: usize, basis: &Vec<Vec<u8>>) -> (Ve
         a_dag_list.push(a_dag);
         a_list.push(a);
     }
-    
+
     (a_dag_list, a_list)
 }
 

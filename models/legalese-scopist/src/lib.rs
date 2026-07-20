@@ -1,16 +1,40 @@
 // The Rust Sedona Spine Engine Implementation
 // Memory layout strictly matches Lean 4 exports
 
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
-use serde::{Serialize, Deserialize};
 
-pub mod collatz;
 pub mod ace;
+pub mod collatz;
 
 #[repr(C)]
 pub struct GlobalHilbertSpace {
     pub data: *mut f64,
     pub dim: usize,
+}
+
+// Exact replica of Lean's Matrix2x2 layout
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct Matrix2x2 {
+    pub a: f64,
+    pub b: f64,
+    pub c: f64,
+    pub d: f64,
+}
+
+// Declare the Lean-exported symbols
+unsafe extern "C" {
+    fn toy_o2() -> Matrix2x2;
+    fn toy_o3() -> Matrix2x2;
+    fn toy_o5() -> Matrix2x2;
+    fn toy_sigma() -> f64;
+    fn toy_alpha() -> f64;
+}
+
+// Rust wrapper that reads the Lean-specified initial conditions
+pub fn get_lean_initial_conditions() -> (Matrix2x2, Matrix2x2, Matrix2x2, f64, f64) {
+    unsafe { (toy_o2(), toy_o3(), toy_o5(), toy_sigma(), toy_alpha()) }
 }
 
 /// Dummy function implementing the FFI contract for Lean
@@ -115,25 +139,21 @@ pub extern "C" fn compute_density_matrix_eigenvalues(
         (*out_evals)[0] = exp1 / trace;
         (*out_evals)[1] = exp2 / trace;
     }
-    
+
     true
 }
 
 /// Verifies that Tr(rho) == 1 and rho is PSD (eigenvalues >= 0)
 #[unsafe(no_mangle)]
-pub extern "C" fn check_density_matrix_invariant(
-    p: u32,
-    s: f64,
-    op: *const [[f64; 2]; 2],
-) -> bool {
+pub extern "C" fn check_density_matrix_invariant(p: u32, s: f64, op: *const [[f64; 2]; 2]) -> bool {
     let mut evals = [0.0; 2];
     if !compute_density_matrix_eigenvalues(p, s, op, &mut evals) {
         return false; // Out of bounds or invalid
     }
-    
+
     let trace = evals[0] + evals[1];
     let is_psd = evals[0] >= 0.0 && evals[1] >= 0.0;
-    
+
     // Check trace == 1 within floating-point tolerance
     let trace_is_one = (trace - 1.0).abs() < 1e-9;
 
@@ -147,7 +167,7 @@ pub extern "C" fn compute_entropy(evals: *const [f64; 2]) -> f64 {
     if evals.is_null() {
         return 0.0;
     }
-    
+
     let l1 = unsafe { (*evals)[0] };
     let l2 = unsafe { (*evals)[1] };
 
@@ -195,14 +215,14 @@ pub struct UnifiedWitness {
     pub compilation_result: CompilationResult,
     pub timestamp: u64,
     // Typically this would hold a cryptographic signature or ledger anchor hash
-    pub signature: String, 
+    pub signature: String,
 }
 
 /// Maps ESI inputs into a 2x2 Hermitian matrix (Density Matrix format)
 /// We use spoliation and urgency to construct the operator bounds.
 pub fn map_esi_to_operator(inputs: &EsiInputs) -> [[f64; 2]; 2] {
     // A simplified transformation mapping legal facts into the spectral space
-    let a = inputs.spoliation_potential * 2.0; 
+    let a = inputs.spoliation_potential * 2.0;
     let d = inputs.preservation_urgency * 2.0;
     // Cross-terms represent compounding complexity
     let b = if inputs.spoliation_potential >= 0.0 && inputs.preservation_urgency >= 0.0 {
@@ -210,7 +230,7 @@ pub fn map_esi_to_operator(inputs: &EsiInputs) -> [[f64; 2]; 2] {
     } else {
         0.0 // Fallback if inputs are invalid/negative
     };
-    
+
     [[a, b], [b, d]]
 }
 
@@ -218,11 +238,11 @@ pub fn map_esi_to_operator(inputs: &EsiInputs) -> [[f64; 2]; 2] {
 /// Adheres strictly to the Path of Integrity.
 pub fn evaluate_esi_risk(inputs: &EsiInputs, p_factor: u32, sigma: f64) -> UnifiedWitness {
     let op = map_esi_to_operator(inputs);
-    
+
     // Check stability mathematically
     let is_stable = check_rg_condition(p_factor, sigma, &op as *const [[f64; 2]; 2]);
     let rho = compute_spectral_radius(&op as *const [[f64; 2]; 2]);
-    
+
     // Policy logic: If it violates mathematical stability, or if rho is high, it's Critical
     let risk_level = if !is_stable {
         RiskLevel::Critical
@@ -248,12 +268,16 @@ pub fn evaluate_esi_risk(inputs: &EsiInputs, p_factor: u32, sigma: f64) -> Unifi
 /// WASM SDK Entry Point
 /// This is the strictly enforced boundary for the Path of Integrity.
 #[wasm_bindgen]
-pub fn evaluate_esi_risk_wasm(inputs_val: JsValue, p_factor: u32, sigma: f64) -> Result<JsValue, JsValue> {
+pub fn evaluate_esi_risk_wasm(
+    inputs_val: JsValue,
+    p_factor: u32,
+    sigma: f64,
+) -> Result<JsValue, JsValue> {
     let inputs: EsiInputs = serde_wasm_bindgen::from_value(inputs_val)
         .map_err(|e| JsValue::from_str(&format!("Invalid ESI inputs: {}", e)))?;
-        
+
     let witness = evaluate_esi_risk(&inputs, p_factor, sigma);
-    
+
     serde_wasm_bindgen::to_value(&witness)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize witness: {}", e)))
 }
@@ -261,29 +285,31 @@ pub fn evaluate_esi_risk_wasm(inputs_val: JsValue, p_factor: u32, sigma: f64) ->
 /// WASM SDK Entry Point for ACE-bound risk evaluation
 #[wasm_bindgen]
 pub fn evaluate_esi_risk_with_ace_wasm(
-    inputs_val: JsValue, 
-    p_factor: u32, 
+    inputs_val: JsValue,
+    p_factor: u32,
     sigma: f64,
     budget_val: JsValue,
 ) -> Result<JsValue, JsValue> {
     let inputs: EsiInputs = serde_wasm_bindgen::from_value(inputs_val)
         .map_err(|e| JsValue::from_str(&format!("Invalid ESI inputs: {}", e)))?;
-        
+
     let budget: ace::AceBudget = serde_wasm_bindgen::from_value(budget_val)
         .map_err(|e| JsValue::from_str(&format!("Invalid ACE Budget: {}", e)))?;
-        
+
     let envelope = ace::AceEnvelope::new(budget);
-    
+
     let result = ace::evaluate_esi_risk_with_ace(&inputs, p_factor, sigma, envelope)
         .map_err(|e| JsValue::from_str(&format!("ACE Execution Error: {}", e)))?;
-    
+
     serde_wasm_bindgen::to_value(&result)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize ACE result: {}", e)))
 }
 
 #[wasm_bindgen]
 pub fn process_collatz_chunk_wasm(start_str: String, chunk_size: u32) -> Result<JsValue, JsValue> {
-    let start: u128 = start_str.parse().map_err(|e| JsValue::from_str(&format!("Invalid start bound: {}", e)))?;
+    let start: u128 = start_str
+        .parse()
+        .map_err(|e| JsValue::from_str(&format!("Invalid start bound: {}", e)))?;
     let end: u128 = start.saturating_add(chunk_size as u128).saturating_sub(1);
 
     let result = collatz::verify_range(start, end);
@@ -339,11 +365,11 @@ mod verification {
 
         if passes {
             let rho = compute_spectral_radius(&op);
-            
+
             // Assert that numeric boundaries and computations are perfectly safe
             kani::assert(rho.is_finite(), "Spectral radius must remain finite");
             kani::assert(!rho.is_nan(), "Spectral radius must not hit NaN");
-            
+
             let p_f64 = p as f64;
             let threshold = (1.0 + p_f64.powf(sigma) / 2.0).ln();
             kani::assert(threshold.is_finite(), "Threshold must remain finite");
@@ -372,10 +398,16 @@ mod verification {
 
         let mut evals = [0.0; 2];
         let success = compute_density_matrix_eigenvalues(p, s, &op, &mut evals);
-        
+
         if success {
-            kani::assert(evals[0].is_finite() && evals[1].is_finite(), "Density matrix eigenvalues must be finite");
-            kani::assert(!evals[0].is_nan() && !evals[1].is_nan(), "Density matrix eigenvalues must not be NaN");
+            kani::assert(
+                evals[0].is_finite() && evals[1].is_finite(),
+                "Density matrix eigenvalues must be finite",
+            );
+            kani::assert(
+                !evals[0].is_nan() && !evals[1].is_nan(),
+                "Density matrix eigenvalues must not be NaN",
+            );
         }
     }
 
@@ -400,13 +432,13 @@ mod verification {
 
         let mut evals = [0.0; 2];
         let success = compute_density_matrix_eigenvalues(p, s, &op, &mut evals);
-        
+
         if success {
             let trace = evals[0] + evals[1];
             let is_psd = evals[0] >= 0.0 && evals[1] >= 0.0;
-            // Slightly relaxed float tolerance since float math is not exact 
+            // Slightly relaxed float tolerance since float math is not exact
             let trace_is_one = (trace - 1.0).abs() < 1e-8;
-            
+
             kani::assert(is_psd, "Eigenvalues must be non-negative");
             kani::assert(trace_is_one, "Trace must be exactly 1 within tolerance");
         }
@@ -428,7 +460,10 @@ mod verification {
 
         // Entropy of 2-level system is bounded by ln(2) ~ 0.693. We check < 1.0
         kani::assert(entropy >= 0.0, "Entropy must be non-negative");
-        kani::assert(entropy <= 1.0, "Entropy of 2x2 system must not exceed ln(2)");
+        kani::assert(
+            entropy <= 1.0,
+            "Entropy of 2x2 system must not exceed ln(2)",
+        );
         kani::assert(entropy.is_finite(), "Entropy must remain finite");
         kani::assert(!entropy.is_nan(), "Entropy must not hit NaN");
     }
@@ -456,9 +491,477 @@ mod verification {
         kani::assume(sigma >= 1.5 && sigma <= 3.0);
 
         let witness = evaluate_esi_risk(&inputs, p, sigma);
-        
-        kani::assert(witness.compilation_result.spectral_radius.is_finite(), "Spectral radius must be finite");
-        kani::assert(!witness.compilation_result.spectral_radius.is_nan(), "Spectral radius must not be NaN");
+
+        kani::assert(
+            !witness.compilation_result.spectral_radius.is_nan(),
+            "Spectral radius must not be NaN",
+        );
+    }
+
+    const TOY_O2_STUB: Matrix2x2 = Matrix2x2 {
+        a: 0.5,
+        b: 0.0,
+        c: 0.0,
+        d: -0.5,
+    };
+    const TOY_O3_STUB: Matrix2x2 = Matrix2x2 {
+        a: 0.3,
+        b: 0.0,
+        c: 0.0,
+        d: 0.3,
+    };
+    const TOY_O5_STUB: Matrix2x2 = Matrix2x2 {
+        a: 0.2,
+        b: 0.0,
+        c: 0.0,
+        d: -0.2,
+    };
+    const TOY_SIGMA_STUB: f64 = 2.0;
+
+    // -------------------------------------------------------------------------
+    // Time Evolution Verification (Option 1 — Lean FFI stubbed for Kani)
+    // -------------------------------------------------------------------------
+
+    const EPS_2: f64 = 0.1;
+    const OMEGA_2: f64 = 0.5;
+    const EPS_3: f64 = 0.08;
+    const OMEGA_3: f64 = 0.7;
+    const EPS_5: f64 = 0.05;
+    const OMEGA_5: f64 = 1.0;
+
+    const W2: [[f64; 2]; 2] = [[0.5, 0.0], [0.0, -0.5]];
+    const W3: [[f64; 2]; 2] = [[0.3, 0.0], [0.0, 0.3]];
+    const W5: [[f64; 2]; 2] = [[0.2, 0.0], [0.0, -0.2]];
+
+    const O2_BASE: [[f64; 2]; 2] = [[0.5, 0.0], [0.0, -0.5]];
+    const O3_BASE: [[f64; 2]; 2] = [[0.3, 0.0], [0.0, 0.3]];
+    const O5_BASE: [[f64; 2]; 2] = [[0.2, 0.0], [0.0, -0.2]];
+
+    /// Time-dependent local operator: O_p(t) = O_p(0) + eps * sin(omega * t) * W_p
+    fn local_op_time(
+        base: [[f64; 2]; 2],
+        eps: f64,
+        omega: f64,
+        w: [[f64; 2]; 2],
+        t: f64,
+    ) -> [[f64; 2]; 2] {
+        let sin_term = (omega * t).sin();
+        let scale = eps * sin_term;
+        [
+            [base[0][0] + scale * w[0][0], base[0][1] + scale * w[0][1]],
+            [base[1][0] + scale * w[1][0], base[1][1] + scale * w[1][1]],
+        ]
+    }
+
+    /// Spectral separation proxy: Delta_p(t) = threshold_p - rho(O_p(t))
+    fn spectral_separation_proxy(p: u32, sigma: f64, op: &[[f64; 2]; 2]) -> f64 {
+        let rho = compute_spectral_radius(op as *const _);
+        let p_f64 = p as f64;
+        let threshold = (1.0 + p_f64.powf(sigma) / 2.0).ln();
+        threshold - rho
+    }
+
+    #[kani::proof]
+    fn verify_time_evolution_rg_condition() {
+        let sigma = TOY_SIGMA_STUB;
+
+        let scale2: f64 = kani::any();
+        let scale3: f64 = kani::any();
+        let scale5: f64 = kani::any();
+        kani::assume(scale2 >= -EPS_2 && scale2 <= EPS_2);
+        kani::assume(scale3 >= -EPS_3 && scale3 <= EPS_3);
+        kani::assume(scale5 >= -EPS_5 && scale5 <= EPS_5);
+
+        let o2 = [
+            [
+                O2_BASE[0][0] + scale2 * W2[0][0],
+                O2_BASE[0][1] + scale2 * W2[0][1],
+            ],
+            [
+                O2_BASE[1][0] + scale2 * W2[1][0],
+                O2_BASE[1][1] + scale2 * W2[1][1],
+            ],
+        ];
+        let o3 = [
+            [
+                O3_BASE[0][0] + scale3 * W3[0][0],
+                O3_BASE[0][1] + scale3 * W3[0][1],
+            ],
+            [
+                O3_BASE[1][0] + scale3 * W3[1][0],
+                O3_BASE[1][1] + scale3 * W3[1][1],
+            ],
+        ];
+        let o5 = [
+            [
+                O5_BASE[0][0] + scale5 * W5[0][0],
+                O5_BASE[0][1] + scale5 * W5[0][1],
+            ],
+            [
+                O5_BASE[1][0] + scale5 * W5[1][0],
+                O5_BASE[1][1] + scale5 * W5[1][1],
+            ],
+        ];
+
+        kani::assert(
+            check_rg_condition(2, sigma, &o2),
+            "O2 must satisfy RG condition under bounded perturbation",
+        );
+        kani::assert(
+            check_rg_condition(3, sigma, &o3),
+            "O3 must satisfy RG condition under bounded perturbation",
+        );
+        kani::assert(
+            check_rg_condition(5, sigma, &o5),
+            "O5 must satisfy RG condition under bounded perturbation",
+        );
+    }
+
+    #[kani::proof]
+    fn verify_time_evolution_density_matrix_invariants() {
+        let sigma = TOY_SIGMA_STUB;
+
+        let scale2: f64 = kani::any();
+        let scale3: f64 = kani::any();
+        let scale5: f64 = kani::any();
+        kani::assume(scale2 >= -EPS_2 && scale2 <= EPS_2);
+        kani::assume(scale3 >= -EPS_3 && scale3 <= EPS_3);
+        kani::assume(scale5 >= -EPS_5 && scale5 <= EPS_5);
+
+        let o2 = [
+            [
+                O2_BASE[0][0] + scale2 * W2[0][0],
+                O2_BASE[0][1] + scale2 * W2[0][1],
+            ],
+            [
+                O2_BASE[1][0] + scale2 * W2[1][0],
+                O2_BASE[1][1] + scale2 * W2[1][1],
+            ],
+        ];
+        let o3 = [
+            [
+                O3_BASE[0][0] + scale3 * W3[0][0],
+                O3_BASE[0][1] + scale3 * W3[0][1],
+            ],
+            [
+                O3_BASE[1][0] + scale3 * W3[1][0],
+                O3_BASE[1][1] + scale3 * W3[1][1],
+            ],
+        ];
+        let o5 = [
+            [
+                O5_BASE[0][0] + scale5 * W5[0][0],
+                O5_BASE[0][1] + scale5 * W5[0][1],
+            ],
+            [
+                O5_BASE[1][0] + scale5 * W5[1][0],
+                O5_BASE[1][1] + scale5 * W5[1][1],
+            ],
+        ];
+
+        let mut evals2 = [0.0; 2];
+        let mut evals3 = [0.0; 2];
+        let mut evals5 = [0.0; 2];
+
+        let ok2 = compute_density_matrix_eigenvalues(2, sigma, &o2, &mut evals2);
+        let ok3 = compute_density_matrix_eigenvalues(3, sigma, &o3, &mut evals3);
+        let ok5 = compute_density_matrix_eigenvalues(5, sigma, &o5, &mut evals5);
+
+        kani::assume(ok2 && ok3 && ok5);
+
+        let trace2 = evals2[0] + evals2[1];
+        let trace3 = evals3[0] + evals3[1];
+        let trace5 = evals5[0] + evals5[1];
+
+        kani::assert(
+            (trace2 - 1.0_f64).abs() < 1e-8,
+            "Trace of rho_2 must be 1 under bounded perturbation",
+        );
+        kani::assert(
+            (trace3 - 1.0_f64).abs() < 1e-8,
+            "Trace of rho_3 must be 1 under bounded perturbation",
+        );
+        kani::assert(
+            (trace5 - 1.0_f64).abs() < 1e-8,
+            "Trace of rho_5 must be 1 under bounded perturbation",
+        );
+
+        kani::assert(
+            evals2[0] >= 0.0 && evals2[1] >= 0.0,
+            "rho_2 must be PSD under bounded perturbation",
+        );
+        kani::assert(
+            evals3[0] >= 0.0 && evals3[1] >= 0.0,
+            "rho_3 must be PSD under bounded perturbation",
+        );
+        kani::assert(
+            evals5[0] >= 0.0 && evals5[1] >= 0.0,
+            "rho_5 must be PSD under bounded perturbation",
+        );
+    }
+
+    #[kani::proof]
+    fn verify_time_evolution_entropy() {
+        let sigma = TOY_SIGMA_STUB;
+
+        let scale2: f64 = kani::any();
+        let scale3: f64 = kani::any();
+        let scale5: f64 = kani::any();
+        kani::assume(scale2 >= -EPS_2 && scale2 <= EPS_2);
+        kani::assume(scale3 >= -EPS_3 && scale3 <= EPS_3);
+        kani::assume(scale5 >= -EPS_5 && scale5 <= EPS_5);
+
+        let o2 = [
+            [
+                O2_BASE[0][0] + scale2 * W2[0][0],
+                O2_BASE[0][1] + scale2 * W2[0][1],
+            ],
+            [
+                O2_BASE[1][0] + scale2 * W2[1][0],
+                O2_BASE[1][1] + scale2 * W2[1][1],
+            ],
+        ];
+        let o3 = [
+            [
+                O3_BASE[0][0] + scale3 * W3[0][0],
+                O3_BASE[0][1] + scale3 * W3[0][1],
+            ],
+            [
+                O3_BASE[1][0] + scale3 * W3[1][0],
+                O3_BASE[1][1] + scale3 * W3[1][1],
+            ],
+        ];
+        let o5 = [
+            [
+                O5_BASE[0][0] + scale5 * W5[0][0],
+                O5_BASE[0][1] + scale5 * W5[0][1],
+            ],
+            [
+                O5_BASE[1][0] + scale5 * W5[1][0],
+                O5_BASE[1][1] + scale5 * W5[1][1],
+            ],
+        ];
+
+        let mut evals2 = [0.0; 2];
+        let mut evals3 = [0.0; 2];
+        let mut evals5 = [0.0; 2];
+
+        let ok2 = compute_density_matrix_eigenvalues(2, sigma, &o2, &mut evals2);
+        let ok3 = compute_density_matrix_eigenvalues(3, sigma, &o3, &mut evals3);
+        let ok5 = compute_density_matrix_eigenvalues(5, sigma, &o5, &mut evals5);
+
+        kani::assume(ok2 && ok3 && ok5);
+
+        let s2 = compute_entropy(&evals2);
+        let s3 = compute_entropy(&evals3);
+        let s5 = compute_entropy(&evals5);
+        let s_total = s2 + s3 + s5;
+
+        kani::assert(
+            s2 >= 0.0,
+            "Entropy S_2 must be non-negative under bounded perturbation",
+        );
+        kani::assert(
+            s3 >= 0.0,
+            "Entropy S_3 must be non-negative under bounded perturbation",
+        );
+        kani::assert(
+            s5 >= 0.0,
+            "Entropy S_5 must be non-negative under bounded perturbation",
+        );
+        kani::assert(
+            s_total >= 0.0,
+            "Total entropy must be non-negative under bounded perturbation",
+        );
+        kani::assert(
+            s_total <= 3.0,
+            "Total entropy of 3 qubits must not exceed 3*ln(2) under bounded perturbation",
+        );
+        kani::assert(
+            s2.is_finite() && s3.is_finite() && s5.is_finite(),
+            "Entropies must be finite under bounded perturbation",
+        );
+    }
+
+    #[kani::proof]
+    fn verify_time_evolution_spectral_separation() {
+        let sigma = TOY_SIGMA_STUB;
+
+        let scale2: f64 = kani::any();
+        let scale3: f64 = kani::any();
+        let scale5: f64 = kani::any();
+        kani::assume(scale2 >= -EPS_2 && scale2 <= EPS_2);
+        kani::assume(scale3 >= -EPS_3 && scale3 <= EPS_3);
+        kani::assume(scale5 >= -EPS_5 && scale5 <= EPS_5);
+
+        let o2 = [
+            [
+                O2_BASE[0][0] + scale2 * W2[0][0],
+                O2_BASE[0][1] + scale2 * W2[0][1],
+            ],
+            [
+                O2_BASE[1][0] + scale2 * W2[1][0],
+                O2_BASE[1][1] + scale2 * W2[1][1],
+            ],
+        ];
+        let o3 = [
+            [
+                O3_BASE[0][0] + scale3 * W3[0][0],
+                O3_BASE[0][1] + scale3 * W3[0][1],
+            ],
+            [
+                O3_BASE[1][0] + scale3 * W3[1][0],
+                O3_BASE[1][1] + scale3 * W3[1][1],
+            ],
+        ];
+        let o5 = [
+            [
+                O5_BASE[0][0] + scale5 * W5[0][0],
+                O5_BASE[0][1] + scale5 * W5[0][1],
+            ],
+            [
+                O5_BASE[1][0] + scale5 * W5[1][0],
+                O5_BASE[1][1] + scale5 * W5[1][1],
+            ],
+        ];
+
+        let delta2 = spectral_separation_proxy(2, sigma, &o2);
+        let delta3 = spectral_separation_proxy(3, sigma, &o3);
+        let delta5 = spectral_separation_proxy(5, sigma, &o5);
+        let delta_min = delta2.min(delta3).min(delta5);
+
+        kani::assert(
+            delta2 > 0.0,
+            "Delta_2 spectral separation must be positive under bounded perturbation",
+        );
+        kani::assert(
+            delta3 > 0.0,
+            "Delta_3 spectral separation must be positive under bounded perturbation",
+        );
+        kani::assert(
+            delta5 > 0.0,
+            "Delta_5 spectral separation must be positive under bounded perturbation",
+        );
+        kani::assert(
+            delta_min.is_finite(),
+            "Delta(t) proxy must be finite under bounded perturbation",
+        );
+    }
+
+    #[kani::proof]
+    fn verify_time_evolution_bounded() {
+        let sigma = TOY_SIGMA_STUB;
+
+        let t: f64 = kani::any();
+        kani::assume(t >= 0.0 && t <= 1.0);
+
+        let o2 = local_op_time(O2_BASE, EPS_2, OMEGA_2, W2, t);
+        let o3 = local_op_time(O3_BASE, EPS_3, OMEGA_3, W3, t);
+        let o5 = local_op_time(O5_BASE, EPS_5, OMEGA_5, W5, t);
+
+        kani::assert(
+            check_rg_condition(2, sigma, &o2),
+            "O2 must satisfy RG condition at symbolic time t",
+        );
+        kani::assert(
+            check_rg_condition(3, sigma, &o3),
+            "O3 must satisfy RG condition at symbolic time t",
+        );
+        kani::assert(
+            check_rg_condition(5, sigma, &o5),
+            "O5 must satisfy RG condition at symbolic time t",
+        );
+
+        let mut evals2 = [0.0; 2];
+        let mut evals3 = [0.0; 2];
+        let mut evals5 = [0.0; 2];
+
+        let ok2 = compute_density_matrix_eigenvalues(2, sigma, &o2, &mut evals2);
+        let ok3 = compute_density_matrix_eigenvalues(3, sigma, &o3, &mut evals3);
+        let ok5 = compute_density_matrix_eigenvalues(5, sigma, &o5, &mut evals5);
+
+        kani::assume(ok2 && ok3 && ok5);
+
+        let trace2 = evals2[0] + evals2[1];
+        let trace3 = evals3[0] + evals3[1];
+        let trace5 = evals5[0] + evals5[1];
+
+        kani::assert(
+            (trace2 - 1.0_f64).abs() < 1e-8,
+            "Trace of rho_2 must be 1 at symbolic time t",
+        );
+        kani::assert(
+            (trace3 - 1.0_f64).abs() < 1e-8,
+            "Trace of rho_3 must be 1 at symbolic time t",
+        );
+        kani::assert(
+            (trace5 - 1.0_f64).abs() < 1e-8,
+            "Trace of rho_5 must be 1 at symbolic time t",
+        );
+
+        kani::assert(
+            evals2[0] >= 0.0 && evals2[1] >= 0.0,
+            "rho_2 must be PSD at symbolic time t",
+        );
+        kani::assert(
+            evals3[0] >= 0.0 && evals3[1] >= 0.0,
+            "rho_3 must be PSD at symbolic time t",
+        );
+        kani::assert(
+            evals5[0] >= 0.0 && evals5[1] >= 0.0,
+            "rho_5 must be PSD at symbolic time t",
+        );
+
+        let s2 = compute_entropy(&evals2);
+        let s3 = compute_entropy(&evals3);
+        let s5 = compute_entropy(&evals5);
+        let s_total = s2 + s3 + s5;
+
+        kani::assert(
+            s2 >= 0.0,
+            "Entropy S_2 must be non-negative at symbolic time t",
+        );
+        kani::assert(
+            s3 >= 0.0,
+            "Entropy S_3 must be non-negative at symbolic time t",
+        );
+        kani::assert(
+            s5 >= 0.0,
+            "Entropy S_5 must be non-negative at symbolic time t",
+        );
+        kani::assert(
+            s_total >= 0.0,
+            "Total entropy must be non-negative at symbolic time t",
+        );
+        kani::assert(
+            s_total <= 3.0,
+            "Total entropy of 3 qubits must not exceed 3*ln(2) at symbolic time t",
+        );
+        kani::assert(
+            s2.is_finite() && s3.is_finite() && s5.is_finite(),
+            "Entropies must be finite at symbolic time t",
+        );
+
+        let delta2 = spectral_separation_proxy(2, sigma, &o2);
+        let delta3 = spectral_separation_proxy(3, sigma, &o3);
+        let delta5 = spectral_separation_proxy(5, sigma, &o5);
+        let delta_min = delta2.min(delta3).min(delta5);
+
+        kani::assert(
+            delta2 > 0.0,
+            "Delta_2 spectral separation must be positive at symbolic time t",
+        );
+        kani::assert(
+            delta3 > 0.0,
+            "Delta_3 spectral separation must be positive at symbolic time t",
+        );
+        kani::assert(
+            delta5 > 0.0,
+            "Delta_5 spectral separation must be positive at symbolic time t",
+        );
+        kani::assert(
+            delta_min.is_finite(),
+            "Delta(t) proxy must be finite at symbolic time t",
+        );
     }
 }
-

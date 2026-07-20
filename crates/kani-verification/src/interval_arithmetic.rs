@@ -123,7 +123,7 @@ mod verification {
         kani::assume(i2.low <= i2.high);
         kani::assume(i1.low.is_finite() && i1.high.is_finite());
         kani::assume(i2.low.is_finite() && i2.high.is_finite());
-        
+
         let result = i1.add(&i2);
         kani::assert(result.low <= result.high, "Interval add: low <= high");
     }
@@ -142,7 +142,7 @@ mod verification {
         kani::assume(i2.low <= i2.high);
         kani::assume(i1.low.is_finite() && i1.high.is_finite());
         kani::assume(i2.low.is_finite() && i2.high.is_finite());
-        
+
         let result = i1.sub(&i2);
         kani::assert(result.low <= result.high, "Interval sub: low <= high");
     }
@@ -157,7 +157,7 @@ mod verification {
         kani::assume(i.low <= i.high);
         kani::assume(i.low.is_finite() && i.high.is_finite());
         kani::assume(scalar > 0.0 && scalar.is_finite());
-        
+
         let result = i.mul_pos(scalar);
         kani::assert(result.low <= result.high, "Interval mul_pos: low <= high");
     }
@@ -177,7 +177,7 @@ mod verification {
         kani::assume(i1.low.is_finite() && i1.high.is_finite());
         kani::assume(i2.low.is_finite() && i2.high.is_finite());
         kani::assume(i2.low > 0.0);
-        
+
         let result = i1.div(&i2);
         kani::assert(result.low <= result.high, "Interval div: low <= high");
     }
@@ -190,7 +190,7 @@ mod verification {
         };
         kani::assume(i.low <= i.high);
         kani::assume(i.low.is_finite() && i.high.is_finite());
-        
+
         let result = i.abs();
         kani::assert(result.low <= result.high, "Interval abs: low <= high");
     }
@@ -205,7 +205,7 @@ mod verification {
         kani::assume(i.low <= i.high);
         kani::assume(i.low.is_finite() && i.high.is_finite());
         kani::assume(x.is_finite());
-        
+
         let contained = i.contains(x);
         if contained {
             kani::assert(i.low <= x && x <= i.high, "Contains implies in bounds");
@@ -220,7 +220,7 @@ mod verification {
         };
         kani::assume(i.low <= i.high);
         kani::assume(i.low.is_finite() && i.high.is_finite());
-        
+
         let width = i.width();
         kani::assert(width >= 0.0, "Interval width must be non-negative");
     }

@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use quick_xml::de::from_str;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename = "lexicon")]
@@ -63,6 +63,12 @@ mod tests {
 
         let lexicon: Lexicon = from_str(xml).unwrap();
         assert_eq!(lexicon.parts.len(), 1);
-        assert_eq!(lexicon.parts[0].sections[0].entries[0].word.as_ref().unwrap(), "א");
+        assert_eq!(
+            lexicon.parts[0].sections[0].entries[0]
+                .word
+                .as_ref()
+                .unwrap(),
+            "א"
+        );
     }
 }

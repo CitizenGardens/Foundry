@@ -1,14 +1,14 @@
-use thiserror::Error;
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ContractivityError {
     #[error("Non-recoverable drift: delta {delta} >= epsilon {epsilon}")]
     DriftExceeded { delta: f64, epsilon: f64 },
-    
+
     #[error("Sovereign Binding Failed: TEE quote missing")]
     ProvenanceGap,
-    
+
     #[error("Trajectory Dissonance: Atom trajectory {atom} does not match active {active}")]
     TrajectoryDissonance { active: String, atom: String },
 }
@@ -81,7 +81,11 @@ mod verification {
     struct MockMetric(f64);
     impl MetricSpace for MockMetric {
         fn distance(&self, other: &Self) -> f64 {
-            if self.0 >= other.0 { self.0 - other.0 } else { other.0 - self.0 }
+            if self.0 >= other.0 {
+                self.0 - other.0
+            } else {
+                other.0 - self.0
+            }
         }
     }
 
@@ -90,16 +94,19 @@ mod verification {
         let x: f64 = kani::any();
         let y: f64 = kani::any();
         let epsilon: f64 = kani::any();
-        
+
         kani::assume(x.is_finite() && y.is_finite() && epsilon.is_finite());
         kani::assume(epsilon > 0.0);
-        
+
         let s1 = MockMetric(x);
         let s2 = MockMetric(y);
-        
+
         if enforce_contractivity(&s1, &s2, epsilon).is_ok() {
             let dist = s1.distance(&s2);
-            kani::assert(dist < epsilon, "Distance must be strictly bounded by epsilon");
+            kani::assert(
+                dist < epsilon,
+                "Distance must be strictly bounded by epsilon",
+            );
         }
     }
 
@@ -107,10 +114,10 @@ mod verification {
     fn verify_sovereign_contractivity() {
         let q: f64 = kani::any();
         let max_q: f64 = kani::any();
-        
+
         kani::assume(q.is_finite() && max_q.is_finite());
         kani::assume(max_q > 0.0);
-        
+
         let atom = LambdaTraceAtom {
             proof_digest: String::new(),
             state_root_hash: String::new(),
@@ -121,7 +128,7 @@ mod verification {
             protocol_v: 1,
             signer_id: None,
         };
-        
+
         if enforce_sovereign_contractivity(&atom, "ACTIVE", max_q).is_ok() {
             kani::assert(q < max_q, "Sovereign q must be bounded by max_q");
         }

@@ -41,7 +41,7 @@ mod tests {
         let mut x = Xi::init(3);
         Xi::evolve(&mut x.view_mut(), 1.0, 0.1);
         LambdaM::evolve(&mut x.view_mut(), 1.0);
-        
+
         assert_eq!(x.dim(), (3, 3));
     }
 }

@@ -1,4 +1,6 @@
-use multiplicity_common::constitution::{ConstitutionModel, ConstitutionViolation, CritiqueResult, PrimeGate, L0Invariant};
+use multiplicity_common::constitution::{
+    ConstitutionModel, ConstitutionViolation, CritiqueResult, L0Invariant, PrimeGate,
+};
 use multiplicity_common::identity::{
     ExternalIssuerConfig, IdentityOnboardingConfig, UniquenessAnchor, UniquenessAnchorInput,
     ValidatedIdToken, VerifiedVerifiableCredential,
@@ -7,8 +9,8 @@ use multiplicity_common::ledger::{LedgerHistoryEntry, ProposalEntry};
 use multiplicity_common::replication::{ReplicationConfig, ReplicationRole};
 use multiplicity_common::task::{Task, Workflow};
 use multiplicity_common::types::{
-    McpRegistry, McpServerDescriptor, ProposalRequest, SignedAdmissionToken, ToolResponse,
-    TrustLevel, UnifiedWitness, VetoStatus, CompilationResult, SpoliationRiskLevel,
+    CompilationResult, McpRegistry, McpServerDescriptor, ProposalRequest, SignedAdmissionToken,
+    SpoliationRiskLevel, ToolResponse, TrustLevel, UnifiedWitness, VetoStatus,
 };
 use schemars::schema_for;
 use std::fs;

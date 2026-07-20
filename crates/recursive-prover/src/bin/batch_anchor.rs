@@ -49,10 +49,8 @@ fn leaf_hash(prev: &[u8; 32], e: &AttestedEvent) -> [u8; 32] {
     use keccak::Keccak256;
 
     let digest = hex::decode(&e.digest.trim_start_matches("0x")).unwrap_or_default();
-    let consent =
-        hex::decode(&e.consent_commitment.trim_start_matches("0x")).unwrap_or_default();
-    let nullifier =
-        hex::decode(&e.nullifier.trim_start_matches("0x")).unwrap_or_default();
+    let consent = hex::decode(&e.consent_commitment.trim_start_matches("0x")).unwrap_or_default();
+    let nullifier = hex::decode(&e.nullifier.trim_start_matches("0x")).unwrap_or_default();
 
     let mut ts = [0u8; 8];
     ts.copy_from_slice(&e.timestamp.to_be_bytes());
@@ -71,14 +69,15 @@ fn leaf_hash(prev: &[u8; 32], e: &AttestedEvent) -> [u8; 32] {
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        println!(
-            "Usage: batch_anchor <attested_events.jsonl> [out=aggregated_proof.json]"
-        );
+        println!("Usage: batch_anchor <attested_events.jsonl> [out=aggregated_proof.json]");
         return Ok(());
     }
 
     let events_path = &args[1];
-    let out_path = args.get(2).map(String::as_str).unwrap_or("aggregated_proof.json");
+    let out_path = args
+        .get(2)
+        .map(String::as_str)
+        .unwrap_or("aggregated_proof.json");
 
     let raw = fs::read_to_string(events_path)
         .with_context(|| format!("Failed to read events from {}", events_path))?;
@@ -90,8 +89,7 @@ fn main() -> Result<()> {
             continue;
         }
         events.push(
-            serde_json::from_str(line)
-                .with_context(|| format!("Failed to parse event: {line}"))?,
+            serde_json::from_str(line).with_context(|| format!("Failed to parse event: {line}"))?,
         );
     }
     println!("=== UAC Daily Batch Anchor (ADR-PML-050) ===");
@@ -141,7 +139,10 @@ fn main() -> Result<()> {
             hex::encode(batch_root)
         );
     }
-    println!("  APO Aggregate Root (STARK commitment): 0x{}", hex::encode(apo.aggregate_root));
+    println!(
+        "  APO Aggregate Root (STARK commitment): 0x{}",
+        hex::encode(apo.aggregate_root)
+    );
     println!("  Member roots: {}", apo.member_roots.len());
 
     // 4. Persist the APO for on-chain submitBatchAttestation + Archivum witness.
@@ -149,8 +150,10 @@ fn main() -> Result<()> {
     fs::write(out_path, &apo_json)?;
     println!("  Saved APO: {} ({} bytes)", out_path, apo_json.len());
 
-    println!("\n  => Hand `batch_root` (0x{}) to the ADR-PML-055 sidecar",
-        hex::encode(batch_root));
+    println!(
+        "\n  => Hand `batch_root` (0x{}) to the ADR-PML-055 sidecar",
+        hex::encode(batch_root)
+    );
     println!("     as the `attestations` category of the daily combined root.");
     println!("     (The APO `aggregate_root` is the STARK proof commitment,");
     println!("      verified on-chain via `submitBatchAttestation`.)");

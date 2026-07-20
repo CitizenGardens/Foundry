@@ -30,8 +30,6 @@ fn default_scales_version() -> String {
     "v1".to_string()
 }
 
-
-
 pub mod audit;
 pub mod audit_api;
 pub mod certify;
@@ -42,9 +40,8 @@ pub mod gate;
 pub mod gate_k;
 pub mod hoe_router;
 
-
-pub mod linker;
 pub mod jubilee;
+pub mod linker;
 pub mod mlir_emitter;
 pub mod orchestrator;
 pub mod petc;
@@ -55,9 +52,6 @@ pub mod rta;
 pub mod serialization;
 pub mod session_graph_op;
 pub mod spectral;
-
-
-
 
 pub mod weights;
 pub mod witness;
@@ -125,11 +119,11 @@ mod tests {
 pub mod adaptive;
 pub mod galois;
 pub mod gates;
-pub mod langlands_zk;
 pub mod lambda_bridge;
-pub mod telemetry;
-pub mod types;
-pub mod uac_loss;
+pub mod langlands_zk;
 pub mod r1cs_constants;
+pub mod telemetry;
 pub mod telemetry_binding;
 pub mod tether_policy;
+pub mod types;
+pub mod uac_loss;

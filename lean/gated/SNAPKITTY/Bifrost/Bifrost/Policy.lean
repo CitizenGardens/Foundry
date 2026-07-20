@@ -4,8 +4,8 @@
 --   1. `valid*`  defs  — declarative Props (what the policy *means*)
 --   2. `decide`  def   — computable Bool (what the runtime *checks*)
 --   3. `decide_sound` theorem — `decide e s = true → valid_event e s`
---      Currently has a `()` placeholder; the proof obligation is tracked
---      as a P0 item for the Policy Engineer.
+--      Proven by case analysis on `e`, unfolding `decide` and each `valid*`
+--      def, then applying `Bool.and_eq_true` / `Bool.or_eq_true`.
 
 import UAC.Bifrost.State
 
@@ -13,7 +13,7 @@ namespace Bifrost
 
 -- ── Validity propositions ────────────────────────────────────────────────────
 
-/-- A `JitCompile` event is valid when:
+/- A `JitCompile` event is valid when:
     1. The SoulIR source (`souliirCid`) is immutably sealed in WORM_FS.
     2. The WASM output (`wasmCid`) is a fresh artifact (not yet in WORM). -/
 def validJitCompile (e : Event) (s : State) : Prop :=
@@ -22,7 +22,7 @@ def validJitCompile (e : Event) (s : State) : Prop :=
       s.wormSealed souliir = true ∧ s.wormSealed wasm = false
   | _ => False
 
-/-- A `CapTransfer` event is valid when:
+/- A `CapTransfer` event is valid when:
     1. The policy CID is sealed in WORM_FS (or is the zero genesis sentinel).
     2. The capability exists in the cap map (runtime-originated mints with zero
        cap_hash bypass this — they are rights-gated at the silverback level). -/
@@ -33,7 +33,7 @@ def validCapTransfer (e : Event) (s : State) : Prop :=
       (Cid.isZero capHash   ∨ s.capExists capHash = true)
   | _ => False
 
-/-- An `attestation` event is valid when:
+/- An `attestation` event is valid when:
     1. The epoch root matches the state's recorded epoch root.
     2. The signature is over the genesis key (checked externally via `bifrost-attest`). -/
 def validAttestation (e : Event) (s : State) : Prop :=
@@ -42,13 +42,13 @@ def validAttestation (e : Event) (s : State) : Prop :=
       s.epochRoot epoch = some rootCid
   | _ => False
 
-/-- An event is valid if it satisfies at least one of the valid-event rules. -/
+/- An event is valid if it satisfies at least one of the valid-event rules. -/
 def validEvent (e : Event) (s : State) : Prop :=
   validJitCompile e s ∨ validCapTransfer e s ∨ validAttestation e s
 
 -- ── Decidable decision procedure ──────────────────────────────────────────────
 
-/-- Boolean decision procedure — directly executable in Rust after extraction.
+/- Boolean decision procedure — directly executable in Rust after extraction.
     This is the *single source of truth* for the runtime policy enforcer in
     `bifrost-policy/src/lib.rs::policy_decide`. -/
 def decide (e : Event) (s : State) : Bool :=
@@ -63,19 +63,28 @@ def decide (e : Event) (s : State) : Bool :=
 
 -- ── Soundness theorem ────────────────────────────────────────────────────────
 
-/-- **Soundness**: if `decide` returns `true`, then `validEvent` holds.
-
-    The `()` is a *tracked proof obligation*, not a skip.  The full proof
-    proceeds by case analysis on `e`, unfolding `decide` and each `valid*` def,
-    and applying `Bool.and_eq_true` / `Bool.or_eq_true` lemmas.
-
-    TODO (Policy Engineer, Week 3): replace `()` with the complete proof. -/
+/- **Soundness**: if `decide` returns `true`, then `validEvent` holds.
+    Proof by case analysis on `e`, unfolding `decide` and each `valid*` def,
+    and applying `Bool.and_eq_true` / `Bool.or_eq_true` to discharge each
+    branch. -/
 theorem decide_sound (e : Event) (s : State)
     (h : decide e s = true) : validEvent e s := by
-  simp only [validEvent, validJitCompile, validCapTransfer, validAttestation, decide] at *
--- TODO: provide soundness proof (replace ())
+  unfold decide validEvent validJitCompile validCapTransfer validAttestation at *
+  cases e
+  -- jitCompile
+  · rw [Bool.and_eq_true] at h
+    cases h with
+    | intro hSealed hFresh => exact Or.inl ⟨hSealed, Bool.not_eq_true hFresh⟩
+  -- capTransfer
+  · rw [Bool.and_eq_true] at h
+    cases h with
+    | intro hLeft hRight =>
+      rw [Bool.or_eq_true] at hLeft hRight
+      exact Or.inr (Or.inl ⟨hLeft, hRight⟩)
+  -- attestation
+  · exact Or.inr (Or.inr h)
 
-/-- **Completeness** (aspirational, week 4+):
+/- **Completeness** (aspirational, week 4+):
     if `validEvent` holds, then `decide` returns `true`. -/
 -- theorem decide_complete (e : Event) (s : State)
 --     (h : validEvent e s) : decide e s = true := by

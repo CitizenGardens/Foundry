@@ -1,5 +1,5 @@
-use rustfft::{FftPlanner, num_complex::Complex};
 use ndarray::{Array1, ArrayView1};
+use rustfft::{FftPlanner, num_complex::Complex};
 
 /// Spectral transformation utilities for DRMM.
 pub struct SpectralTransform {
@@ -24,7 +24,7 @@ impl SpectralTransform {
     pub fn forward(&mut self, gradient: ArrayView1<f64>) -> (Array1<Complex<f64>>, usize, usize) {
         let original_size = gradient.len();
         let padded_size = (original_size.max(2)).next_power_of_two();
-        
+
         let mut buffer: Vec<Complex<f64>> = vec![Complex::new(0.0, 0.0); padded_size];
         for (i, &val) in gradient.iter().enumerate() {
             buffer[i] = Complex::new(val, 0.0);
@@ -43,9 +43,14 @@ impl SpectralTransform {
     }
 
     /// Perform an inverse spectral transformation.
-    pub fn inverse(&mut self, spectrum: ArrayView1<Complex<f64>>, padded_size: usize, original_size: usize) -> Array1<f64> {
+    pub fn inverse(
+        &mut self,
+        spectrum: ArrayView1<Complex<f64>>,
+        padded_size: usize,
+        original_size: usize,
+    ) -> Array1<f64> {
         let mut buffer: Vec<Complex<f64>> = vec![Complex::new(0.0, 0.0); padded_size];
-        
+
         // Reconstruct full spectrum for complex-to-real inverse FFT
         // spectrum has padded_size / 2 + 1 elements
         for i in 0..spectrum.len() {
@@ -75,16 +80,20 @@ pub fn compute_bin_energies(spectrum: ArrayView1<Complex<f64>>, num_bins: usize)
     let magnitudes: Array1<f64> = spectrum.mapv(|c| c.norm_sqr());
     let total = magnitudes.len();
     let usable_bins = num_bins.min(total).max(1);
-    
+
     let mut energies = Vec::with_capacity(usable_bins);
     for index in 0..usable_bins {
         let start = (index * total) / usable_bins;
         let end = ((index + 1) * total) / usable_bins;
         let slice = magnitudes.slice(ndarray::s![start..end]);
-        let mean = if slice.is_empty() { 0.0 } else { slice.mean().unwrap_or(0.0) };
+        let mean = if slice.is_empty() {
+            0.0
+        } else {
+            slice.mean().unwrap_or(0.0)
+        };
         energies.push(mean);
     }
-    
+
     Array1::from_vec(energies)
 }
 
@@ -99,7 +108,7 @@ mod tests {
         let input = array![1.0, 2.0, 3.0, 4.0];
         let (spectrum, padded, orig) = transform.forward(input.view());
         let output = transform.inverse(spectrum.view(), padded, orig);
-        
+
         for (a, b) in input.iter().zip(output.iter()) {
             assert!((a - b).abs() < 1e-10);
         }

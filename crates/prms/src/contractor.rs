@@ -32,14 +32,17 @@ pub struct MultiplicityContractor {
 impl MultiplicityContractor {
     pub fn new(config: ContractorConfig) -> Result<Self, &'static str> {
         if config.lambda_m <= 0.0 || config.lambda_m >= 1.0 {
-            return Err("Contractor Init Failed: lambda_m must reside in the open interval (0, 1).");
+            return Err(
+                "Contractor Init Failed: lambda_m must reside in the open interval (0, 1).",
+            );
         }
         if config.alpha >= -1.0 {
             return Err("Contractor Init Failed: Convergence requires alpha < -1.");
         }
 
         let primes = generate_prime_truncation(config.max_p_index);
-        let lipschitz_k: f64 = primes.iter()
+        let lipschitz_k: f64 = primes
+            .iter()
             .map(|&p| config.lambda_m * (p as f64).powf(config.alpha))
             .sum();
 
@@ -47,27 +50,35 @@ impl MultiplicityContractor {
             return Err("Contractor Init Failed: Lipschitz constant k >= 1.0 violates Banach mapping criteria.");
         }
 
-        Ok(Self { config, primes, lipschitz_k })
+        Ok(Self {
+            config,
+            primes,
+            lipschitz_k,
+        })
     }
 
     pub fn lipschitz_constant(&self) -> f64 {
         self.lipschitz_k
     }
 
-    pub fn verify_structural_admissibility(&self, source: &TensorSpaceType, target: &TensorSpaceType) -> bool {
+    pub fn verify_structural_admissibility(
+        &self,
+        source: &TensorSpaceType,
+        target: &TensorSpaceType,
+    ) -> bool {
         source.evaluates_weak_equivalence(target)
     }
 
     /// Evaluates real-time matrix conditioning trajectories to issue pre-emptive safety alerts  
-    pub fn evaluate_stability(&self, cond_number: f64, max_budget: f64) -> StabilityStatus {  
-        if cond_number >= max_budget {  
-            StabilityStatus::CriticalBoundaryViolation  
-        } else if cond_number >= max_budget * 0.80 {  
-            StabilityStatus::Warning  
-        } else {  
-            StabilityStatus::Nominal  
-        }  
-    }  
+    pub fn evaluate_stability(&self, cond_number: f64, max_budget: f64) -> StabilityStatus {
+        if cond_number >= max_budget {
+            StabilityStatus::CriticalBoundaryViolation
+        } else if cond_number >= max_budget * 0.80 {
+            StabilityStatus::Warning
+        } else {
+            StabilityStatus::Nominal
+        }
+    }
 }
 
 fn generate_prime_truncation(n: usize) -> Vec<u64> {
@@ -90,16 +101,23 @@ mod verification {
     fn verify_contractor_critical_soundness() {
         let cond: f64 = kani::any();
         let max_b: f64 = kani::any();
-        
+
         kani::assume(cond.is_finite() && max_b.is_finite());
         kani::assume(cond >= 0.0 && max_b > 0.0);
-        
-        let config = ContractorConfig { lambda_m: 0.5, alpha: -2.0, max_p_index: 2 };
+
+        let config = ContractorConfig {
+            lambda_m: 0.5,
+            alpha: -2.0,
+            max_p_index: 2,
+        };
         let contractor = MultiplicityContractor::new(config).unwrap();
-        
+
         let status = contractor.evaluate_stability(cond, max_b);
         if status == StabilityStatus::CriticalBoundaryViolation {
-            kani::assert(cond >= max_b, "Critical soundness: condition must be >= max_budget");
+            kani::assert(
+                cond >= max_b,
+                "Critical soundness: condition must be >= max_budget",
+            );
         }
     }
 }

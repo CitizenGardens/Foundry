@@ -1,4 +1,4 @@
-use crate::schemas::{RuleViolation, Severity, ConflictLogSchema};
+use crate::schemas::{ConflictLogSchema, RuleViolation, Severity};
 
 pub fn check_physical_dissonance(input: &ConflictLogSchema) -> Vec<RuleViolation> {
     let mut violations = Vec::new();

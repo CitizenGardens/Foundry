@@ -39,7 +39,7 @@ impl PirtmEngine {
         let t_x = x_t.map(|v| v.tanh());
 
         let linear_part = xi_t * x_t + lambda_t * t_x + g_t;
-        
+
         // Simplified Projection P = Identity
         let projection = linear_part;
 

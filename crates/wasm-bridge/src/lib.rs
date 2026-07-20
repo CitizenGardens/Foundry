@@ -1,6 +1,6 @@
-use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct StateTransition {
@@ -33,7 +33,12 @@ impl WasmSigmaKernel {
     /// Evaluates a state transition strictly in the browser sandbox.
     /// Returns a JSON string of the UnifiedWitness if successful, or throws a JS error.
     #[wasm_bindgen]
-    pub fn evaluate_and_sign(&self, transition_json: &str, operator_key: &str, kernel_key: &str) -> Result<String, JsValue> {
+    pub fn evaluate_and_sign(
+        &self,
+        transition_json: &str,
+        operator_key: &str,
+        kernel_key: &str,
+    ) -> Result<String, JsValue> {
         let transition: StateTransition = serde_json::from_str(transition_json)
             .map_err(|e| JsValue::from_str(&format!("Parse error: {}", e)))?;
 
@@ -55,7 +60,7 @@ impl WasmSigmaKernel {
 
         // 3. Dual-Signature Protocol
         let timestamp = "browser-timestamp"; // Mocked for WASM sandbox
-        
+
         let mut core_hasher = Sha256::new();
         core_hasher.update(transition.id.as_bytes());
         core_hasher.update(timestamp.as_bytes());
@@ -82,7 +87,12 @@ impl WasmSigmaKernel {
 
     /// Assembles a Quantum-Symbolic Hybrid Proof, binding probabilistic tensor state to a verified SAT constraint hash.
     #[wasm_bindgen]
-    pub fn export_hybrid_proof(&self, tensor_state_json: &str, sat_proof_hash: &str, kernel_key: &str) -> Result<String, JsValue> {
+    pub fn export_hybrid_proof(
+        &self,
+        tensor_state_json: &str,
+        sat_proof_hash: &str,
+        kernel_key: &str,
+    ) -> Result<String, JsValue> {
         let mut tensor_hasher = Sha256::new();
         tensor_hasher.update(tensor_state_json.as_bytes());
         let probabilistic_tensor_hash = hex::encode(tensor_hasher.finalize());

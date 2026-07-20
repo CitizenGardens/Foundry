@@ -31,7 +31,11 @@ impl State {
 
     /// Compute prime signature.
     pub fn prime_sig(&self) -> &'static str {
-        if self.viable { "VIABLE" } else { "NON_VIABLE" }
+        if self.viable {
+            "VIABLE"
+        } else {
+            "NON_VIABLE"
+        }
     }
 
     /// Compute canonical witness.
@@ -101,11 +105,14 @@ mod verification {
         s.witness_matches_prime_sig = kani::any();
         kani::assume(s.viable);
         kani::assume(s.contraction_holds);
-        
+
         if s.viable && s.contraction_holds {
             let witness = s.canonical_witness();
             let prime_sig = s.prime_sig();
-            kani::assert(witness == prime_sig || witness == "MISMATCH", "Witness is either match or mismatch");
+            kani::assert(
+                witness == prime_sig || witness == "MISMATCH",
+                "Witness is either match or mismatch",
+            );
         }
     }
 
@@ -115,13 +122,16 @@ mod verification {
         s.viable = kani::any();
         s.gauge_aligned = kani::any();
         kani::assume(s.viable);
-        
+
         let prime_sig = s.prime_sig();
         let restored = s.restore(prime_sig);
-        
+
         if restored.gauge_aligned {
             let after_gauge = restored.gauge_connection();
-            kani::assert(after_gauge.gauge_aligned == restored.gauge_aligned, "Gauge identity when aligned");
+            kani::assert(
+                after_gauge.gauge_aligned == restored.gauge_aligned,
+                "Gauge identity when aligned",
+            );
         }
     }
 
@@ -131,11 +141,14 @@ mod verification {
         s.contraction_holds = kani::any();
         s.flow_stable = kani::any();
         kani::assume(s.contraction_holds);
-        
+
         let after_gauge = s.gauge_connection();
         if after_gauge.flow_stable {
             let after_flow = after_gauge.recursive_flow();
-            kani::assert(after_flow.flow_stable == after_gauge.flow_stable, "Flow identity when stable");
+            kani::assert(
+                after_flow.flow_stable == after_gauge.flow_stable,
+                "Flow identity when stable",
+            );
         }
     }
 
@@ -143,17 +156,17 @@ mod verification {
     fn proof_phi_decomposition() {
         let s = State::new();
         let phi_result = s.phi();
-        
+
         let after_flow = s.recursive_flow();
         let after_gauge = after_flow.gauge_connection();
         let prime_sig = after_gauge.prime_sig();
         let expected = after_gauge.restore(prime_sig);
-        
+
         kani::assert(
-            phi_result.viable == expected.viable &&
-            phi_result.gauge_aligned == expected.gauge_aligned &&
-            phi_result.flow_stable == expected.flow_stable,
-            "Phi decomposition matches composition"
+            phi_result.viable == expected.viable
+                && phi_result.gauge_aligned == expected.gauge_aligned
+                && phi_result.flow_stable == expected.flow_stable,
+            "Phi decomposition matches composition",
         );
     }
 
@@ -164,7 +177,7 @@ mod verification {
         s.contraction_holds = kani::any();
         s.witness_matches_prime_sig = kani::any();
         kani::assume(s.satisfies_c1_c2_c3());
-        
+
         kani::assert(s.viable, "C123 implies viable");
         kani::assert(s.contraction_holds, "C123 implies contraction");
     }
@@ -177,13 +190,13 @@ mod verification {
         s.witness_matches_prime_sig = true;
         s.gauge_aligned = true;
         s.flow_stable = true;
-        
+
         let phi_result = s.phi();
         kani::assert(
-            phi_result.viable == s.viable &&
-            phi_result.gauge_aligned == s.gauge_aligned &&
-            phi_result.flow_stable == s.flow_stable,
-            "Fit fixed point implies Phi fixed point"
+            phi_result.viable == s.viable
+                && phi_result.gauge_aligned == s.gauge_aligned
+                && phi_result.flow_stable == s.flow_stable,
+            "Fit fixed point implies Phi fixed point",
         );
     }
 }

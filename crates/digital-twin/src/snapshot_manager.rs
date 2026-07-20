@@ -85,7 +85,7 @@ impl SnapshotManager {
         };
 
         self.snapshots.insert(tx_id.clone(), record.clone());
-        
+
         self.index.latest_tx_id = Some(tx_id.clone());
         self.index.tx_history.push(tx_id.clone());
         self.index.hash_manifest.insert(tx_id, state_hash);

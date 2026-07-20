@@ -1,7 +1,7 @@
 use ndarray::{Array2, ArrayViewMut2};
 
 /// Manages recursive update dynamics using entropy gradients and trace-preserving normalizations.
-/// 
+///
 /// Parity with: drmm/src/feedback_loops.py -> EntropicFeedbackLoop
 pub struct EntropicFeedbackLoop {
     pub alpha: f64,
@@ -28,7 +28,7 @@ impl EntropicFeedbackLoop {
 }
 
 /// Regulates recursive flow convergence under DRMM dynamic rules.
-/// 
+///
 /// Parity with: drmm/src/feedback_loops.py -> ConvergenceController
 pub struct ConvergenceController {
     pub threshold: f64,
@@ -52,7 +52,7 @@ impl ConvergenceController {
 }
 
 /// Embeds ethical phase-space filters to dampen recursive overload or divergence.
-/// 
+///
 /// Parity with: drmm/src/feedback_loops.py -> EthicalModulator
 pub struct EthicalModulator {
     pub filter_strength: f64,
@@ -81,7 +81,7 @@ mod tests {
         let mut x = Array2::from_elem((2, 2), 0.5);
         let loop_ctrl = EntropicFeedbackLoop::new(0.05);
         loop_ctrl.update(&mut x, 1.0);
-        
+
         // gradient = -ln(0.5 + 1e-8) approx 0.693
         // update = 0.5 + 0.05 * 1.0 * 0.693 approx 0.5346
         assert!(x[[0, 0]] > 0.5);
@@ -93,7 +93,7 @@ mod tests {
         let mut x = Array2::from_elem((2, 2), 1.0);
         let mod_ctrl = EthicalModulator::new(0.1);
         mod_ctrl.apply(&mut x);
-        
+
         // 1.0 - 0.1 * tanh(1.0) approx 1.0 - 0.1 * 0.761 = 0.9239
         assert!(x[[0, 0]] < 1.0);
         assert!((x[[0, 0]] - 0.9239).abs() < 1e-3);
@@ -104,7 +104,7 @@ mod tests {
         let x1 = Array2::from_elem((2, 2), 1.0);
         let x2 = Array2::from_elem((2, 2), 1.0001);
         let controller = ConvergenceController::new(1e-3);
-        
+
         // diff = 0.0001, norm = sqrt(4 * 0.0001^2) = 0.0002
         assert!(controller.is_converged(&x1, &x2));
     }

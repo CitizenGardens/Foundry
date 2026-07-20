@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
-use std::{env, fs};
+use num_bigint::BigUint;
 use prover::StarkProof;
 use recursive_prover::verifier_gadget::StarkVerifierGadget;
-use num_bigint::BigUint;
+use std::{env, fs};
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -14,20 +14,23 @@ fn main() -> Result<()> {
     let proof_path = &args[1];
     let proof_json = fs::read_to_string(proof_path)
         .with_context(|| format!("Failed to read proof from {}", proof_path))?;
-    
-    let inner_proof: StarkProof = serde_json::from_str(&proof_json)
-        .context("Failed to deserialize inner proof")?;
+
+    let inner_proof: StarkProof =
+        serde_json::from_str(&proof_json).context("Failed to deserialize inner proof")?;
 
     println!("=== Starting Recursive Proof Wrap POC ===");
-    println!("  Inner Proof Commitment: 0x{}", hex::encode(&inner_proof.trace_commitment));
-    
+    println!(
+        "  Inner Proof Commitment: 0x{}",
+        hex::encode(&inner_proof.trace_commitment)
+    );
+
     let gadget = StarkVerifierGadget::new();
     let blinding = BigUint::from(987654321u64);
-    
+
     println!("Step 1: Wrapping STARK into RPO v1...");
     // For POC, we assume empty public inputs or extract them from a real AIR later.
     let rpo = gadget.wrap_stark(&inner_proof, vec![], &blinding)?;
-    
+
     println!("  Recursive Pedersen Commitment (Affine):");
     println!("    X: 0x{}", rpo.seal_x);
     println!("    Y: 0x{}", rpo.seal_y);

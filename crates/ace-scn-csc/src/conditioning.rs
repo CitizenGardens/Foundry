@@ -38,11 +38,7 @@ impl SCNConditioningLayer {
         extended
     }
 
-    pub fn policy_logits(
-        &self,
-        features: &[f64],
-        weights: &SCNWeights,
-    ) -> Vec<f64> {
+    pub fn policy_logits(&self, features: &[f64], weights: &SCNWeights) -> Vec<f64> {
         // SCN forward pass conditioned on extended feature vector.
         // The network architecture is unchanged; only input width increases.
         weights.forward(features)

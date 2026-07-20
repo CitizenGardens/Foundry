@@ -7,7 +7,10 @@ pub struct MocDomain {
 
 impl MocDomain {
     pub fn new(bound: f64) -> Self {
-        assert!(bound < 1.0 && bound > 0.0, "MOC Domain must be strictly contractive (0 < bound < 1)");
+        assert!(
+            bound < 1.0 && bound > 0.0,
+            "MOC Domain must be strictly contractive (0 < bound < 1)"
+        );
         Self {
             contractivity_bound: bound,
         }
@@ -15,13 +18,15 @@ impl MocDomain {
 
     /// Recursively applies the operator sequence and guarantees contractivity mathematically.
     pub fn apply_recursive_operator(
-        &self, 
-        initial_state: f64, 
-        lambda_m: f64, 
-        iterations: usize
+        &self,
+        initial_state: f64,
+        lambda_m: f64,
+        iterations: usize,
     ) -> Result<f64, &'static str> {
         if lambda_m >= self.contractivity_bound {
-            return Err("Operator scaling factor exceeds MOC contractivity bound. Contractivity failure.");
+            return Err(
+                "Operator scaling factor exceeds MOC contractivity bound. Contractivity failure.",
+            );
         }
 
         let mut state = initial_state;
@@ -52,7 +57,7 @@ impl PrimeSuccessorFormalism {
     /// Evaluates if the sequence jump is valid within the MOC domain.
     pub fn is_valid_jump(&self) -> bool {
         // A minimal logic mapping to prove it's strictly monotonic
-        // A complete formalism would check if it is explicitly the NEXT prime, 
+        // A complete formalism would check if it is explicitly the NEXT prime,
         // but for contractivity, strict monotonicity is the necessary foundation.
         self.next_prime > self.current_prime
     }
@@ -68,23 +73,29 @@ mod proofs {
         let initial_state: f64 = kani::any();
         let lambda_m: f64 = kani::any();
         let bound: f64 = kani::any();
-        
+
         // Axioms of the Sovereign Domain
         kani::assume(bound > 0.0 && bound < 1.0);
         kani::assume(initial_state >= 0.0 && initial_state <= 1000.0);
         kani::assume(lambda_m >= 0.0);
-        
+
         let moc = MocDomain::new(bound);
-        
+
         // Apply 5 iterations (within unwind(6) bound)
         let result = moc.apply_recursive_operator(initial_state, lambda_m, 5);
-        
+
         if lambda_m >= bound {
-            kani::assert(result.is_err(), "MOC MUST reject non-contractive scaling factors");
+            kani::assert(
+                result.is_err(),
+                "MOC MUST reject non-contractive scaling factors",
+            );
         } else {
             let final_state = result.unwrap();
             // Contractive mapping guarantees state decreases or remains 0
-            kani::assert(final_state <= initial_state, "Recursive application MUST be strictly contractive");
+            kani::assert(
+                final_state <= initial_state,
+                "Recursive application MUST be strictly contractive",
+            );
         }
     }
 
@@ -92,14 +103,20 @@ mod proofs {
     fn verify_prime_successor_axiom() {
         let p_current: u64 = kani::any();
         let p_next: u64 = kani::any();
-        
+
         let formal = PrimeSuccessorFormalism::new(p_current, p_next);
         let valid = formal.is_valid_jump();
-        
+
         if valid {
-            kani::assert(p_next > p_current, "A valid Prime Successor jump MUST be strictly monotonic");
+            kani::assert(
+                p_next > p_current,
+                "A valid Prime Successor jump MUST be strictly monotonic",
+            );
         } else {
-            kani::assert(p_next <= p_current, "An invalid jump means monotonicity failed");
+            kani::assert(
+                p_next <= p_current,
+                "An invalid jump means monotonicity failed",
+            );
         }
     }
 }

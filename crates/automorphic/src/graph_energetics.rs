@@ -32,11 +32,7 @@ pub enum EnergyViolation {
 }
 
 impl CertifiedGraphEnergetics {
-    pub fn update_edge(
-        &mut self,
-        edge_idx: usize,
-        new_weight: f64,
-    ) -> Result<(), EnergyViolation> {
+    pub fn update_edge(&mut self, edge_idx: usize, new_weight: f64) -> Result<(), EnergyViolation> {
         let delta = new_weight - self.graph.edges[edge_idx].weight;
         let new_energy = self.graph_energy() + delta;
         if new_energy > self.energy_bound {
@@ -63,24 +59,39 @@ mod verification {
         let mut cert = CertifiedGraphEnergetics {
             graph: GraphStructure {
                 vertices: vec![
-                    GraphVertex { id: 0, prime_label: 2 },
-                    GraphVertex { id: 1, prime_label: 3 },
+                    GraphVertex {
+                        id: 0,
+                        prime_label: 2,
+                    },
+                    GraphVertex {
+                        id: 1,
+                        prime_label: 3,
+                    },
                 ],
                 edges: vec![GraphEdge {
-                    source: GraphVertex { id: 0, prime_label: 2 },
-                    target: GraphVertex { id: 1, prime_label: 3 },
+                    source: GraphVertex {
+                        id: 0,
+                        prime_label: 2,
+                    },
+                    target: GraphVertex {
+                        id: 1,
+                        prime_label: 3,
+                    },
                     weight: 0.5,
                 }],
             },
             energy_bound: 1.0,
         };
-        
+
         let new_weight = kani::any::<f64>();
         kani::assume(new_weight > 0.0 && new_weight < 2.0);
-        
+
         let res = cert.update_edge(0, new_weight);
         if res.is_ok() {
-            kani::assert(cert.graph_energy() <= cert.energy_bound, "Energy bound violated after update");
+            kani::assert(
+                cert.graph_energy() <= cert.energy_bound,
+                "Energy bound violated after update",
+            );
         }
     }
 }

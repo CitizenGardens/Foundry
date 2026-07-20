@@ -1,10 +1,10 @@
 // ZMOD crate – production‑grade Rust implementation
 
-use serde::{Deserialize, Serialize};
-use thiserror::Error;
-use log::info;
 use blake3::Hasher;
 use chrono::Utc;
+use log::info;
+use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ZmodTensorWitness {
@@ -28,8 +28,14 @@ impl ZmodEngine {
     /// Compute the interaction of a single gradient with a prime.
     /// Returns `SCALE` when `p > 0` and `grad % p == 0`, otherwise `0`.
     pub fn step_interaction(&self, grad: u64, p: u64) -> Result<u64, ZmodViolation> {
-        if p == 0 { return Ok(0) };
-        if grad % p == 0 { Ok(Self::SCALE) } else { Ok(0) }
+        if p == 0 {
+            return Ok(0);
+        };
+        if grad % p == 0 {
+            Ok(Self::SCALE)
+        } else {
+            Ok(0)
+        }
     }
 
     /// Aggregate step interactions over a slice of gradients.

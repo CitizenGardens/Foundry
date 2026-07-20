@@ -6,9 +6,7 @@ pub fn generate_first_n_primes(count: usize) -> Vec<u64> {
         return Vec::new();
     }
 
-    (1..=count as u64)
-        .map(|n| nth_prime(n))
-        .collect()
+    (1..=count as u64).map(|n| nth_prime(n)).collect()
 }
 
 #[cfg(test)]

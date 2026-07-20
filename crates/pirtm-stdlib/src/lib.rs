@@ -1,10 +1,9 @@
 /// PIRTM Standard Library (MOC Primitives)
 /// Provides the foundational operators for PhaseSpace governed execution.
-
 pub mod matrix_engine;
 
 pub mod prelude {
-    pub use crate::moc::{Ap, EvalNF, Resonance, MOCWord};
+    pub use crate::moc::{Ap, EvalNF, MOCWord, Resonance};
 }
 
 pub mod moc {
@@ -53,7 +52,12 @@ pub mod moc {
                         (1.5, 0.9, 0.9, 0.9) // Unlawful Expansive
                     } else {
                         let pf = *p as f64;
-                        (1.0 / pf, 1.0 + (pf * 0.1), 1.0 + (pf * 0.15), 1.0 + (pf * 0.2))
+                        (
+                            1.0 / pf,
+                            1.0 + (pf * 0.1),
+                            1.0 + (pf * 0.15),
+                            1.0 + (pf * 0.2),
+                        )
                     }
                 }
                 MOCWord::Composite(left, right) => {
@@ -91,9 +95,9 @@ mod tests {
         let word = Ap(2) + Ap(3);
         let (c, r1, r2, r3) = EvalNF::evaluate(&word);
         let rsc = Resonance::calculate(r1, r2, r3);
-        
+
         assert_eq!(word.to_string(), "(Ap(2) + Ap(3))");
         assert!(c < 1.0 - 1e-6); // Lawful check
-        assert!(rsc >= 1.0);     // Resonance tension satisfied
+        assert!(rsc >= 1.0); // Resonance tension satisfied
     }
 }

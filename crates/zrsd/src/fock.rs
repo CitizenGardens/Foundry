@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use num_complex::Complex64;
+use serde::{Deserialize, Serialize};
 use std::f64;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,16 +40,19 @@ impl FockSpace {
     ) -> Result<ContractivityProof, Violation> {
         let norm = compute_operator_norm(op);
         if norm >= 1.0 - epsilon {
-            return Err(Violation::NormViolation { actual: norm, epsilon });
+            return Err(Violation::NormViolation {
+                actual: norm,
+                epsilon,
+            });
         }
         let k = compute_lipschitz_constant(op);
         if k >= 1.0 {
             return Err(Violation::LipschitzViolation { actual: k });
         }
-        
+
         let op_bytes = serde_json::to_vec(op).unwrap();
         let hash = blake3::hash(&op_bytes);
-        
+
         Ok(ContractivityProof {
             operator_norm: norm,
             lipschitz_constant: k,
@@ -97,7 +100,10 @@ mod verification {
 
         let space = FockSpace::new(1);
         if let Ok(proof) = space.verify_contractivity(&op, epsilon) {
-            kani::assert(proof.lipschitz_constant < 1.0, "Lipschitz constant must be < 1");
+            kani::assert(
+                proof.lipschitz_constant < 1.0,
+                "Lipschitz constant must be < 1",
+            );
         }
     }
 }

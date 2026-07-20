@@ -5,7 +5,7 @@ use std::path::Path;
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("riemann_zeta_ffi.h");
-    
+
     let header = r#"#ifndef RIEMANN_ZETA_FFI_H
 #define RIEMANN_ZETA_FFI_H
 

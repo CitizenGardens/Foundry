@@ -13,7 +13,7 @@ use crate::{ProverError, QueryOpening, StarkProof};
 use goldilocks::GoldilocksField;
 
 #[allow(unused_imports)]
-use goldilocks::polynomial::{ntt, intt, eval_poly};
+use goldilocks::polynomial::{eval_poly, intt, ntt};
 
 #[allow(dead_code)]
 pub struct FriProver {
@@ -42,7 +42,7 @@ impl FriProver {
         let lde_start = std::time::Instant::now();
         let domain_size = 1 << self.domain_pow;
         let mut extended_trace = Vec::with_capacity(trace.len());
-        
+
         for col in trace {
             // Interpolate to coefficients
             let mut coeffs = col.clone();
@@ -51,11 +51,11 @@ impl FriProver {
                 coeffs.resize(original_len.next_power_of_two(), GoldilocksField::ZERO);
             }
             goldilocks::polynomial::intt(&mut coeffs);
-            
+
             // Evaluate on larger domain
             coeffs.resize(domain_size, GoldilocksField::ZERO);
             goldilocks::polynomial::ntt(&mut coeffs);
-            
+
             extended_trace.push(coeffs);
         }
         println!("  - LDE took: {:?}", lde_start.elapsed());
@@ -73,7 +73,10 @@ impl FriProver {
         let comp_commit_start = std::time::Instant::now();
         let comp_tree = self.commit_polynomial(&composition)?;
         transcript.append_commitment(b"composition", &comp_tree.root());
-        println!("  - Composition commitment took: {:?}", comp_commit_start.elapsed());
+        println!(
+            "  - Composition commitment took: {:?}",
+            comp_commit_start.elapsed()
+        );
 
         // 4. FRI folding rounds
         let fri_start = std::time::Instant::now();
@@ -85,8 +88,13 @@ impl FriProver {
 
         // 6. Generate query openings
         let open_start = std::time::Instant::now();
-        let query_openings =
-            self.generate_query_openings(&extended_trace, &trace_tree, &composition, &fri_layers, &query_indices)?;
+        let query_openings = self.generate_query_openings(
+            &extended_trace,
+            &trace_tree,
+            &composition,
+            &fri_layers,
+            &query_indices,
+        )?;
         println!("  - Query openings took: {:?}", open_start.elapsed());
 
         // 7. Final polynomial should be constant after folding
@@ -265,12 +273,12 @@ impl FriProver {
     fn sample_query_indices(&self, transcript: &mut Keccak256Transcript) -> Vec<usize> {
         let mut indices = Vec::new();
         let domain_size = 1 << self.domain_pow;
-        
+
         for _ in 0..self.num_queries {
             let challenge = transcript.challenge(b"query_index");
             indices.push((challenge % domain_size as u64) as usize);
         }
-        
+
         indices
     }
 }

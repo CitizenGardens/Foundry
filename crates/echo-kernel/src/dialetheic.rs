@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 /// Truth values for Priest's Logic of Paradox (LP).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LpTruth {
-    True,   // 1
-    False,  // 0
-    Both,   // 1/2 (Dialetheia)
+    True,  // 1
+    False, // 0
+    Both,  // 1/2 (Dialetheia)
 }
 
 impl LpTruth {

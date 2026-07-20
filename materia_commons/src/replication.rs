@@ -1,6 +1,6 @@
+use crate::types::TrustLevel;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use crate::types::TrustLevel;
 
 /// Role of this Commander node in the replication topology.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, schemars::JsonSchema)]
@@ -45,10 +45,7 @@ pub enum ReplicationError {
     /// Primary ALP gate rejected the witness. Do NOT retry.
     /// Write to state/sync/quarantine/ and emit a structured log entry.
     #[error("policy rejection: {reason} (witness_id: {witness_id})")]
-    PolicyRejection {
-        witness_id: String,
-        reason: String,
-    },
+    PolicyRejection { witness_id: String, reason: String },
 
     /// SAT expired or invalid. Attempt exactly one rotation, then quarantine.
     #[error("authentication failure: SAT invalid or expired")]
@@ -70,8 +67,7 @@ impl ReplicationError {
     pub fn requires_quarantine(&self) -> bool {
         matches!(
             self,
-            ReplicationError::PolicyRejection { .. }
-                | ReplicationError::SchemaError(_)
+            ReplicationError::PolicyRejection { .. } | ReplicationError::SchemaError(_)
         )
     }
 }

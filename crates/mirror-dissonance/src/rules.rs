@@ -1,4 +1,4 @@
-use crate::schemas::{RuleViolation, Severity, OracleInput};
+use crate::schemas::{OracleInput, RuleViolation, Severity};
 
 pub async fn check_md001(input: &OracleInput) -> Vec<RuleViolation> {
     let mut violations = Vec::new();
@@ -7,7 +7,8 @@ pub async fn check_md001(input: &OracleInput) -> Vec<RuleViolation> {
         violations.push(RuleViolation {
             rule_id: "MD-001".to_string(),
             severity: Severity::High,
-            message: "Branch protection should be enabled with strict mode for merge queue".to_string(),
+            message: "Branch protection should be enabled with strict mode for merge queue"
+                .to_string(),
             context: None,
         });
     }

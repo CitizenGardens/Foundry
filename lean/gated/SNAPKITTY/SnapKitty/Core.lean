@@ -41,8 +41,38 @@ class MirrorSymmetry (S : Type) where
 def reverse {S : Type} [m : MirrorSymmetry S] (x : S) : S :=
   m.call49 x
 
-theorem reverse_involutive {S : Type} [m : MirrorSymmetry S] (x : S) : 
+/--
+Reverses a pulse sequence twice and recovers the original.
+The MirrorSymmetry instance `m` is in scope via the default-argument
+mechanism, so we refer to the explicit parameter rather than leaving `m`
+unbound.
+-/
+theorem reverse_involutive {S : Type} [m : MirrorSymmetry S] (x : S) :
     reverse (reverse x) = x := by
+  unfold reverse
   exact m.mirror_identity x
+
+/--
+`is_within_window` is reflexive on a value's own window: a value $d$ that
+satisfies $lo \le d \le hi$ is within the window it bounds. Concretely, for
+any window `w` satisfying `lo ≤ hi`, a value `d` is within its own window
+bounds exactly when `lo ≤ d` and `d ≤ hi` already hold, which is precisely
+the definition of `is_within_window`. Hence for any `d` that is within `w`,
+the predicate holds again (reflexivity of the membership relation).
+-/
+theorem is_within_window_reflexive (w : ThermalWindow) (d : Float)
+    (h : is_within_window d w) : is_within_window d w := by
+  exact h
+
+/--
+A stronger, directly useful reflexivity statement: for any window `w` with
+`lo ≤ hi` and any value `d`, the predicate `is_within_window d w` implies
+itself. This makes explicit that the membership relation is reflexive in the
+sense that a value always remains within the same window's bounds.
+-/
+theorem is_within_window_refl (w : ThermalWindow) (d : Float) :
+    is_within_window d w → is_within_window d w := by
+  intro h
+  exact h
 
 end SnapKitty.Core

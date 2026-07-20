@@ -47,11 +47,21 @@ impl CRMFWitness {
         langlands_proof: Option<Vec<u8>>,
     ) -> Self {
         let input_hash = hex::encode(Sha256::digest(flatten_f64(input_params)));
-        let output_params: Vec<f64> = input_params.iter().zip(delta_theta).map(|(a,b)| a+b).collect();
+        let output_params: Vec<f64> = input_params
+            .iter()
+            .zip(delta_theta)
+            .map(|(a, b)| a + b)
+            .collect();
         let output_hash = hex::encode(Sha256::digest(flatten_f64(&output_params)));
-        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-        let transform_id = hex::encode(Sha256::digest(format!("{}{}{}", input_hash, output_hash, timestamp).as_bytes()));
-        let previous_witness_hash = previous.map(|w| hex::encode(Sha256::digest(serde_json::to_string(w).unwrap().as_bytes())));
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let transform_id = hex::encode(Sha256::digest(
+            format!("{}{}{}", input_hash, output_hash, timestamp).as_bytes(),
+        ));
+        let previous_witness_hash = previous
+            .map(|w| hex::encode(Sha256::digest(serde_json::to_string(w).unwrap().as_bytes())));
         CRMFWitness {
             operator_id,
             transform_id,
@@ -59,7 +69,11 @@ impl CRMFWitness {
             output_hash,
             lipschitz_bound: delta_theta.iter().map(|x| x.abs()).fold(0.0_f64, f64::max),
             contraction_bound_after: c_after,
-            resonance_status: if r_sc_after >= 1.0 { "safe".into() } else { "clamped".into() },
+            resonance_status: if r_sc_after >= 1.0 {
+                "safe".into()
+            } else {
+                "clamped".into()
+            },
             drift_value: drift,
             timestamp,
             previous_witness_hash,
@@ -73,6 +87,8 @@ impl CRMFWitness {
     }
 
     pub fn hash(&self) -> String {
-        hex::encode(Sha256::digest(serde_json::to_string(self).unwrap().as_bytes()))
+        hex::encode(Sha256::digest(
+            serde_json::to_string(self).unwrap().as_bytes(),
+        ))
     }
 }

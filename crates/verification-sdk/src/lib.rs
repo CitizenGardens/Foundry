@@ -9,71 +9,71 @@
 #![forbid(unsafe_code)]
 #![deny(clippy::all, missing_docs)]
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::prelude::*;
 use std::sync::Arc;
+use wasm_bindgen::prelude::*;
 
 /// Represents a zero‑knowledge proof bundle with associated public signals and verification key.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProofBundle {
     /// The zero‑knowledge proof data.
-pub proof: serde_json::Value,
+    pub proof: serde_json::Value,
     #[serde(rename = "publicSignals")]
     /// The public signals associated with the proof.
-pub public_signals: Vec<String>,
+    pub public_signals: Vec<String>,
     #[serde(rename = "vKey")]
     /// The verification key for the proof.
-pub v_key: serde_json::Value,
+    pub v_key: serde_json::Value,
 }
 
 /// Result of a proof verification indicating success or error.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationResult {
     /// Indicates whether the proof was verified successfully.
-pub verified: bool,
+    pub verified: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// Optional error message if verification failed.
-pub error: Option<String>,
+    pub error: Option<String>,
 }
 
 /// Outcome of a CSL rule evaluation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CslRuleResult {
     /// Whether the CSL rule permits the operation.
-pub allowed: bool,
+    pub allowed: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// Optional justification when a rule disallows an operation.
-pub reason: Option<String>,
+    pub reason: Option<String>,
 }
 
 /// Result returned after a pre‑submission check, including verification and CSL outcomes.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PreSubmissionResult {
     /// Overall acceptance result of the pre‑submission check.
-pub accepted: bool,
+    pub accepted: bool,
     #[serde(rename = "verificationResult")]
     /// Result of the proof verification step.
-pub verification_result: VerificationResult,
+    pub verification_result: VerificationResult,
     #[serde(rename = "cslResult", skip_serializing_if = "Option::is_none")]
     /// Result of the CSL rule evaluation, if any.
-pub csl_result: Option<CslRuleResult>,
+    pub csl_result: Option<CslRuleResult>,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// Optional receipt generated for silent submissions.
-pub receipt: Option<serde_json::Value>,
+    pub receipt: Option<serde_json::Value>,
 }
 
 /// Trait for CSL (Compliance Specification Language) rules that can be evaluated against public signals.
 pub trait CslRule: Send + Sync {
     /// Evaluates this rule against the provided public signals.
-fn evaluate(&self, public_signals: &[String]) -> Result<CslRuleResult, String>;
+    fn evaluate(&self, public_signals: &[String]) -> Result<CslRuleResult, String>;
 }
 
 /// A rule that caps a numeric signal at a maximum amount.
 #[derive(Debug, Clone)]
 pub struct AmountCapRule {
     /// Index of the signal to which the cap applies.
-pub signal_index: usize,
+    pub signal_index: usize,
     /// Maximum allowed amount for the specified signal.
-pub max_amount: u64,
+    pub max_amount: u64,
 }
 
 impl CslRule for AmountCapRule {
@@ -109,21 +109,21 @@ impl CslRule for AmountCapRule {
 /// Engine that holds a collection of CSL rules and evaluates them.
 pub struct CslEngine {
     /// Collection of CSL rules registered with the engine.
-pub rules: Vec<Arc<dyn CslRule>>,
+    pub rules: Vec<Arc<dyn CslRule>>,
 }
 
 impl CslEngine {
-        /// Creates a new, empty CSL engine.
+    /// Creates a new, empty CSL engine.
     pub fn new() -> Self {
         Self { rules: Vec::new() }
     }
 
-        /// Registers a new CSL rule with the engine.
+    /// Registers a new CSL rule with the engine.
     pub fn register_rule(&mut self, rule: Arc<dyn CslRule>) {
         self.rules.push(rule);
     }
 
-        /// Checks all registered rules against the provided public signals.
+    /// Checks all registered rules against the provided public signals.
     pub fn check_lawfulness(&self, public_signals: &[String]) -> Result<CslRuleResult, String> {
         for rule in &self.rules {
             let res = rule.evaluate(public_signals)?;
@@ -142,7 +142,7 @@ impl CslEngine {
 pub struct ProofReceiptBuilder;
 
 impl ProofReceiptBuilder {
-        /// Constructs a minimal receipt for a silent proof submission.
+    /// Constructs a minimal receipt for a silent proof submission.
     pub fn silent(proof: &serde_json::Value, nullifier: &str, reason: &str) -> serde_json::Value {
         serde_json::json!({
             "proof": proof,
@@ -159,7 +159,7 @@ impl ProofReceiptBuilder {
 pub struct VerificationSDK;
 
 impl VerificationSDK {
-        /// Performs a quick local validation of the proof bundle structure.
+    /// Performs a quick local validation of the proof bundle structure.
     pub fn verify_locally(bundle: &ProofBundle) -> VerificationResult {
         // Simple structural and size validation matching legacy logic expectations
         if bundle.proof.is_null() || bundle.v_key.is_null() {
@@ -179,7 +179,10 @@ impl VerificationSDK {
             }
         };
 
-        if !proof_obj.contains_key("pi_a") || !proof_obj.contains_key("pi_b") || !proof_obj.contains_key("pi_c") {
+        if !proof_obj.contains_key("pi_a")
+            || !proof_obj.contains_key("pi_b")
+            || !proof_obj.contains_key("pi_c")
+        {
             return VerificationResult {
                 verified: false,
                 error: Some("Invalid Groth16 proof coordinates".to_string()),
@@ -192,7 +195,7 @@ impl VerificationSDK {
         }
     }
 
-        /// Runs the full pre‑submission pipeline: local verification followed by CSL rule checks.
+    /// Runs the full pre‑submission pipeline: local verification followed by CSL rule checks.
     pub fn pre_submission_check(
         bundle: &ProofBundle,
         csl_engine: &CslEngine,
@@ -210,7 +213,10 @@ impl VerificationSDK {
 
         let csl_res = csl_engine.check_lawfulness(&bundle.public_signals)?;
         if !csl_res.allowed {
-            let reason = csl_res.reason.clone().unwrap_or_else(|| "CSL Violation".to_string());
+            let reason = csl_res
+                .reason
+                .clone()
+                .unwrap_or_else(|| "CSL Violation".to_string());
             let receipt = ProofReceiptBuilder::silent(&bundle.proof, nullifier, &reason);
             return Ok(PreSubmissionResult {
                 accepted: false,
@@ -240,13 +246,15 @@ pub struct WasmCslEngine {
 #[wasm_bindgen]
 impl WasmCslEngine {
     #[wasm_bindgen(constructor)]
-        /// Constructs a new WASM CSL engine.
+    /// Constructs a new WASM CSL engine.
     pub fn new() -> Self {
-        Self { inner: CslEngine::new() }
+        Self {
+            inner: CslEngine::new(),
+        }
     }
 
     #[wasm_bindgen(js_name = registerRule)]
-        /// Registers a CSL rule via its WASM wrapper.
+    /// Registers a CSL rule via its WASM wrapper.
     pub fn register_rule(&mut self, rule: WasmCslRule) {
         self.inner.register_rule(rule.inner);
     }
@@ -261,9 +269,14 @@ pub struct WasmCslRule {
 #[wasm_bindgen]
 impl WasmCslRule {
     #[wasm_bindgen(js_name = newAmountCapRule)]
-        /// Creates a new amount‑cap rule from string parameters.
-    pub fn new_amount_cap_rule(signal_index: usize, max_amount_str: String) -> Result<WasmCslRule, JsError> {
-        let max_amount = max_amount_str.parse::<u64>().map_err(|e| JsError::new(&e.to_string()))?;
+    /// Creates a new amount‑cap rule from string parameters.
+    pub fn new_amount_cap_rule(
+        signal_index: usize,
+        max_amount_str: String,
+    ) -> Result<WasmCslRule, JsError> {
+        let max_amount = max_amount_str
+            .parse::<u64>()
+            .map_err(|e| JsError::new(&e.to_string()))?;
         Ok(WasmCslRule {
             inner: Arc::new(AmountCapRule {
                 signal_index,
@@ -280,7 +293,7 @@ pub struct WasmVerificationSDK;
 #[wasm_bindgen]
 impl WasmVerificationSDK {
     #[wasm_bindgen(js_name = verifyLocally)]
-        /// WASM binding for local verification of a proof bundle.
+    /// WASM binding for local verification of a proof bundle.
     pub fn verify_locally(bundle_val: JsValue) -> Result<JsValue, JsError> {
         let bundle: ProofBundle = serde_wasm_bindgen::from_value(bundle_val)?;
         let res = VerificationSDK::verify_locally(&bundle);
@@ -289,7 +302,7 @@ impl WasmVerificationSDK {
     }
 
     #[wasm_bindgen(js_name = preSubmissionCheck)]
-        /// WASM binding for the pre‑submission check pipeline.
+    /// WASM binding for the pre‑submission check pipeline.
     pub fn pre_submission_check(
         bundle_val: JsValue,
         engine_wrapper: &WasmCslEngine,
@@ -310,11 +323,13 @@ pub struct WasmAlpEngine;
 #[wasm_bindgen]
 impl WasmAlpEngine {
     #[wasm_bindgen(js_name = alpCheck)]
-        /// Checks ALP policy compliance for a given system state.
+    /// Checks ALP policy compliance for a given system state.
     pub fn alp_check(state_val: JsValue) -> Result<bool, JsError> {
         let state: multiplicity_alp::SystemState = serde_wasm_bindgen::from_value(state_val)?;
         let engine = multiplicity_alp::PolicyEngine;
-        let res = engine.check(&state).map_err(|e| JsError::new(&e.to_string()))?;
+        let res = engine
+            .check(&state)
+            .map_err(|e| JsError::new(&e.to_string()))?;
         Ok(res)
     }
 }
@@ -403,7 +418,7 @@ mod tests {
         let res = VerificationSDK::pre_submission_check(&bundle, &engine, "nullifier123").unwrap();
         assert!(!res.accepted);
         assert!(res.verification_result.verified);
-        
+
         let csl = res.csl_result.unwrap();
         assert!(!csl.allowed);
         assert!(csl.reason.unwrap().contains("exceeds cap"));

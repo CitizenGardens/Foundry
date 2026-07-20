@@ -9,7 +9,7 @@ mod tests {
         let tensor_json_byte: u8 = kani::any();
         let sat_proof_byte: u8 = kani::any();
         let kernel_key_byte: u8 = kani::any();
-        
+
         // This simulates the behavior of the wasm-bridge HybridProof binding
         let mut tensor_hasher = Sha256::new();
         tensor_hasher.update(&[tensor_json_byte]);
@@ -21,11 +21,11 @@ mod tests {
         signature_hasher.update(&[kernel_key_byte]);
         let final_signature = signature_hasher.finalize();
 
-        // Safety property: Ensure that the unified signature is structurally bound 
+        // Safety property: Ensure that the unified signature is structurally bound
         // to both the continuous tensor space and the discrete SAT constraint.
         // It must not equal the raw tensor hash or the SAT proof byte alone.
         assert!(final_signature != tensor_hash);
-        
+
         // We guarantee that the hybrid signature correctly envelopes the internal hashes
         // by verifying that modifying the kernel key alters the cryptographic bound.
         let mut alt_hasher = Sha256::new();

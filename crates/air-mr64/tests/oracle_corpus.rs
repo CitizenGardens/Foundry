@@ -25,9 +25,15 @@ impl XorShift64 {
     fn next_odd(&mut self, max: u64) -> u64 {
         loop {
             let n = self.next_u64();
-            if n < 3 { continue; }
-            if n > max { continue; }
-            if n % 2 == 0 { continue; }
+            if n < 3 {
+                continue;
+            }
+            if n > max {
+                continue;
+            }
+            if n % 2 == 0 {
+                continue;
+            }
             return n;
         }
     }
@@ -36,13 +42,19 @@ impl XorShift64 {
 // Reference Miller-Rabin using num-bigint
 // Returns true if probably prime, false if composite
 fn oracle_mr_bigint(n_u64: u64) -> bool {
-    if n_u64 < 2 { return false; }
-    if n_u64 == 2 || n_u64 == 3 { return true; }
-    if n_u64 % 2 == 0 { return false; }
+    if n_u64 < 2 {
+        return false;
+    }
+    if n_u64 == 2 || n_u64 == 3 {
+        return true;
+    }
+    if n_u64 % 2 == 0 {
+        return false;
+    }
 
     let n = BigUint::from(n_u64);
     let nm1 = &n - 1u32;
-    
+
     // Factor n-1 = 2^s * d
     let mut s = 0u32;
     let mut d = nm1.clone();
@@ -54,7 +66,9 @@ fn oracle_mr_bigint(n_u64: u64) -> bool {
     let bases: [u64; 5] = [2, 3, 5, 7, 11];
     for &a_val in &bases {
         let a = BigUint::from(a_val);
-        if a >= n { break; }
+        if a >= n {
+            break;
+        }
 
         let mut x = a.modpow(&d, &n);
         if x == BigUint::one() || x == nm1 {
@@ -81,7 +95,7 @@ fn oracle_mr_bigint(n_u64: u64) -> bool {
 fn oracle_corpus_5k_checks() {
     let mut rng = XorShift64::new(12345);
     let count = 5000;
-    
+
     // Explicit Carmichael numbers and edge cases
     let explicit_checks = vec![
         561, 1105, 1729, 2465, 2821, 6601, 8911, // Carmichael
@@ -94,13 +108,16 @@ fn oracle_corpus_5k_checks() {
         let executor = MR64Executor::new(n);
         let exec_decision = executor.decision();
         let oracle_decision = oracle_mr_bigint(n);
-        
+
         if exec_decision != oracle_decision {
-             eprintln!("Mismatch for n={}: Executor={}, Oracle={}", n, exec_decision, oracle_decision);
-             mismatches += 1;
+            eprintln!(
+                "Mismatch for n={}: Executor={}, Oracle={}",
+                n, exec_decision, oracle_decision
+            );
+            mismatches += 1;
         }
     }
-    
+
     // Warn about PSP-2,3 mismatch which is expected given current Executor implementation
     let psp23 = 1373653;
     let exec_psp = MR64Executor::new(psp23).decision();
@@ -108,7 +125,10 @@ fn oracle_corpus_5k_checks() {
     if exec_psp != oracle_psp {
         println!("Note: Known mismatch for PSP(2,3) n={}. Executor={}, Oracle={}. This confirms Executor uses only bases 2,3.", psp23, exec_psp, oracle_psp);
     } else {
-        println!("Unexpected: PSP(2,3) n={} matched? Executor={}, Oracle={}", psp23, exec_psp, oracle_psp);
+        println!(
+            "Unexpected: PSP(2,3) n={} matched? Executor={}, Oracle={}",
+            psp23, exec_psp, oracle_psp
+        );
     }
 
     // Check random 5k
@@ -117,10 +137,13 @@ fn oracle_corpus_5k_checks() {
         let executor = MR64Executor::new(n);
         let exec_decision = executor.decision();
         let oracle_decision = oracle_mr_bigint(n);
-        
+
         if exec_decision != oracle_decision {
-             eprintln!("Mismatch for n={}: Executor={}, Oracle={}", n, exec_decision, oracle_decision);
-             mismatches += 1;
+            eprintln!(
+                "Mismatch for n={}: Executor={}, Oracle={}",
+                n, exec_decision, oracle_decision
+            );
+            mismatches += 1;
         }
     }
 

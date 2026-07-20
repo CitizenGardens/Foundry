@@ -28,7 +28,11 @@ impl AlpEngine {
     ///
     /// Mirrors the contradiction rule used by `PolicyEngine`: a policy mixing
     /// `NoOp` with a concrete perturbation is contradictory and rejected.
-    pub fn evaluate(&self, policy: &AlpPolicy, state: &SystemState) -> Result<RtaMetric, EvalError> {
+    pub fn evaluate(
+        &self,
+        policy: &AlpPolicy,
+        state: &SystemState,
+    ) -> Result<RtaMetric, EvalError> {
         let mut has_increase = false;
         let mut has_decrease = false;
         let mut has_noop = false;

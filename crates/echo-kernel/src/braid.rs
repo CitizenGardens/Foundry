@@ -43,19 +43,23 @@ impl EchoBraidState {
         if msg.sender.value == msg.receiver.value {
             return Err(SendError::SelfLoop);
         }
-        
-        // No cycles check (for two nodes, if channel A->B exists, or B->A exists, we might reject, 
+
+        // No cycles check (for two nodes, if channel A->B exists, or B->A exists, we might reject,
         // but let's just check if the exact channel is already active as per ADR)
-        if self.active_channels.iter().any(|(s, r)|
-            s.value == msg.sender.value && r.value == msg.receiver.value) {
+        if self
+            .active_channels
+            .iter()
+            .any(|(s, r)| s.value == msg.sender.value && r.value == msg.receiver.value)
+        {
             return Err(SendError::ChannelActive);
         }
-        
+
         // In a fuller implementation, we'd do a topological sort or cycle detection on active_channels + new edge
         // For Kani verification, we can encode the constraint.
 
         self.queued_messages.push(msg.clone());
-        self.active_channels.push((msg.sender.clone(), msg.receiver.clone()));
+        self.active_channels
+            .push((msg.sender.clone(), msg.receiver.clone()));
         self.system_energy *= 0.99; // Contractive step
         Ok(())
     }
@@ -68,29 +72,40 @@ mod verification {
     #[kani::proof]
     fn proof_send_preserves_contraction() {
         let mut state = EchoBraidState::new(100.0);
-        
+
         let msg = EchoMessage {
-            sender: AgentId { value: "A".to_string() },
-            receiver: AgentId { value: "B".to_string() },
+            sender: AgentId {
+                value: "A".to_string(),
+            },
+            receiver: AgentId {
+                value: "B".to_string(),
+            },
             payload: "test".to_string(),
             contractive_proof: "proof".to_string(),
         };
 
         let old_energy = state.system_energy;
         let res = state.send(msg);
-        
+
         if res.is_ok() {
-            kani::assert(state.system_energy < old_energy, "System energy must decrease");
+            kani::assert(
+                state.system_energy < old_energy,
+                "System energy must decrease",
+            );
         }
     }
 
     #[kani::proof]
     fn proof_no_self_loops() {
         let mut state = EchoBraidState::new(100.0);
-        
+
         let msg = EchoMessage {
-            sender: AgentId { value: "A".to_string() },
-            receiver: AgentId { value: "A".to_string() },
+            sender: AgentId {
+                value: "A".to_string(),
+            },
+            receiver: AgentId {
+                value: "A".to_string(),
+            },
             payload: "test".to_string(),
             contractive_proof: "proof".to_string(),
         };

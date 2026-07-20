@@ -1,7 +1,7 @@
 // prms/src/petc.rs
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use sha2::{Sha256, Digest};
-use serde::{Serialize, Deserialize};
 
 pub type Atom = u64;
 
@@ -12,7 +12,9 @@ pub struct AlgebraicSignature {
 
 impl AlgebraicSignature {
     pub fn zero() -> Self {
-        Self { components: HashMap::new() }
+        Self {
+            components: HashMap::new(),
+        }
     }
 
     pub fn combine(&self, other: &Self) -> Self {
@@ -21,7 +23,9 @@ impl AlgebraicSignature {
             *combined.entry(atom).or_insert(0) += exponent;
         }
         combined.retain(|_, &mut exp| exp != 0);
-        Self { components: combined }
+        Self {
+            components: combined,
+        }
     }
 }
 
@@ -56,9 +60,9 @@ pub struct ProofWitnessVerificationSystem;
 
 impl ProofWitnessVerificationSystem {
     pub fn compute_provenance_hash(
-        header: &BytecodeHeader, 
-        alpha: f64, 
-        prime_table: &[u64]
+        header: &BytecodeHeader,
+        alpha: f64,
+        prime_table: &[u64],
     ) -> [u8; 32] {
         let mut hasher = Sha256::new();
         let header_bytes = bincode::serialize(header).unwrap_or_default();

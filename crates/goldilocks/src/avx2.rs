@@ -1,5 +1,5 @@
-use std::arch::x86_64::*;
 use crate::GOLDILOCKS_PRIME;
+use std::arch::x86_64::*;
 
 #[derive(Clone, Copy, Debug)]
 #[repr(transparent)]
@@ -100,27 +100,28 @@ unsafe fn mul_64x64_to_128(a: __m256i, b: __m256i) -> (__m256i, __m256i) {
     let b_lo = b;
     let a_hi = _mm256_srli_epi64(a, 32);
     let b_hi = _mm256_srli_epi64(b, 32);
-    
+
     let ll = _mm256_mul_epu32(a_lo, b_lo);
     let lh = _mm256_mul_epu32(a_lo, b_hi);
     let hl = _mm256_mul_epu32(a_hi, b_lo);
     let hh = _mm256_mul_epu32(a_hi, b_hi);
-    
+
     let mid = _mm256_add_epi64(lh, hl);
     let carry_mask = cmplt_u64(mid, lh);
     let mid_carry = _mm256_and_si256(carry_mask, _mm256_set1_epi64x(1));
-    
+
     let hh_final = _mm256_add_epi64(hh, _mm256_slli_epi64(mid_carry, 32));
-    
+
     let mid_lo = _mm256_slli_epi64(mid, 32);
     let mid_hi = _mm256_srli_epi64(mid, 32);
-    
+
     let res_lo = _mm256_add_epi64(ll, mid_lo);
     let carry_mask2 = cmplt_u64(res_lo, ll);
-    let res_hi_carry = _mm256_add_epi64(mid_hi, _mm256_and_si256(carry_mask2, _mm256_set1_epi64x(1)));
-    
+    let res_hi_carry =
+        _mm256_add_epi64(mid_hi, _mm256_and_si256(carry_mask2, _mm256_set1_epi64x(1)));
+
     let res_hi = _mm256_add_epi64(hh_final, res_hi_carry);
-    
+
     (res_lo, res_hi)
 }
 
@@ -129,17 +130,17 @@ unsafe fn mul_64x64_to_128(a: __m256i, b: __m256i) -> (__m256i, __m256i) {
 #[target_feature(enable = "avx2")]
 unsafe fn reduce_wide(lo: __m256i, hi: __m256i) -> __m256i {
     let p = _mm256_set1_epi64x(GOLDILOCKS_PRIME as i64);
-    
+
     let hi_lo = _mm256_and_si256(hi, _mm256_set1_epi64x(0xFFFFFFFF));
     let hi_hi = _mm256_srli_epi64(hi, 32);
-    
+
     let hi_lo_32 = _mm256_slli_epi64(hi_lo, 32);
     let mut reduced = _mm256_add_epi64(lo, hi_lo_32);
-    
+
     let carry1 = cmplt_u64(reduced, lo);
     let carry1_val = _mm256_and_si256(carry1, _mm256_set1_epi64x(0xFFFFFFFF));
     reduced = _mm256_add_epi64(reduced, carry1_val);
-    
+
     let mask_sub1 = cmplt_u64(reduced, hi_lo);
     reduced = _mm256_sub_epi64(reduced, hi_lo);
     reduced = _mm256_add_epi64(reduced, _mm256_and_si256(mask_sub1, p));
@@ -147,7 +148,7 @@ unsafe fn reduce_wide(lo: __m256i, hi: __m256i) -> __m256i {
     let mask_sub2 = cmplt_u64(reduced, hi_hi);
     reduced = _mm256_sub_epi64(reduced, hi_hi);
     reduced = _mm256_add_epi64(reduced, _mm256_and_si256(mask_sub2, p));
-    
+
     let mask_final = cmpge_u64(reduced, p);
     _mm256_sub_epi64(reduced, _mm256_and_si256(mask_final, p))
 }
@@ -161,11 +162,17 @@ mod tests {
     #[test]
     fn test_avx2_mul_edge_cases() {
         let edges = [
-            0, 1, 2, 0xFFFFFFFF, 0x100000000, 
-            GOLDILOCKS_PRIME - 1, GOLDILOCKS_PRIME - 2,
-            0x12345678, 0xABCDEF01,
+            0,
+            1,
+            2,
+            0xFFFFFFFF,
+            0x100000000,
+            GOLDILOCKS_PRIME - 1,
+            GOLDILOCKS_PRIME - 2,
+            0x12345678,
+            0xABCDEF01,
         ];
-        
+
         for &a_val in &edges {
             for &b_val in &edges {
                 unsafe {
@@ -174,11 +181,11 @@ mod tests {
                     let c_avx = Avx2Goldilocks::mul(a_avx, b_avx);
                     let mut c_vals = [0u64; 4];
                     c_avx.store(&mut c_vals);
-                    
+
                     let fa = GoldilocksField::new(a_val);
                     let fb = GoldilocksField::new(b_val);
                     let expected = fa.mul(&fb).to_canonical();
-                    
+
                     assert_eq!(c_vals[0], expected);
                     assert_eq!(c_vals[1], expected);
                 }

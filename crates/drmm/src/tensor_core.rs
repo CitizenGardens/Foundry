@@ -2,20 +2,20 @@ use ndarray::Array2;
 use num_prime::nt_funcs::nth_prime;
 
 /// Generate a tensor of shape (dim, dim) where each entry is weighted by prime-indexed coefficients.
-/// 
+///
 /// Parity with: drmm/src/tensor_core.py -> prime_indexed_tensor
 pub fn prime_indexed_tensor(max_prime: usize, dim: usize) -> Array2<f64> {
-    use num_prime::nt_funcs::is_prime;
     use num_prime::Primality;
+    use num_prime::nt_funcs::is_prime;
     let primes: Vec<u64> = (1..=max_prime as u64)
         .filter(|&n| match is_prime(&n, None) {
             Primality::No => false,
             _ => true,
         })
         .collect();
-    
+
     let mut tensor = Array2::zeros((dim, dim));
-    
+
     if primes.is_empty() {
         return tensor;
     }
@@ -26,12 +26,12 @@ pub fn prime_indexed_tensor(max_prime: usize, dim: usize) -> Array2<f64> {
             tensor[[i, j]] = primes[idx] as f64;
         }
     }
-    
+
     tensor
 }
 
 /// Normalize a tensor using Frobenius norm.
-/// 
+///
 /// Parity with: drmm/src/tensor_core.py -> normalize_tensor
 pub fn normalize_tensor(t: &Array2<f64>) -> Array2<f64> {
     let mut square_sum = 0.0;
@@ -40,15 +40,11 @@ pub fn normalize_tensor(t: &Array2<f64>) -> Array2<f64> {
     }
     let norm = square_sum.sqrt();
 
-    if norm > 1e-12 {
-        t / norm
-    } else {
-        t.clone()
-    }
+    if norm > 1e-12 { t / norm } else { t.clone() }
 }
 
 /// Compute eigenvalues of a tensor.
-/// 
+///
 /// Parity with: drmm/src/tensor_core.py -> tensor_spectrum
 /// NOTE: Stubbed until a Lapack backend is available in the environment.
 pub fn tensor_spectrum(_t: &Array2<f64>) -> Vec<num_complex::Complex<f64>> {

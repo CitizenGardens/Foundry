@@ -1,7 +1,7 @@
 #[cfg(kani)]
 mod drmm_verification {
     use ndarray::{Array1, Array2};
-    // In a real verification, we'd import the actual structures. 
+    // In a real verification, we'd import the actual structures.
     // Here we construct bounded models for the plant and controller.
 
     /// Verifies the Weyl Gap lower bound property from DRMM:
@@ -19,7 +19,7 @@ mod drmm_verification {
         kani::assume(delta_s > 0.0);
         kani::assume(w_norm >= 0.0);
         kani::assume(r_bound >= 0.0);
-        
+
         // Assumption A (ii): ||C(w)|| <= r < delta_S / 2
         kani::assume(w_norm <= r_bound);
         kani::assume(r_bound < delta_s / 2.0);
@@ -28,7 +28,10 @@ mod drmm_verification {
         let calculated_gap = delta_s - 2.0 * w_norm;
 
         // Verify Pilot Theorem (i) Pinning & Gap
-        assert!(calculated_gap > 0.0, "DRMM Pilot Theorem: Weyl gap collapsed under valid bounds!");
+        assert!(
+            calculated_gap > 0.0,
+            "DRMM Pilot Theorem: Weyl gap collapsed under valid bounds!"
+        );
     }
 
     /// Verifies that the ||C(w)|| <= sum |w_p| b_p is mathematically consistent
@@ -42,7 +45,7 @@ mod drmm_verification {
 
         let mut sum_w_b = 0.0;
         let mut max_w = 0.0;
-        
+
         for i in 0..P {
             kani::assume(w[i] >= -10.0 && w[i] <= 10.0); // finite bounds for Kani float resolution
             let abs_w = w[i].abs();
@@ -53,6 +56,9 @@ mod drmm_verification {
         }
 
         // Basic consistency check: the 1-norm weighted sum is always bounded above by P * max(w) * max(b)
-        assert!(sum_w_b <= (P as f64) * max_w * 1.2, "Norm bound violated triangle inequality constraints.");
+        assert!(
+            sum_w_b <= (P as f64) * max_w * 1.2,
+            "Norm bound violated triangle inequality constraints."
+        );
     }
 }

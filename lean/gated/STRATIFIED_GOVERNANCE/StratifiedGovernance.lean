@@ -70,35 +70,35 @@ instance : LE ResourceBudget where
           a.max_latency_ns ≤ b.max_latency_ns := Iff.rfl
 
 theorem resource_budget_monotonic (s₁ s₂ : Stratum)
-  (h : s₁ ≤ s₂) :
-  ∀ b, b ∈ actualConsumption s₁ → b ≤ budgetForStratum s₂ := by
+    (h : s₁ ≤ s₂) :
+    ∀ b, b ∈ actualConsumption s₁ → b ≤ budgetForStratum s₂ := by
   intro b hb
-  cases hb with
-  | mem_cons head tail =>
-    cases s₁ with
-    | S0 =>
-      cases s₂ with
-      | S0 => simp [budgetForStratum] at h ⊢; exact h
-      | S2 => simp [budgetForStratum]
-      | S4 => simp [budgetForStratum]
-      | S6 => simp [budgetForStratum]
-    | S2 =>
-      cases s₂ with
-      | S0 => simp [budgetForStratum] at h
-      | S2 => simp [budgetForStratum] at h ⊢; exact h
-      | S4 => simp [budgetForStratum]
-      | S6 => simp [budgetForStratum]
-    | S4 =>
-      cases s₂ with
-      | S0 => simp [budgetForStratum] at h
-      | S2 => simp [budgetForStratum] at h
-      | S4 => simp [budgetForStratum] at h ⊢; exact h
-      | S6 => simp [budgetForStratum]
-    | S6 =>
-      cases s₂ with
-      | S0 => simp [budgetForStratum] at h
-      | S2 => simp [budgetForStratum] at h
-      | S4 => simp [budgetForStratum] at h
-      | S6 => simp [budgetForStratum] at h ⊢; exact h
+  simp [actualConsumption] at hb
+  rw [hb]
+  cases s₁ with
+  | S0 =>
+    cases s₂ with
+    | S0 => simp [budgetForStratum]
+    | S2 => simp [budgetForStratum]
+    | S4 => simp [budgetForStratum]
+    | S6 => simp [budgetForStratum]
+  | S2 =>
+    cases s₂ with
+    | S0 => simp [Stratum.le_def] at h; exact False.elim ((by decide : ¬2 ≤ 0) h)
+    | S2 => simp [budgetForStratum]
+    | S4 => simp [budgetForStratum]
+    | S6 => simp [budgetForStratum]
+  | S4 =>
+    cases s₂ with
+    | S0 => simp [Stratum.le_def] at h; exact False.elim ((by decide : ¬4 ≤ 0) h)
+    | S2 => simp [Stratum.le_def] at h; exact False.elim ((by decide : ¬4 ≤ 2) h)
+    | S4 => simp [budgetForStratum]
+    | S6 => simp [budgetForStratum]
+  | S6 =>
+    cases s₂ with
+    | S0 => simp [Stratum.le_def] at h; exact False.elim ((by decide : ¬6 ≤ 0) h)
+    | S2 => simp [Stratum.le_def] at h; exact False.elim ((by decide : ¬6 ≤ 2) h)
+    | S4 => simp [Stratum.le_def] at h; exact False.elim ((by decide : ¬6 ≤ 4) h)
+    | S6 => simp [budgetForStratum]
 
 end StratifiedGovernance

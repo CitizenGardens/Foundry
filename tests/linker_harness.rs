@@ -4,7 +4,7 @@
 
 #[cfg(test)]
 mod tests {
-    use multiplicity::{Signature, PrimeMonomialMatrix, multiplicity};
+    use multiplicity::{multiplicity, PrimeMonomialMatrix, Signature};
     use num_rational::BigRational;
     use num_traits::One;
 
@@ -127,6 +127,9 @@ mod tests {
         assert_eq!(dense.len(), 1);
         assert_eq!(dense[0].len(), 1);
         // Entry (0,0) = +1 * multiplicity(2^1) = 2
-        assert_eq!(dense[0][0], BigRational::new(num_bigint::BigInt::from(2), num_bigint::BigInt::one()));
+        assert_eq!(
+            dense[0][0],
+            BigRational::new(num_bigint::BigInt::from(2), num_bigint::BigInt::one())
+        );
     }
 }

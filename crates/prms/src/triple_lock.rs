@@ -6,7 +6,10 @@
 //! Publisher → signs telemetry snapshot into Archivum
 //! ```
 
-use super::{PrmsEngine, LineageMetrics, ComplianceBudget, TelemetryFrame, PrmsViolation, PrmsTelemetryWitness};
+use super::{
+    ComplianceBudget, LineageMetrics, PrmsEngine, PrmsTelemetryWitness, PrmsViolation,
+    TelemetryFrame,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct TripleLockPrms {
@@ -115,7 +118,9 @@ mod tests {
         #[cfg(feature = "archivum")]
         {
             let mut ledger = archivum::WitnessLedger::new("/tmp/prms_test_ledger.json");
-            let (_frame, _witness) = lock.execute(&engine, &metrics, &budget, 500, &mut ledger).unwrap();
+            let (_frame, _witness) = lock
+                .execute(&engine, &metrics, &budget, 500, &mut ledger)
+                .unwrap();
         }
 
         #[cfg(not(feature = "archivum"))]

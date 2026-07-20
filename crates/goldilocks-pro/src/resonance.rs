@@ -3,12 +3,14 @@ use crate::GoldilocksField;
 /// Lever 3 — Resonance Encoding Layer (Normative)
 /// A resonance word is a 64-bit value with layout:
 /// - Bits 0–5: c ∈ {0, …, 95} — R96 resonance class
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// ResonanceWord encodes:
 /// - Bits 0-5: class
 /// - Bits 6-63: payload
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
+)]
 pub struct ResonanceWord(pub u64);
 
 impl ResonanceWord {
@@ -87,7 +89,7 @@ mod tests {
         let (unpacked_c, unpacked_val) = rw.unpack_q29_29();
         assert_eq!(unpacked_c, c);
         assert!((unpacked_val - val).abs() < 1e-8);
-        
+
         let neg_val = -1.2345;
         let rw_neg = ResonanceWord::pack_q29_29(c, neg_val);
         let (_, unpacked_neg) = rw_neg.unpack_q29_29();

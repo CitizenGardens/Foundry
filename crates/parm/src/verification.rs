@@ -83,7 +83,13 @@ mod verification {
         let (_, w1) = engine.seal_with_witness(&[p1, p2]).unwrap();
         let (_, w2) = engine.seal_with_witness(&[p1, p2]).unwrap();
 
-        kani::assert(w1.input_hash == w2.input_hash, "Witness hash must be deterministic");
-        kani::assert(w1.sealed_value == w2.sealed_value, "Witness value must be deterministic");
+        kani::assert(
+            w1.input_hash == w2.input_hash,
+            "Witness hash must be deterministic",
+        );
+        kani::assert(
+            w1.sealed_value == w2.sealed_value,
+            "Witness value must be deterministic",
+        );
     }
 }

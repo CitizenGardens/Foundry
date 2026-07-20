@@ -41,7 +41,10 @@ impl RecursiveFeedback {
             let delta = compute_delta(feature);
             let norm = delta.iter().map(|&d| d * d).sum::<f64>().sqrt();
             if norm < 1e-10 {
-                return Ok(FixedPoint { iteration: i, feature: feature.clone() });
+                return Ok(FixedPoint {
+                    iteration: i,
+                    feature: feature.clone(),
+                });
             }
             for (v, d) in feature.values.iter_mut().zip(delta.iter()) {
                 *v += alpha * d;
@@ -86,7 +89,10 @@ pub struct FilteredFeatures {
 pub struct EigenvalueFilter;
 
 impl EigenvalueFilter {
-    pub fn apply(tensor: &TensorNetworkOutput, threshold: f64) -> Result<FilteredFeatures, FilterError> {
+    pub fn apply(
+        tensor: &TensorNetworkOutput,
+        threshold: f64,
+    ) -> Result<FilteredFeatures, FilterError> {
         let mut filtered = Vec::new();
         for (f, e) in tensor.features.iter().zip(tensor.eigenvalues.iter()) {
             if *e >= threshold {
@@ -117,7 +123,7 @@ mod verification {
         };
         let iterations = 1000;
         let alpha = 0.5;
-        
+
         // This will converge since delta = -0.1 * v, so v_new = v * (1 - 0.1 * 0.5) = v * 0.95
         let res = RecursiveFeedback::refine(&mut feature, iterations, alpha);
         kani::assert(res.is_ok(), "Feedback converges");

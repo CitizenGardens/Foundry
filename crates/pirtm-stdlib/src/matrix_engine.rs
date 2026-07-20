@@ -49,25 +49,28 @@ mod verification {
         let cols: usize = kani::any();
         let grade: i64 = kani::any();
         let contraction_param: f64 = kani::any();
-        
+
         kani::assume(contraction_param.is_finite());
-        
+
         let m = PrimeMonomialMatrix {
             rows,
             cols,
             entries: vec![],
             grade,
         };
-        
+
         let k = TensorKernel {
             name: "test".to_string(),
             contraction_param,
         };
-        
+
         match evaluate(&k, &m) {
             Ok(m_out) => {
                 kani::assert(contraction_param < 1.0, "Allowed evaluation with c >= 1.0");
-                kani::assert(m_out.grade == m.grade, "Signature grade changed during evaluation");
+                kani::assert(
+                    m_out.grade == m.grade,
+                    "Signature grade changed during evaluation",
+                );
                 kani::assert(m_out.rows == m.rows, "Row dimension altered");
                 kani::assert(m_out.cols == m.cols, "Col dimension altered");
             }

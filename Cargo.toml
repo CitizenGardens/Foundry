@@ -9,7 +9,8 @@ members = [
     "crates/zmod",
     "crates/prms",
     "crates/echo-kernel",
-    "crates/resolvent-verify",
+    "phase-mirror-agent",
+    "crates/lean-sdk",
     "crates/riemann-zeta",
     "crates/prime-mirror-verification",
     "models/ataraxia",
@@ -25,8 +26,8 @@ members = [
   , "docs/adr/RustADR", "lean/Core/prime_tensors/sedona_spine", "crates/pirtm-compiler", "crates/drmm", "crates/zmos", "crates/sigma", "crates/strata", "crates/pirtm-stdlib", "crates/ace", "crates/fermat-certifier", "crates/recursive-prover", "crates/xi-compiler", "crates/automorphic", "crates/hybrid-quantum", "crates/alp", "crates/verification-sdk", "crates/orf", "crates/moc", "crates/zrsd", "crates/digital-twin", "crates/prime-quantum", "crates/ike", "crates/ptqe", "crates/cv-multiplicity", "crates/potu", "crates/zmod", "crates/parm", "crates/prms",     "crates/xi-formal", "crates/roc", "crates/wasm-bridge", "crates/meta-relativity", "crates/affine-core", "crates/ace-governance", "crates/ace-certify", "crates/kani-verification", "crates/abd_framework/rust_f1_square", "crates/tests/rust-mtpi-tests", "crates/pirtm-tensor", "crates/pirtm-orchestration",     "crates/dilithium-signer",
     "crates/goldilocks",
     "crates/goldilocks-pro",
-    "crates/langlands", "lean", "lean/lean",
-]
+    "crates/langlands",
+    "crates/drmm_ir_parser",]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
@@ -62,5 +63,14 @@ num-traits = "0.2"
 multiplicity-common = { path = "materia_commons" }
 
 [dev-dependencies]
+# Dependencies needed for integration tests (Track B)
+# Async runtime and WebSocket client used by the test harness
+tokio = { version = "1", features = ["full"] }
+# WebSocket client for the integration test
+tokio-tungstenite = "0.20"
+# Allows the test to import the agent crate as a library (if needed)
+phase-mirror-agent = { path = "phase-mirror-agent" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+# The real 108-cycle verification engine exercised by the integration test
+lean-sdk = { path = "crates/lean-sdk" }

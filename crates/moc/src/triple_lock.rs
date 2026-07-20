@@ -6,7 +6,7 @@
 //! Publisher → signs schema into Archivum
 //! ```
 
-use super::{MocEngine, Schema, VerifiedSchema, MocError, MocSchemaWitness};
+use super::{MocEngine, MocError, MocSchemaWitness, Schema, VerifiedSchema};
 
 #[cfg(feature = "archivum")]
 use archivum::MocSchemaProof;

@@ -1,9 +1,9 @@
-use wasm_bindgen::prelude::*;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::collections::HashMap;
-use once_cell::sync::Lazy;
 use serde_yaml;
+use std::collections::HashMap;
+use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Deserialize)]
 struct PreservationEvent {

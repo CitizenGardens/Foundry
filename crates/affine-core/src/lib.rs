@@ -34,11 +34,14 @@ pub enum AffineCoreViolation {
 pub struct AffineCoreEngine;
 
 impl AffineCoreEngine {
-    pub fn certify(&self, op: &MultiplicityOperator) -> Result<CertificationWitness, AffineCoreViolation> {
+    pub fn certify(
+        &self,
+        op: &MultiplicityOperator,
+    ) -> Result<CertificationWitness, AffineCoreViolation> {
         if op.prime_indices.is_empty() {
             return Err(AffineCoreViolation::NotAdmissible(op.name.clone()));
         }
-        
+
         #[cfg(kani)]
         let operator_hash = [0u8; 32];
         #[cfg(not(kani))]
@@ -50,7 +53,7 @@ impl AffineCoreEngine {
             }
             hasher.finalize().into()
         };
-        
+
         #[cfg(kani)]
         let timestamp = 0;
         #[cfg(not(kani))]
@@ -58,7 +61,7 @@ impl AffineCoreEngine {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs() as i64;
-            
+
         Ok(CertificationWitness {
             operator_hash,
             is_admissible: true,
@@ -66,11 +69,16 @@ impl AffineCoreEngine {
         })
     }
 
-    pub fn zeno_check(&self, state: u64, transition: &dyn Fn(u64) -> u64, max_steps: u64) -> Result<ZenoWitness, AffineCoreViolation> {
+    pub fn zeno_check(
+        &self,
+        state: u64,
+        transition: &dyn Fn(u64) -> u64,
+        max_steps: u64,
+    ) -> Result<ZenoWitness, AffineCoreViolation> {
         let mut curr = state;
         let mut next = transition(curr);
         let mut steps = 0;
-        
+
         while curr != next {
             if steps >= max_steps {
                 return Err(AffineCoreViolation::ZenoViolation);
@@ -79,7 +87,7 @@ impl AffineCoreEngine {
             next = transition(curr);
             steps += 1;
         }
-        
+
         #[cfg(kani)]
         let state_hash = [0u8; 32];
         #[cfg(not(kani))]
@@ -88,7 +96,7 @@ impl AffineCoreEngine {
             hasher.update(&state.to_le_bytes());
             hasher.finalize().into()
         };
-        
+
         #[cfg(kani)]
         let timestamp = 0;
         #[cfg(not(kani))]
@@ -120,7 +128,7 @@ mod verification {
         if !is_empty {
             op.prime_indices.push(kani::any());
         }
-        
+
         let res = engine.certify(&op);
         if is_empty {
             kani::assert(res.is_err(), "Empty primes must be rejected");
@@ -133,13 +141,16 @@ mod verification {
     fn proof_zeno_contractivity() {
         let engine = AffineCoreEngine;
         let state: u64 = kani::any();
-        
+
         // A simple Zeno contractive function: just integer division by 2.
         // It always converges to 0 in finite steps.
         let transition = |x: u64| x / 2;
-        
+
         // max_steps = 64 is enough for u64 to reach 0.
         let res = engine.zeno_check(state, &transition, 64);
-        kani::assert(res.is_ok(), "Division by 2 is Zeno contractive within 64 steps");
+        kani::assert(
+            res.is_ok(),
+            "Division by 2 is Zeno contractive within 64 steps",
+        );
     }
 }

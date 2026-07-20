@@ -1,8 +1,8 @@
+use anyhow::{anyhow, Result};
+use chrono::Utc;
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use serde::{Deserialize, Serialize};
-use anyhow::{Result, anyhow};
-use chrono::Utc;
 
 #[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct LedgerHistoryEntry {
@@ -64,16 +64,22 @@ impl GitLedger {
     }
 
     pub fn head_sha(&self) -> String {
-        self.git(&["rev-parse", "--short", "HEAD"]).unwrap_or_else(|_| "no-commits".to_string())
+        self.git(&["rev-parse", "--short", "HEAD"])
+            .unwrap_or_else(|_| "no-commits".to_string())
     }
 
     pub fn get_ledger_history(&self, limit: usize) -> Vec<LedgerHistoryEntry> {
         let limit_str = limit.to_string();
-        let log = self.git(&["log", &format!("-{}", limit_str), "--pretty=format:%H\t%ai\t%s"]);
-        
+        let log = self.git(&[
+            "log",
+            &format!("-{}", limit_str),
+            "--pretty=format:%H\t%ai\t%s",
+        ]);
+
         match log {
-            Ok(log_str) => {
-                log_str.lines().filter_map(|line| {
+            Ok(log_str) => log_str
+                .lines()
+                .filter_map(|line| {
                     let parts: Vec<&str> = line.split('\t').collect();
                     if parts.len() == 3 {
                         Some(LedgerHistoryEntry {
@@ -84,8 +90,8 @@ impl GitLedger {
                     } else {
                         None
                     }
-                }).collect()
-            }
+                })
+                .collect(),
             Err(_) => Vec::new(),
         }
     }
@@ -100,7 +106,7 @@ impl GitLedger {
         if !multiplicity_effect.is_convergent() {
             let current_dissonance = (multiplicity_effect.current_token_value - 3.0).abs();
             let projected_dissonance = (multiplicity_effect.projected_token_value - 3.0).abs();
-            
+
             // Log auditability
             tracing::error!(
                 "MultiplicityDissonance: Proposal {} moves system away from Hundian Ground State. Current Dissonance: {}, Projected Dissonance: {}",
@@ -113,7 +119,7 @@ impl GitLedger {
         }
         let ledger_dir = self.repo_path.join("state").join("proposals");
         std::fs::create_dir_all(&ledger_dir)?;
-        
+
         let proposal_file = ledger_dir.join(format!("{}.json", proposal_id));
         let entry = ProposalEntry {
             proposal_id: proposal_id.to_string(),
@@ -122,13 +128,17 @@ impl GitLedger {
             committed_at: Utc::now().to_rfc3339(),
             multiplicity_effect: multiplicity_effect.clone(),
         };
-        
+
         let content = serde_json::to_string_pretty(&entry)?;
         std::fs::write(&proposal_file, content)?;
-        
+
         self.git(&["add", proposal_file.to_str().unwrap()])?;
-        
-        let message = format!("proposal({}): {}", proposal_id, &rationale[..std::cmp::min(rationale.len(), 72)]);
+
+        let message = format!(
+            "proposal({}): {}",
+            proposal_id,
+            &rationale[..std::cmp::min(rationale.len(), 72)]
+        );
         match self.git(&["commit", "--no-verify", "-m", &message]) {
             Ok(_) => Ok(self.head_sha()),
             Err(_) => Ok(self.head_sha()), // If nothing to commit
@@ -146,20 +156,20 @@ impl GitLedger {
     pub fn append_witness(&self, witness: &crate::types::UnifiedWitness) -> Result<String> {
         let archivum_dir = self.repo_path.join("state").join("archivum");
         std::fs::create_dir_all(&archivum_dir)?;
-        
+
         let witness_file = archivum_dir.join("witnesses.jsonl");
         let witness_json = serde_json::to_string(witness)?;
-        
+
         use std::io::Write;
         let mut file = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
             .open(&witness_file)?;
         writeln!(file, "{}", witness_json)?;
-        
+
         let file_str = witness_file.to_str().unwrap();
         self.git(&["add", file_str])?;
-        
+
         let message = format!("archivum: anchor witness {}", witness.witness_id);
         match self.git(&["commit", "--no-verify", "-m", &message]) {
             Ok(_) => Ok(self.head_sha()),

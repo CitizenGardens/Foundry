@@ -23,7 +23,10 @@ fn test_validate_schema_version_1_empty_field() {
         telemetry_version: 1,
     };
     let cert = ACECertificate::from_telemetry(&[], telemetry, &[4, 5, 6]);
-    assert_eq!(cert.validate_schema(), Err(CertificateSchemaError::EmptyField));
+    assert_eq!(
+        cert.validate_schema(),
+        Err(CertificateSchemaError::EmptyField)
+    );
 }
 
 #[test]
@@ -36,7 +39,10 @@ fn test_validate_schema_unsupported_version_0() {
         telemetry_version: 0,
     };
     let cert = ACECertificate::from_telemetry(&[1, 2, 3], telemetry, &[4, 5, 6]);
-    assert_eq!(cert.validate_schema(), Err(CertificateSchemaError::UnsupportedVersion(0)));
+    assert_eq!(
+        cert.validate_schema(),
+        Err(CertificateSchemaError::UnsupportedVersion(0))
+    );
 }
 
 #[test]
@@ -49,24 +55,28 @@ fn test_validate_schema_unsupported_version_unknown() {
         telemetry_version: 42,
     };
     let cert = ACECertificate::from_telemetry(&[1, 2, 3], telemetry, &[4, 5, 6]);
-    assert_eq!(cert.validate_schema(), Err(CertificateSchemaError::UnsupportedVersion(42)));
+    assert_eq!(
+        cert.validate_schema(),
+        Err(CertificateSchemaError::UnsupportedVersion(42))
+    );
 }
 
 #[test]
 fn test_python_serialization_roundtrip() {
     use std::process::Command;
-    
+
     let output = Command::new("python3")
         .arg("../../src/ace/governor.py")
         .arg("test_roundtrip")
         .output()
         .expect("Failed to execute Python script");
-        
+
     assert!(output.status.success(), "Python script failed");
-    
+
     let json_str = String::from_utf8(output.stdout).expect("Invalid UTF-8");
-    let cert: ACECertificate = serde_json::from_str(&json_str).expect("Failed to deserialize JSON to ACECertificate");
-    
+    let cert: ACECertificate =
+        serde_json::from_str(&json_str).expect("Failed to deserialize JSON to ACECertificate");
+
     assert_eq!(cert.telemetry_version, 1);
     assert_eq!(cert.xn_kernel, 0.123);
     assert_eq!(cert.is_valid_kernel, 1);

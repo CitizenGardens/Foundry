@@ -1,12 +1,15 @@
 // Build script for ORF crate – runs Lean lake build
 
-use std::process::Command;
 use std::path::Path;
+use std::process::Command;
 
 fn main() {
     // Lean project root (relative to crate)
     let lean_root = Path::new("../lean");
-    assert!(lean_root.join("lakefile.lean").exists(), "Lakefile not found");
+    assert!(
+        lean_root.join("lakefile.lean").exists(),
+        "Lakefile not found"
+    );
 
     let status = Command::new("lake")
         .arg("build")

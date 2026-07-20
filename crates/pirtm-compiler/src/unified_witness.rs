@@ -21,7 +21,10 @@ impl UnifiedWitness {
 
     /// Derives the canonical payload string to be hashed and signed.
     pub fn derive_canonical_payload(&self) -> String {
-        format!("{}:{}:{}", self.tensor_hash, self.compilation_timestamp, self.ace_deficit)
+        format!(
+            "{}:{}:{}",
+            self.tensor_hash, self.compilation_timestamp, self.ace_deficit
+        )
     }
 }
 
@@ -63,7 +66,7 @@ impl DualSignatureRecovery {
         if self.primary_signature == self.secondary_signature {
             return Err("Signatures must be cryptographically distinct (no self-dealing).");
         }
-        
+
         Ok(())
     }
 }
@@ -78,25 +81,37 @@ mod verification {
         let hash_val = String::from("mock_hash");
         let ts: u64 = kani::any();
         let deficit: f64 = kani::any();
-        
+
         kani::assume(deficit > 0.0);
-        
+
         let witness = UnifiedWitness::new(hash_val, ts, deficit);
         let mut recovery = DualSignatureRecovery::new(witness);
-        
+
         // At creation, recovery MUST fail.
-        kani::assert(recovery.verify_recovery().is_err(), "Recovery must fail with zero signatures");
-        
+        kani::assert(
+            recovery.verify_recovery().is_err(),
+            "Recovery must fail with zero signatures",
+        );
+
         // Single signature MUST fail.
         recovery.attach_primary_signature(String::from("SIG_1"));
-        kani::assert(recovery.verify_recovery().is_err(), "Recovery must fail with one signature");
-        
+        kani::assert(
+            recovery.verify_recovery().is_err(),
+            "Recovery must fail with one signature",
+        );
+
         // Identical signatures MUST fail (anti-Sybil / self-dealing).
         recovery.attach_secondary_signature(String::from("SIG_1"));
-        kani::assert(recovery.verify_recovery().is_err(), "Recovery must fail with identical signatures");
-        
+        kani::assert(
+            recovery.verify_recovery().is_err(),
+            "Recovery must fail with identical signatures",
+        );
+
         // Distinct dual signatures MUST succeed.
         recovery.attach_secondary_signature(String::from("SIG_2"));
-        kani::assert(recovery.verify_recovery().is_ok(), "Recovery must succeed with valid distinct dual signatures");
+        kani::assert(
+            recovery.verify_recovery().is_ok(),
+            "Recovery must succeed with valid distinct dual signatures",
+        );
     }
 }

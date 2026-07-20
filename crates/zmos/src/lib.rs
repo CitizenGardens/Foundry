@@ -33,22 +33,24 @@ impl Operator {
 
     /// Validates the operator against the spectral bound and emits a proof to the Archivum ledger.
     pub fn accept_and_record(
-        &self, 
-        operator_id: &str, 
-        bound: f64, 
+        &self,
+        operator_id: &str,
+        bound: f64,
         ledger_path: &std::path::Path,
         lean_hash: String,
         rust_hash: String,
-        tee_quote: String
+        tee_quote: String,
     ) -> Result<(), &'static str> {
         let radius = self.spectral_radius();
-        
+
         if radius > bound || !radius.is_finite() {
-            return Err("Operator violates the mathematically verified spectral bound. (SIG_GOV_KILL)");
+            return Err(
+                "Operator violates the mathematically verified spectral bound. (SIG_GOV_KILL)",
+            );
         }
 
         let ledger = archivum::WitnessLedger::new(ledger_path);
-        
+
         let proof = archivum::ZmosSpectralProof::new(
             operator_id.to_string(),
             radius,
@@ -57,7 +59,9 @@ impl Operator {
             tee_quote,
         );
 
-        ledger.stamp_zmos_proof(&proof).map_err(|_| "Failed to write ZmosSpectralProof to Archivum ledger")?;
+        ledger
+            .stamp_zmos_proof(&proof)
+            .map_err(|_| "Failed to write ZmosSpectralProof to Archivum ledger")?;
         Ok(())
     }
 }
@@ -84,15 +88,15 @@ pub mod ffi {
         }
         let operator = unsafe { &*op };
         let radius = operator.spectral_radius();
-        
+
         radius <= bound && radius.is_finite() && !radius.is_nan()
     }
 }
 
 #[cfg(kani)]
 mod verification {
-    use super::*;
     use super::ffi::*;
+    use super::*;
 
     #[kani::proof]
     fn verify_spectral_bound_soundness() {
@@ -113,7 +117,10 @@ mod verification {
         if is_valid {
             let radius = zmos_spectral_radius_rs(ptr);
             // The core Soundness Theorem: If the Rust check passes, the radius MUST be <= the Lean bound.
-            kani::assert(radius <= bound, "Runtime check failed to enforce the bound strictly");
+            kani::assert(
+                radius <= bound,
+                "Runtime check failed to enforce the bound strictly",
+            );
             kani::assert(radius.is_finite(), "Spectral radius must be finite");
             kani::assert(!radius.is_nan(), "Spectral radius cannot be NaN");
         }

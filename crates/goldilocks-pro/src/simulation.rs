@@ -1,5 +1,8 @@
-use crate::{GoldilocksField, PrimeMask, ResonanceWord, SpectralWitness, FormalStabilityCertificate, CertificationStatus};
 use crate::hamiltonian::Hamiltonian;
+use crate::{
+    CertificationStatus, FormalStabilityCertificate, GoldilocksField, PrimeMask, ResonanceWord,
+    SpectralWitness,
+};
 use std::collections::HashMap;
 
 pub const N0_CIRCUIT: usize = 64;
@@ -46,19 +49,23 @@ impl AzTftcSimulation {
     pub fn new() -> Self {
         let ref_zeros = get_reference_zeta_zeros();
         let zeros = ref_zeros.into_iter().map(to_gold_fp).collect();
-        
+
         let mut hamiltonian = Hamiltonian::new(N0_CIRCUIT);
         // Add some sample terms
         hamiltonian.add_term(PrimeMask::from_bit(0), to_gold_fp(0.1), Some(0));
         hamiltonian.add_term(PrimeMask::from_bit(1), to_gold_fp(0.05), Some(1));
-        
+
         Self { zeros, hamiltonian }
     }
 
-    pub fn run_step(&self, active_mask: PrimeMask, resonance_state: &HashMap<u8, ResonanceWord>) -> FormalStabilityCertificate {
+    pub fn run_step(
+        &self,
+        active_mask: PrimeMask,
+        resonance_state: &HashMap<u8, ResonanceWord>,
+    ) -> FormalStabilityCertificate {
         // 1. Evaluate Hamiltonian
         let _coeffs = self.hamiltonian.evaluate(active_mask, resonance_state);
-        
+
         // 2. Generate Spectral Witness
         // Simplified: compute delta_pz as the first spacing
         let d0 = if self.zeros.len() >= 2 {
@@ -67,13 +74,15 @@ impl AzTftcSimulation {
             0
         };
         let delta_pz = GoldilocksField::new(d0);
-        
+
         // Compute all spacings
         let mut zero_spacings = Vec::new();
         for i in 0..self.zeros.len() - 1 {
-            zero_spacings.push(GoldilocksField::new(self.zeros[i+1].0.wrapping_sub(self.zeros[i].0)));
+            zero_spacings.push(GoldilocksField::new(
+                self.zeros[i + 1].0.wrapping_sub(self.zeros[i].0),
+            ));
         }
-        
+
         let witness = SpectralWitness {
             delta_pz,
             zero_spacings,
@@ -111,39 +120,51 @@ mod tests {
         let sim = AzTftcSimulation::new();
         let mut resonance_state = HashMap::new();
         resonance_state.insert(0, ResonanceWord::pack_q29_29(0, 1.0));
-        
+
         let cert = sim.run_step(PrimeMask::from_bit(0), &resonance_state);
         println!("Cert status: {:?}", cert.status);
-        assert!(cert.status == CertificationStatus::PASS || cert.status == CertificationStatus::CONDITIONAL);
+        assert!(
+            cert.status == CertificationStatus::PASS
+                || cert.status == CertificationStatus::CONDITIONAL
+        );
     }
 
     #[test]
     fn test_az_tftc_full_lifecycle() {
         println!("=== AZ-TFTC 1D Simulation Start ===");
-        
+
         let sim = AzTftcSimulation::new();
         let mut resonance_state = HashMap::new();
         resonance_state.insert(0, ResonanceWord::pack_q29_29(0, 1.0));
-        
+
         // 1. Production: ZetaBridge generates a spectral witness (simulated by run_step)
         // 2. Certification: Formal certificate Issued
         let cert = sim.run_step(PrimeMask::from_bit(0), &resonance_state);
-        println!("SpectralWitness Generated: delta_pz={:?}", cert.spectral.as_ref().unwrap().delta_pz);
+        println!(
+            "SpectralWitness Generated: delta_pz={:?}",
+            cert.spectral.as_ref().unwrap().delta_pz
+        );
         println!("Certificate Result: status={:?}", cert.status);
-        
+
         // 3. Export: Bundle extracted for ZK proving
         let inputs = cert.export_proof_inputs();
-        println!("Exported Pro-tier Bundle: mask={:x}, word={:?}", inputs.prime_mask.0, inputs.resonance_word);
-        
+        println!(
+            "Exported Pro-tier Bundle: mask={:x}, word={:?}",
+            inputs.prime_mask.0, inputs.resonance_word
+        );
+
         // 4. Attestation: Proof generated and verified (cross-check)
         let public_vec = inputs.to_vec();
-        println!("Wiring Cross-check: STARK Public Inputs Length = {}", public_vec.len());
+        println!(
+            "Wiring Cross-check: STARK Public Inputs Length = {}",
+            public_vec.len()
+        );
         assert_eq!(public_vec.len(), 6);
-        
+
         // Use PrimeResonanceAir for verification
         let air = crate::circuit::PrimeResonanceAir::new(inputs.prime_mask, inputs.resonance_word);
         assert!(air.verify());
-        
+
         println!("Proof Verification: SUCCESS");
         println!("=== AZ-TFTC 1D Simulation COMPLETE ===");
     }

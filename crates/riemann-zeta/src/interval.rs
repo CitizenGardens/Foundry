@@ -3,10 +3,10 @@
 //! Provides verified interval arithmetic using MPFR-backed floats,
 //! ensuring that all bounds on ζ(s) are mathematically rigorous.
 
-use rug::{Float, Complex};
+use rug::{Complex, Float};
 use serde::{Deserialize, Serialize};
 
-use crate::{RiemannError, Result};
+use crate::{Result, RiemannError};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Interval {
@@ -19,16 +19,23 @@ impl Interval {
     pub fn new(low: Float, high: Float) -> Result<Self> {
         let precision = low.prec();
         if precision != high.prec() {
-            return Err(RiemannError::InvalidArgument(
-                format!("Interval endpoints must have matching precision: {} != {}", precision, high.prec())
-            ));
+            return Err(RiemannError::InvalidArgument(format!(
+                "Interval endpoints must have matching precision: {} != {}",
+                precision,
+                high.prec()
+            )));
         }
         if low > high {
-            return Err(RiemannError::InvalidArgument(
-                format!("Interval lower bound {} exceeds upper bound {}", low, high)
-            ));
+            return Err(RiemannError::InvalidArgument(format!(
+                "Interval lower bound {} exceeds upper bound {}",
+                low, high
+            )));
         }
-        Ok(Self { low, high, precision })
+        Ok(Self {
+            low,
+            high,
+            precision,
+        })
     }
 
     /// Check if this interval contains a given value.
@@ -82,8 +89,14 @@ impl std::ops::Mul for Interval {
             &self.high * &rhs.low,
             &self.high * &rhs.high,
         ];
-        let low = products.iter().min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)).unwrap();
-        let high = products.iter().max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)).unwrap();
+        let low = products
+            .iter()
+            .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            .unwrap();
+        let high = products
+            .iter()
+            .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            .unwrap();
         Self::new(low.clone(), high.clone())
     }
 }
@@ -94,7 +107,7 @@ impl std::ops::Div for Interval {
     fn div(self, rhs: Self) -> Result<Self> {
         if rhs.contains_zero() {
             return Err(RiemannError::InvalidArgument(
-                "Division by interval containing zero".to_string()
+                "Division by interval containing zero".to_string(),
             ));
         }
         let products = [
@@ -103,8 +116,14 @@ impl std::ops::Div for Interval {
             &self.high / &rhs.low,
             &self.high / &rhs.high,
         ];
-        let low = products.iter().min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)).unwrap();
-        let high = products.iter().max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)).unwrap();
+        let low = products
+            .iter()
+            .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            .unwrap();
+        let high = products
+            .iter()
+            .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            .unwrap();
         Self::new(low.clone(), high.clone())
     }
 }
@@ -119,7 +138,11 @@ pub struct VerifiedBound {
 impl VerifiedBound {
     pub fn new(value: Float, error_margin: Float) -> Self {
         let is_verified = error_margin < Float::with_val(value.prec(), 1e-15);
-        Self { value, error_margin, is_verified }
+        Self {
+            value,
+            error_margin,
+            is_verified,
+        }
     }
 }
 
@@ -137,14 +160,8 @@ mod tests {
 
     #[test]
     fn test_interval_arithmetic() {
-        let a = Interval::new(
-            Float::with_val(128, 1.0),
-            Float::with_val(128, 2.0),
-        ).unwrap();
-        let b = Interval::new(
-            Float::with_val(128, 0.5),
-            Float::with_val(128, 1.5),
-        ).unwrap();
+        let a = Interval::new(Float::with_val(128, 1.0), Float::with_val(128, 2.0)).unwrap();
+        let b = Interval::new(Float::with_val(128, 0.5), Float::with_val(128, 1.5)).unwrap();
 
         let sum = (a.clone() + b.clone()).unwrap();
         assert!(sum.contains(&Float::with_val(128, 1.5)));

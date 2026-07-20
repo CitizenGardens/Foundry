@@ -1,9 +1,10 @@
-use num_bigint::{BigInt, Sign};
-use sha2::{Sha256, Digest};
-use std::str::FromStr;
 use crate::GoldilocksField;
+use num_bigint::{BigInt, Sign};
+use sha2::{Digest, Sha256};
+use std::str::FromStr;
 
-pub const BN254_PRIME_STR: &str = "21888242871839275222246405745257275088548364400416034343698204186575808495617";
+pub const BN254_PRIME_STR: &str =
+    "21888242871839275222246405745257275088548364400416034343698204186575808495617";
 
 pub fn get_bn254_prime() -> BigInt {
     BigInt::from_str(BN254_PRIME_STR).unwrap()
@@ -25,7 +26,11 @@ impl Poseidon2BN254 {
         let p = get_bn254_prime();
         let mds = Self::build_mds_matrix(POSEIDON2_T, &p);
         let round_constants = Self::build_round_constants(RF * POSEIDON2_T + RP, &p);
-        Self { prime: p, mds, round_constants }
+        Self {
+            prime: p,
+            mds,
+            round_constants,
+        }
     }
 
     fn build_mds_matrix(t: usize, p: &BigInt) -> Vec<Vec<BigInt>> {
@@ -119,7 +124,10 @@ impl Poseidon2Goldilocks {
     pub fn new() -> Self {
         let mds = Self::build_mds_matrix(POSEIDON2_T);
         let round_constants = Self::build_round_constants(RF * POSEIDON2_T + RP);
-        Self { mds, round_constants }
+        Self {
+            mds,
+            round_constants,
+        }
     }
 
     fn build_mds_matrix(t: usize) -> Vec<Vec<GoldilocksField>> {

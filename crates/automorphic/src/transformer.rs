@@ -1,6 +1,6 @@
 //! Automorphic Transformer implementation
-//! 
-//! Provides a neural architecture bridging Langlands representations 
+//!
+//! Provides a neural architecture bridging Langlands representations
 //! with transformer attention mechanics, firmly bound by certified graph energetics.
 
 use crate::graph_energetics::{CertifiedGraphEnergetics, EnergyViolation};
@@ -64,11 +64,19 @@ pub struct AutomorphicTransformer {
 
 impl AutomorphicTransformer {
     /// Initializes a new Automorphic Transformer with given configs and baseline energetics.
-    pub fn new(config: TransformerConfig, base_energetics: CertifiedGraphEnergetics) -> Result<Self, InitError> {
+    pub fn new(
+        config: TransformerConfig,
+        base_energetics: CertifiedGraphEnergetics,
+    ) -> Result<Self, InitError> {
         if config.hidden_dim == 0 || config.num_heads == 0 {
-            return Err(InitError::InvalidConfig("Dimensions must be positive".to_string()));
+            return Err(InitError::InvalidConfig(
+                "Dimensions must be positive".to_string(),
+            ));
         }
-        Ok(Self { config, energetics: base_energetics })
+        Ok(Self {
+            config,
+            energetics: base_energetics,
+        })
     }
 
     /// Performs a forward pass, bounded by contractive properties.
@@ -91,9 +99,9 @@ impl AutomorphicTransformer {
         if !self.energetics.graph.edges.is_empty() {
             // Attempt a contractive step (e.g. weight decay)
             let current_weight = self.energetics.graph.edges[0].weight;
-            self.energetics.update_edge(0, current_weight * 0.99)?; 
+            self.energetics.update_edge(0, current_weight * 0.99)?;
         }
-        
+
         Ok(Loss { value: 0.1 })
     }
 }
@@ -101,7 +109,7 @@ impl AutomorphicTransformer {
 #[cfg(kani)]
 mod verification {
     use super::*;
-    use crate::graph_energetics::{GraphStructure, GraphVertex, GraphEdge};
+    use crate::graph_energetics::{GraphEdge, GraphStructure, GraphVertex};
 
     #[kani::proof]
     fn proof_forward_preserves_energy() {
@@ -112,12 +120,19 @@ mod verification {
             },
             energy_bound: 1.0,
         };
-        let config = TransformerConfig { num_heads: 1, hidden_dim: 1, max_energy_budget: 1.0 };
+        let config = TransformerConfig {
+            num_heads: 1,
+            hidden_dim: 1,
+            max_energy_budget: 1.0,
+        };
         let transformer = AutomorphicTransformer::new(config, cert).unwrap();
         let tensor = Tensor { data: vec![0.0] };
-        
+
         let res = transformer.forward(&tensor);
-        kani::assert(res.is_ok(), "Forward should not violate bounds for empty graph");
+        kani::assert(
+            res.is_ok(),
+            "Forward should not violate bounds for empty graph",
+        );
     }
 
     #[kani::proof]
@@ -125,25 +140,44 @@ mod verification {
         let mut cert = CertifiedGraphEnergetics {
             graph: GraphStructure {
                 vertices: vec![
-                    GraphVertex { id: 0, prime_label: 2 },
-                    GraphVertex { id: 1, prime_label: 3 },
+                    GraphVertex {
+                        id: 0,
+                        prime_label: 2,
+                    },
+                    GraphVertex {
+                        id: 1,
+                        prime_label: 3,
+                    },
                 ],
                 edges: vec![GraphEdge {
-                    source: GraphVertex { id: 0, prime_label: 2 },
-                    target: GraphVertex { id: 1, prime_label: 3 },
+                    source: GraphVertex {
+                        id: 0,
+                        prime_label: 2,
+                    },
+                    target: GraphVertex {
+                        id: 1,
+                        prime_label: 3,
+                    },
                     weight: 0.5,
                 }],
             },
             energy_bound: 1.0,
         };
-        let config = TransformerConfig { num_heads: 1, hidden_dim: 1, max_energy_budget: 1.0 };
+        let config = TransformerConfig {
+            num_heads: 1,
+            hidden_dim: 1,
+            max_energy_budget: 1.0,
+        };
         let mut transformer = AutomorphicTransformer::new(config, cert).unwrap();
         let batch = Batch { inputs: vec![] };
-        
+
         let initial_energy = transformer.energetics.graph_energy();
         let _ = transformer.train_step(&batch).unwrap();
         let final_energy = transformer.energetics.graph_energy();
-        
-        kani::assert(final_energy <= initial_energy, "Train step must be contractive");
+
+        kani::assert(
+            final_energy <= initial_energy,
+            "Train step must be contractive",
+        );
     }
 }

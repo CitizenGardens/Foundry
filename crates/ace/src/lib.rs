@@ -41,7 +41,12 @@ pub struct ACEEnvelope {
 
 impl ACEEnvelope {
     pub fn new(budget: ComputationBudget, invariants: InvariantSet) -> Result<Self, ACEViolation> {
-        Ok(Self { budget, invariants, cycles_used: 0, witness_trace: Vec::new() })
+        Ok(Self {
+            budget,
+            invariants,
+            cycles_used: 0,
+            witness_trace: Vec::new(),
+        })
     }
 
     pub fn check_transition(&mut self, state: &State) -> Result<State, ACEViolation> {
@@ -54,12 +59,19 @@ impl ACEEnvelope {
         }
         for (name, check) in &self.invariants.invariants {
             if !check(state) {
-                return Err(ACEViolation::InvariantBreach { inv_name: name.clone() });
+                return Err(ACEViolation::InvariantBreach {
+                    inv_name: name.clone(),
+                });
             }
         }
         let witness = ACEWitness {
             state_hash: blake3::hash(&serde_json::to_vec(state).unwrap()).into(),
-            invariant_checks: self.invariants.invariants.iter().map(|(n, c)| (n.clone(), c(state))).collect(),
+            invariant_checks: self
+                .invariants
+                .invariants
+                .iter()
+                .map(|(n, c)| (n.clone(), c(state)))
+                .collect(),
             budget_used: self.cycles_used,
             timestamp: chrono::Utc::now().timestamp(),
         };
@@ -68,7 +80,10 @@ impl ACEEnvelope {
     }
 
     pub fn finalize(self) -> Result<archivum::ACEProof, ACEViolation> {
-        Ok(archivum::ACEProof::new(self.witness_trace.len(), self.cycles_used))
+        Ok(archivum::ACEProof::new(
+            self.witness_trace.len(),
+            self.cycles_used,
+        ))
     }
 }
 
@@ -79,26 +94,26 @@ mod verification {
     fn proof_ace_preserves_invariants_and_budget() {
         let max_cycles: u64 = kani::any();
         kani::assume(max_cycles > 0 && max_cycles < 10);
-        
+
         let budget = ComputationBudget {
             max_cycles,
             max_memory: 1024,
             max_latency_ns: 1000,
         };
-        
+
         let inv = InvariantSet {
             invariants: vec![("test_inv".into(), |_s| true)],
         };
-        
+
         let mut envelope = ACEEnvelope::new(budget, inv).unwrap();
         let state = State { data: vec![0] };
-        
+
         for i in 1..=max_cycles {
             let res = envelope.check_transition(&state);
             kani::assert(res.is_ok(), "Valid transition rejected");
             kani::assert(envelope.cycles_used == i, "Cycles not tracked");
         }
-        
+
         let res_over = envelope.check_transition(&state);
         kani::assert(res_over.is_err(), "Budget exhaustion not detected");
         if let Err(ACEViolation::BudgetExceeded { used, limit }) = res_over {
@@ -164,19 +179,31 @@ mod security_gate_tests {
     use super::*;
 
     fn rsa_review() -> SecurityState {
-        SecurityState { mode: SecurityMode::GovernanceReview, primitive_id: 0 }
+        SecurityState {
+            mode: SecurityMode::GovernanceReview,
+            primitive_id: 0,
+        }
     }
     fn rsa_normal() -> SecurityState {
-        SecurityState { mode: SecurityMode::Normal, primitive_id: 0 }
+        SecurityState {
+            mode: SecurityMode::Normal,
+            primitive_id: 0,
+        }
     }
     fn prime_review() -> SecurityState {
-        SecurityState { mode: SecurityMode::GovernanceReview, primitive_id: 1 }
+        SecurityState {
+            mode: SecurityMode::GovernanceReview,
+            primitive_id: 1,
+        }
     }
 
     #[test]
     fn fail_closed_blocks_rsa_in_review() {
         assert!(!rsa_review().validate_contraction_gate());
-        assert_eq!(rsa_review().process_operator_word(), Err(GateError::SecurityViolation));
+        assert_eq!(
+            rsa_review().process_operator_word(),
+            Err(GateError::SecurityViolation)
+        );
     }
 
     #[test]

@@ -79,7 +79,11 @@ impl RtaMetric for State {
     /// Measures the sum of squared differences of Langlands traces over
     /// the primes present in both states.
     fn l_dist(&self, other: &Self) -> f64 {
-        let common: HashSet<u64> = self.active_primes.intersection(&other.active_primes).cloned().collect();
+        let common: HashSet<u64> = self
+            .active_primes
+            .intersection(&other.active_primes)
+            .cloned()
+            .collect();
         let mut dist = 0.0;
         for p in common {
             let t1 = self.langlands_trace(p);
@@ -117,12 +121,12 @@ pub struct CCREUpdater;
 impl CCREUpdater {
     pub fn update_and_audit(state: &mut State) -> f64 {
         let bindu = State::new();
-        
+
         state.fit(0.1, 1e-6);
-        
+
         let dist = state.rta_dist(&bindu);
         let _l_dist = state.l_dist(&bindu);
-        
+
         // In a full implementation, l_dist would be recorded alongside
         // the RTA health snapshot. For now, we return the RTA distance.
         dist
@@ -138,14 +142,14 @@ mod tests {
         let mut state = State::new();
         state.active_primes.insert(2);
         state.active_primes.insert(3);
-        
+
         state.joint_words.insert((2, 3), 5.0);
-        
+
         let initial_defect = state.arta_defect();
         assert!(initial_defect > 0.0);
-        
+
         state.fit(0.2, 1e-5);
-        
+
         let final_defect = state.arta_defect();
         assert!(final_defect < 1e-5);
     }
@@ -197,17 +201,17 @@ mod kani_proofs {
     fn verify_fit_contracts_defect() {
         let mut state = State::new();
         let w: f64 = kani::any();
-        
+
         kani::assume(w >= 0.0 && w <= 1000.0);
-        
+
         state.active_primes.insert(2);
         state.active_primes.insert(3);
         state.joint_words.insert((2, 3), w);
-        
+
         let d_initial = state.arta_defect();
         state.fit(0.1, 1e-6);
         let d_final = state.arta_defect();
-        
+
         // Formally verify in Rust that Fit always reduces or maintains the defect
         assert!(d_final <= d_initial);
         // And if the initial defect was above tolerance, it is forcefully minimized

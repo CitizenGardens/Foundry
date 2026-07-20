@@ -1,13 +1,12 @@
+#[cfg(target_arch = "x86_64")]
+pub mod avx2;
 /// Goldilocks field: p = 2^64 - 2^32 + 1
-/// 
+///
 /// This is a 64-bit prime field optimized for STARK proofs.
 /// Operations are performed modulo GOLDILOCKS_PRIME.
-
 pub mod polynomial;
 #[cfg(target_arch = "x86_64")]
 pub mod sse;
-#[cfg(target_arch = "x86_64")]
-pub mod avx2;
 
 use serde::{Deserialize, Serialize};
 
@@ -16,10 +15,10 @@ pub const GOLDILOCKS_PRIME: u64 = 0xFFFFFFFF00000001;
 
 /// The first 64 prime numbers used for prime-gated indexing (P_64).
 pub const P_64: [u64; 64] = [
-    2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
-    73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 
-    157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 
-    239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311,
+    2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
+    101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,
+    197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307,
+    311,
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -44,7 +43,7 @@ impl GoldilocksField {
     pub fn to_canonical(&self) -> u64 {
         self.0
     }
-    
+
     // ... rest of implementation (add, sub, mul, etc. are below)
 }
 
@@ -72,7 +71,9 @@ impl PrimeMask {
 
     #[inline]
     pub fn is_prime_set(&self, k: usize) -> bool {
-        if k >= 64 { return false; }
+        if k >= 64 {
+            return false;
+        }
         (self.0 & (1 << k)) != 0
     }
 
@@ -140,7 +141,8 @@ impl GoldilocksField {
     fn emit_witness(w: GoldilocksWitness) {
         use once_cell::sync::Lazy;
         use std::sync::Mutex;
-        static WITNESSES: Lazy<Mutex<Vec<GoldilocksWitness>>> = Lazy::new(|| Mutex::new(Vec::new()));
+        static WITNESSES: Lazy<Mutex<Vec<GoldilocksWitness>>> =
+            Lazy::new(|| Mutex::new(Vec::new()));
         let _ = WITNESSES.lock().map(|mut v| v.push(w));
     }
 
@@ -224,7 +226,7 @@ impl GoldilocksField {
     pub fn pow(&self, mut exp: u64) -> Self {
         let mut result = Self::ONE;
         let mut base = *self;
-        
+
         while exp > 0 {
             if exp & 1 == 1 {
                 result = result.mul(&base);
@@ -232,7 +234,7 @@ impl GoldilocksField {
             base = base.mul(&base);
             exp >>= 1;
         }
-        
+
         result
     }
 }

@@ -1,6 +1,6 @@
 use num_complex::Complex64;
-use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -109,7 +109,7 @@ mod tests {
     fn test_langlands_commutes() {
         let mut psi = HashMap::new();
         psi.insert(2, Complex64::new(1.0, 0.0));
-        
+
         // Identity operator commutes with any action
         let identity = |t: &HashMap<u64, Complex64>| Ok(t.clone());
         let result = verify_langlands_commutes(identity, &psi, |p| p as f64, 1e-8).unwrap();

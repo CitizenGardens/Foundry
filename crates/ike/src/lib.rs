@@ -47,11 +47,18 @@ pub fn cosine_similarity(e1: &Entity, e2: &Entity) -> f64 {
 }
 
 impl SetExpander {
-    pub fn expand(&self, seed: &EntitySet, candidate: &Entity) -> Result<EntitySet, ExpansionError> {
+    pub fn expand(
+        &self,
+        seed: &EntitySet,
+        candidate: &Entity,
+    ) -> Result<EntitySet, ExpansionError> {
         for e in &seed.entities {
             let sim = cosine_similarity(e, candidate);
             if sim < seed.similarity_threshold {
-                return Err(ExpansionError::BelowThreshold { actual: sim, threshold: seed.similarity_threshold });
+                return Err(ExpansionError::BelowThreshold {
+                    actual: sim,
+                    threshold: seed.similarity_threshold,
+                });
             }
         }
         let mut new_set = seed.clone();
@@ -78,10 +85,15 @@ pub struct QueryEngine;
 
 impl QueryEngine {
     pub fn compile(source: &str) -> Result<Query, ParseError> {
-        Ok(Query { source: source.to_string() })
+        Ok(Query {
+            source: source.to_string(),
+        })
     }
 
-    pub fn execute(_query: &Query, _context: &KnowledgeGraph) -> Result<QueryResult, ExecutionError> {
+    pub fn execute(
+        _query: &Query,
+        _context: &KnowledgeGraph,
+    ) -> Result<QueryResult, ExecutionError> {
         Ok(QueryResult {
             entities: vec![],
             scores: vec![],
@@ -111,28 +123,33 @@ mod verification {
             entities: vec![e1],
             similarity_threshold: 0.5,
         };
-        
+
         let mut v1: f64 = kani::any();
         let mut v2: f64 = kani::any();
         kani::assume(v1 > -10.0 && v1 < 10.0);
         kani::assume(v2 > -10.0 && v2 < 10.0);
-        
+
         let candidate = Entity {
             id: 2,
             label: "B".to_string(),
             embedding: vec![v1, v2],
         };
-        
+
         let expander = SetExpander;
         if let Ok(new_set) = expander.expand(&seed, &candidate) {
             let sim = cosine_similarity(&new_set.entities[0], &new_set.entities[1]);
-            kani::assert(sim >= seed.similarity_threshold, "Similarity must be above threshold");
+            kani::assert(
+                sim >= seed.similarity_threshold,
+                "Similarity must be above threshold",
+            );
         }
     }
 
     #[kani::proof]
     fn proof_query_deterministic() {
-        let query = Query { source: "test".to_string() };
+        let query = Query {
+            source: "test".to_string(),
+        };
         let kg = KnowledgeGraph;
         let res1 = QueryEngine::execute(&query, &kg).unwrap();
         let res2 = QueryEngine::execute(&query, &kg).unwrap();

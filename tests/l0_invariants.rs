@@ -3,9 +3,9 @@
 
 #[cfg(test)]
 mod tests {
-    use multiplicity::{Signature, multiplicity};
-    use num_rational::BigRational;
+    use multiplicity::{multiplicity, Signature};
     use num_bigint::BigInt;
+    use num_rational::BigRational;
     use num_traits::One;
 
     fn rat(n: i64) -> BigRational {
@@ -48,7 +48,10 @@ mod tests {
         let mut sig = Signature::new();
         sig.insert(3, -1); // 3^-1 = 1/3
         let m = multiplicity(&sig);
-        assert_eq!(m, BigRational::new(num_bigint::BigInt::from(1), num_bigint::BigInt::from(3)));
+        assert_eq!(
+            m,
+            BigRational::new(num_bigint::BigInt::from(1), num_bigint::BigInt::from(3))
+        );
     }
 
     #[test]
@@ -108,7 +111,10 @@ mod tests {
         let inv = sig.inv();
         let product = sig.mul(&inv);
 
-        assert!(product.map.is_empty(), "sig * sig^-1 should be empty (unit)");
+        assert!(
+            product.map.is_empty(),
+            "sig * sig^-1 should be empty (unit)"
+        );
         assert_eq!(multiplicity(&product), BigRational::one());
     }
 
@@ -120,9 +126,9 @@ mod tests {
         sig.insert(3, 2);
         sig.insert(5, -1);
         let m = multiplicity(&sig);
-        assert_eq!(m, BigRational::new(
-            num_bigint::BigInt::from(72),
-            num_bigint::BigInt::from(5),
-        ));
+        assert_eq!(
+            m,
+            BigRational::new(num_bigint::BigInt::from(72), num_bigint::BigInt::from(5),)
+        );
     }
 }

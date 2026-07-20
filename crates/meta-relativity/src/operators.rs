@@ -2,7 +2,7 @@
 //!
 //! Strictly conforms to MetaRelativityFormalized/Operators.lean
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use nalgebra::{DMatrix, DVector};
 
 /// Universal Operator: U = A + B + E
@@ -16,7 +16,7 @@ impl UniversalOperator {
     pub fn assemble(a: PrimeBlock, b: TimeSieve, e: InternalBlock) -> Self {
         Self { a, b, e }
     }
-    
+
     pub fn apply(&self, x: &DVector<f64>) -> DVector<f64> {
         self.a.apply(x) + self.b.apply(x) + self.e.apply(x)
     }
@@ -39,7 +39,9 @@ impl OperatorBlock for PrimeBlock {
         &self.matrix * x
     }
     fn is_self_adjoint(&self) -> bool {
-        if !self.matrix.is_square() { return false; }
+        if !self.matrix.is_square() {
+            return false;
+        }
         (self.matrix.clone() - self.matrix.adjoint()).norm() <= 1e-9
     }
     fn bound_constant(&self) -> f64 {
@@ -57,7 +59,9 @@ impl OperatorBlock for TimeSieve {
         &self.matrix * x
     }
     fn is_self_adjoint(&self) -> bool {
-        if !self.matrix.is_square() { return false; }
+        if !self.matrix.is_square() {
+            return false;
+        }
         (self.matrix.clone() - self.matrix.adjoint()).norm() <= 1e-9
     }
     fn bound_constant(&self) -> f64 {
@@ -75,7 +79,9 @@ impl OperatorBlock for InternalBlock {
         &self.matrix * x
     }
     fn is_self_adjoint(&self) -> bool {
-        if !self.matrix.is_square() { return false; }
+        if !self.matrix.is_square() {
+            return false;
+        }
         (self.matrix.clone() - self.matrix.adjoint()).norm() <= 1e-9
     }
     fn bound_constant(&self) -> f64 {
@@ -90,7 +96,9 @@ pub trait BoundedOperator {
 impl BoundedOperator for UniversalOperator {
     fn is_bounded(&self) -> bool {
         // According to Lean, there exists c_A, c_B, c_E
-        self.a.bound_constant() >= 0.0 && self.b.bound_constant() >= 0.0 && self.e.bound_constant() >= 0.0
+        self.a.bound_constant() >= 0.0
+            && self.b.bound_constant() >= 0.0
+            && self.e.bound_constant() >= 0.0
     }
 }
 

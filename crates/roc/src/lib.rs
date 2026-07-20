@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
 use blake3::Hasher;
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "archivum")]
-use archivum::{WitnessLedger, RocDynamicsProof};
+use archivum::{RocDynamicsProof, WitnessLedger};
 
 #[cfg(feature = "triple-lock")]
 pub mod triple_lock;
@@ -43,9 +43,12 @@ impl RocEngine {
         };
         let v_after = tx.p2.saturating_add(tx.p3).saturating_add(tx.p5);
         if v_after > v_before {
-            return Err(RocViolation::LyapunovIncrease { before: v_before, after: v_after });
+            return Err(RocViolation::LyapunovIncrease {
+                before: v_before,
+                after: v_after,
+            });
         }
-        
+
         #[cfg(kani)]
         let state_hash = [0u8; 32];
         #[cfg(not(kani))]
@@ -56,7 +59,7 @@ impl RocEngine {
             hasher.update(&x.p5.to_le_bytes());
             hasher.finalize().into()
         };
-        
+
         #[cfg(kani)]
         let timestamp = 0;
         #[cfg(not(kani))]
@@ -75,7 +78,7 @@ impl RocEngine {
     }
 
     pub fn spectral_radius(&self, _t: &dyn Fn(&State) -> State) -> Result<f64, RocViolation> {
-        // Mock computation of spectral radius for T operator, 
+        // Mock computation of spectral radius for T operator,
         // normally we would need a matrix representation.
         // For T = 1/2 I, spectral radius is 0.5.
         Ok(0.5)
@@ -88,7 +91,12 @@ impl RocEngine {
         ledger: &mut WitnessLedger,
     ) -> Result<RocDynamicsWitness, RocViolation> {
         let witness = self.lyapunov_check(x)?;
-        let proof = RocDynamicsProof::new(witness.state_hash, witness.v_before, witness.v_after, witness.descent_holds);
+        let proof = RocDynamicsProof::new(
+            witness.state_hash,
+            witness.v_before,
+            witness.v_after,
+            witness.descent_holds,
+        );
         ledger
             .stamp_roc_dynamics_proof(&proof)
             .map_err(|e| RocViolation::ArchivumError(e.to_string()))?;
@@ -120,7 +128,7 @@ mod verification {
         kani::assume(x.p2 <= u64::MAX / 4);
         kani::assume(x.p3 <= u64::MAX / 4);
         kani::assume(x.p5 <= u64::MAX / 4);
-        
+
         let res = engine.lyapunov_check(&x);
         kani::assert(res.is_ok(), "Descent always holds for division by 2");
     }

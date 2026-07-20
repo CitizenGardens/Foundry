@@ -42,13 +42,19 @@ impl ExactCertifier {
         source_attestation: Option<HashMap<String, serde_json::Value>>,
     ) -> Result<Self, String> {
         if g_ns.dim() != (20, 20) {
-            return Err(format!("G_NS must have shape (20, 20), got {:?}", g_ns.dim()));
+            return Err(format!(
+                "G_NS must have shape (20, 20), got {:?}",
+                g_ns.dim()
+            ));
         }
         if h.len() != 20 {
             return Err(format!("H must have length 20, got {}", h.len()));
         }
         if lines.dim().0 != 48 || lines.dim().1 != 20 {
-            return Err(format!("lines must have shape (48, 20), got {:?}", lines.dim()));
+            return Err(format!(
+                "lines must have shape (48, 20), got {:?}",
+                lines.dim()
+            ));
         }
 
         Ok(ExactCertifier {
@@ -65,7 +71,7 @@ impl ExactCertifier {
 
     pub fn generate_exact_certificate(&self, w: &Array1<f64>) -> ExactCertificate {
         let w_int = self.snap_ns(w);
-        
+
         ExactCertificate {
             proven_given_dataset: false,
             algebraic_certificate: AlgebraicCertificate {

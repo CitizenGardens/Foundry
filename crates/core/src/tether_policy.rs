@@ -35,7 +35,7 @@ impl Default for TetherPolicy {
 
 impl TetherPolicy {
     pub fn new(req_coverage: f64) -> Self {
-        Self { 
+        Self {
             req_coverage,
             tau_safe: TAU_SAFE,
             tau_crit: TAU_CRIT,
@@ -47,7 +47,7 @@ impl TetherPolicy {
     pub fn compute_tau(&self, current_coverage: f64, drift_norm: f64) -> f64 {
         let coverage_ratio = current_coverage / self.req_coverage;
         let stability_factor = 1.0 - drift_norm.clamp(0.0, 1.0);
-        
+
         coverage_ratio * stability_factor
     }
 
@@ -62,7 +62,7 @@ impl TetherPolicy {
         }
     }
 
-    /// Master control loop iteration: Ingests the latest operational metrics and 
+    /// Master control loop iteration: Ingests the latest operational metrics and
     /// returns the required governance action (the NodeState).
     pub fn process_telemetry(&self, current_coverage: f64, drift_norm: f64) -> (f64, NodeState) {
         let tau = self.compute_tau(current_coverage, drift_norm);

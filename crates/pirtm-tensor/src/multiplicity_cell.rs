@@ -30,9 +30,9 @@ pub trait MultiplicityCell {
 /// which is enforced to be ≤ 1 at construction time via a debug assertion.
 pub struct LinearMultiplicityCell {
     dim: usize,
-    w_coherence: Array1<f64>,   // length dim
-    w_defect: Array2<f64>,      // shape (k, dim)
-    op_norm_sq: f64,            // cached squared operator norm
+    w_coherence: Array1<f64>, // length dim
+    w_defect: Array2<f64>,    // shape (k, dim)
+    op_norm_sq: f64,          // cached squared operator norm
 }
 
 impl LinearMultiplicityCell {
@@ -102,13 +102,17 @@ pub struct CognitiveMultiplicityCell<C: MultiplicityCell> {
 
 impl<C: MultiplicityCell> CognitiveMultiplicityCell<C> {
     pub fn new(inner: C, baseline_drift_tolerance: f64, load_scaling_factor: f64) -> Self {
-        Self { inner, baseline_drift_tolerance, load_scaling_factor }
+        Self {
+            inner,
+            baseline_drift_tolerance,
+            load_scaling_factor,
+        }
     }
 
     /// Evaluates the underlying multiplicity logic and maps the absolute defect to semantic telemetry.
     pub fn forward_cognitive(&self, state: &Array1<f64>) -> (f64, f64, CognitiveTelemetry) {
         let (coherent, defect) = self.inner.forward(state);
-        
+
         // The mathematical mapping: topological defect induces cognitive load and emotional drift.
         // As defined in ADR-107, this mapping must be monotonic with respect to the defect.
         let emotional_drift = defect * self.load_scaling_factor;

@@ -6,13 +6,9 @@
 //! If any central L-value is zero (or outside a certified safety interval),
 //! the gate fails.
 
+use crate::galois::{GaloisRepresentation, LanglandsPairing, MonsterConjugacyClass};
+use crate::langlands_zk::{verify_langlands_zk, LanglandsPublicInputs};
 use crate::rta::State;
-use crate::galois::{
-    GaloisRepresentation, LanglandsPairing, MonsterConjugacyClass,
-};
-use crate::langlands_zk::{
-    verify_langlands_zk, LanglandsPublicInputs,
-};
 use thiserror::Error;
 
 // ---------------------------------------------------------------------------
@@ -60,12 +56,12 @@ pub const ALL_MONSTER_CLASSES: &[MonsterConjugacyClass] = &[
 /// - All prime divisors of the class's level
 pub fn associated_primes(class: &MonsterConjugacyClass) -> Vec<u64> {
     let mut primes = Vec::new();
-    
+
     // Primes from cycle shape
     for &(len, _) in class.cycle_shape {
         primes.push(len);
     }
-    
+
     // Prime divisors of the level
     let mut n = class.level;
     let mut p = 2u64;
@@ -81,7 +77,7 @@ pub fn associated_primes(class: &MonsterConjugacyClass) -> Vec<u64> {
     if n > 1 {
         primes.push(n);
     }
-    
+
     primes.sort_unstable();
     primes.dedup();
     primes
@@ -209,10 +205,7 @@ pub fn gate_langlands(
         // Check safety interval (e.g., [threshold, 1/threshold] for reciprocity)
         let upper_bound = 1.0 / threshold.max(1e-12);
         if l_val.abs() > upper_bound {
-            return Err(GateFailure::LOutOfBounds(
-                class.class_id.to_string(),
-                l_val,
-            ));
+            return Err(GateFailure::LOutOfBounds(class.class_id.to_string(), l_val));
         }
     }
 
@@ -255,7 +248,7 @@ mod tests {
     fn test_gate_langlands_fails_on_vanishing() {
         let mut state = State::new();
         state.active_primes.insert(2);
-        
+
         // With an extremely small threshold, the L-value might appear to vanish
         // due to numerical precision limits in the truncated Euler product.
         let result = gate_langlands(&state, 1e-100, None);

@@ -1,6 +1,6 @@
 use crate::primes::generate_first_n_primes;
 use crate::spectral::{SpectralTransform, compute_bin_energies};
-use ndarray::{Array1, ArrayViewMutD, ArrayViewD};
+use ndarray::{Array1, ArrayViewD, ArrayViewMutD};
 use num_complex::Complex;
 use std::collections::HashMap;
 
@@ -52,7 +52,10 @@ pub struct DRMMOptimizer {
 impl DRMMOptimizer {
     pub fn new(config: OptimizerConfig) -> Self {
         let prime_count = config.num_bins.max(256);
-        let primes = generate_first_n_primes(prime_count).into_iter().map(|p| p as f64).collect();
+        let primes = generate_first_n_primes(prime_count)
+            .into_iter()
+            .map(|p| p as f64)
+            .collect();
         Self {
             config,
             primes,
@@ -63,13 +66,22 @@ impl DRMMOptimizer {
         }
     }
 
-    pub fn step(&mut self, param_id: usize, param: &mut ArrayViewMutD<f64>, grad: &ArrayViewD<f64>) {
+    pub fn step(
+        &mut self,
+        param_id: usize,
+        param: &mut ArrayViewMutD<f64>,
+        grad: &ArrayViewD<f64>,
+    ) {
         let original_len = grad.len();
-        let flat_grad = grad.as_standard_layout().to_owned().into_shape(original_len).unwrap();
-        
+        let flat_grad = grad
+            .as_standard_layout()
+            .to_owned()
+            .into_shape(original_len)
+            .unwrap();
+
         let (spectrum, padded_size, original_size) = self.transform.forward(flat_grad.view());
         let energies = compute_bin_energies(spectrum.view(), self.config.num_bins);
-        
+
         // Ensure state exists so we can access energy_ema for dynamic mixing
         let state = self.states.entry(param_id).or_insert_with(|| {
             ParameterState {
@@ -80,7 +92,7 @@ impl DRMMOptimizer {
                 energy_ema: vec![1.0; energies.len()], // Initialize with baseline 1.0
             }
         });
-        
+
         // _weighted_sum (State-Dependent Rank-1 Mixing)
         let mut weighted_sum = 0.0;
         for (i, &energy) in energies.iter().enumerate() {
@@ -88,28 +100,28 @@ impl DRMMOptimizer {
             let static_weight = self.primes[i].powf(-self.config.alpha);
             let dynamic_factor = energy / (state.energy_ema[i] + self.config.eps);
             let w_p = static_weight * dynamic_factor.sqrt(); // Soft rank-1 penalty scaling
-            
+
             weighted_sum += energy * w_p;
-            
+
             // Update historical EMA for this bin
-            state.energy_ema[i] = state.energy_ema[i] * self.config.ema_beta + energy * (1.0 - self.config.ema_beta);
+            state.energy_ema[i] =
+                state.energy_ema[i] * self.config.ema_beta + energy * (1.0 - self.config.ema_beta);
         }
 
         let lambda_raw = (1.0 / (weighted_sum + self.config.eps).sqrt())
             .clamp(self.config.lambda_min, self.config.lambda_max);
 
-
-
         // EMA Update
-        state.lambda_ema = state.lambda_ema * self.config.ema_beta + lambda_raw * (1.0 - self.config.ema_beta);
-        
+        state.lambda_ema =
+            state.lambda_ema * self.config.ema_beta + lambda_raw * (1.0 - self.config.ema_beta);
+
         if self.global_step % self.log_every == 0 {
             state.lambda_history.push(state.lambda_ema);
             state.energy_history.push(energies.to_vec());
         }
 
         let lambda_smoothed = state.lambda_ema;
-        
+
         // Contracted spectrum
         let contracted = spectrum.mapv(|c| c * lambda_smoothed);
 
@@ -119,12 +131,14 @@ impl DRMMOptimizer {
         }
 
         // Inverse transform
-        let delta = self.transform.inverse(state.momentum_buffer.view(), padded_size, original_size);
+        let delta =
+            self.transform
+                .inverse(state.momentum_buffer.view(), padded_size, original_size);
 
         // Update parameter
         let param_len = param.len();
         let mut param_flat = param.view_mut().into_shape(param_len).unwrap();
-        
+
         if self.config.weight_decay > 0.0 {
             for p in param_flat.iter_mut() {
                 *p *= 1.0 - self.config.lr * self.config.weight_decay;

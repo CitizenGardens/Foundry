@@ -13,11 +13,11 @@
 //! The module is deliberately lightweight and depends only on `num-bigint`
 //! and `num-rational`, matching the constraints of the surrounding project.
 
-use std::collections::HashMap;
+use crate::{multiplicity, Signature};
 use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::{One, Zero};
-use crate::{Signature, multiplicity};
+use std::collections::HashMap;
 
 /// Sparse representation of a signed monomial entry.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -142,7 +142,13 @@ impl PrimeMonomialMatrix {
                             existing.monomial = new_mono;
                         }
                         None => {
-                            result.entries.insert(pos, Entry { sign: new_sign, monomial: new_mono });
+                            result.entries.insert(
+                                pos,
+                                Entry {
+                                    sign: new_sign,
+                                    monomial: new_mono,
+                                },
+                            );
                         }
                     }
                 }
@@ -157,7 +163,11 @@ impl PrimeMonomialMatrix {
     pub fn to_rational_matrix(&self) -> Vec<Vec<BigRational>> {
         let mut dense = vec![vec![BigRational::zero(); self.cols]; self.rows];
         for ((i, j), entry) in &self.entries {
-            let sign_r = if entry.sign == 1 { BigRational::one() } else { -BigRational::one() };
+            let sign_r = if entry.sign == 1 {
+                BigRational::one()
+            } else {
+                -BigRational::one()
+            };
             let val = multiplicity(&entry.monomial);
             dense[*i][*j] = sign_r * val;
         }
@@ -169,7 +179,11 @@ impl PrimeMonomialMatrix {
     pub fn conservation_ok(&self) -> bool {
         let mut prod = BigRational::one();
         for entry in self.entries.values() {
-            let sign_r = if entry.sign == 1 { BigRational::one() } else { -BigRational::one() };
+            let sign_r = if entry.sign == 1 {
+                BigRational::one()
+            } else {
+                -BigRational::one()
+            };
             prod = prod * sign_r * multiplicity(&entry.monomial);
         }
         let src_total: BigRational = self.src_sigs.iter().map(|s| multiplicity(s)).product();
@@ -182,8 +196,8 @@ impl PrimeMonomialMatrix {
 mod tests {
     use super::*;
     use crate::Signature;
-    use num_rational::BigRational;
     use num_bigint::BigInt;
+    use num_rational::BigRational;
     use num_traits::One;
 
     fn simple_sig(p: u64, e: i64) -> Signature {

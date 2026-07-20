@@ -55,15 +55,22 @@ fn main() {
         }
         Commands::Sign { sk_path, msg_hex } => {
             let sk_bytes = fs::read(sk_path).expect("Failed to read SK");
-            let msg_bytes = hex::decode(msg_hex.trim_start_matches("0x")).expect("Invalid hex message");
+            let msg_bytes =
+                hex::decode(msg_hex.trim_start_matches("0x")).expect("Invalid hex message");
             let sig = sign(&sk_bytes, &msg_bytes);
             let sig_hex = hex::encode(sig);
             println!("0x{}", sig_hex);
         }
-        Commands::Verify { pk_path, msg_hex, sig_hex } => {
+        Commands::Verify {
+            pk_path,
+            msg_hex,
+            sig_hex,
+        } => {
             let pk_bytes = fs::read(pk_path).expect("Failed to read PK");
-            let msg_bytes = hex::decode(msg_hex.trim_start_matches("0x")).expect("Invalid hex message");
-            let sig_bytes = hex::decode(sig_hex.trim_start_matches("0x")).expect("Invalid hex signature");
+            let msg_bytes =
+                hex::decode(msg_hex.trim_start_matches("0x")).expect("Invalid hex message");
+            let sig_bytes =
+                hex::decode(sig_hex.trim_start_matches("0x")).expect("Invalid hex signature");
             match verify(&pk_bytes, &msg_bytes, &sig_bytes) {
                 Ok(()) => println!("Signature verified"),
                 Err(()) => println!("Signature invalid"),

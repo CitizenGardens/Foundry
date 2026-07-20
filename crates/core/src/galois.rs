@@ -117,7 +117,10 @@ impl MonsterConjugacyClass {
     /// For simple classes this equals the level; for general classes it may be
     /// a proper divisor.
     pub fn lcm_from_cycle_shape(&self) -> u64 {
-        self.cycle_shape.iter().map(|(len, _)| *len).fold(1, lcm_u64)
+        self.cycle_shape
+            .iter()
+            .map(|(len, _)| *len)
+            .fold(1, lcm_u64)
     }
 }
 
@@ -270,58 +273,20 @@ const MONSTER_1A_COEFFS: &[i64] = &[
 
 /// T_{2A}(τ) coefficients.
 const MONSTER_2A_COEFFS: &[i64] = &[
-    4372,
-    96256,
-    852000,
-    8439072,
-    70044800,
-    532174080,
-    3825909696,
+    4372, 96256, 852000, 8439072, 70044800, 532174080, 3825909696,
 ];
 
 /// T_{3A}(τ) coefficients.
-const MONSTER_3A_COEFFS: &[i64] = &[
-    276,
-    2716,
-    20652,
-    175704,
-    1286592,
-    8395656,
-    51940128,
-];
+const MONSTER_3A_COEFFS: &[i64] = &[276, 2716, 20652, 175704, 1286592, 8395656, 51940128];
 
 /// T_{5A}(τ) coefficients.
-const MONSTER_5A_COEFFS: &[i64] = &[
-    276,
-    2716,
-    20652,
-    175704,
-    1286592,
-    8395656,
-    51940128,
-];
+const MONSTER_5A_COEFFS: &[i64] = &[276, 2716, 20652, 175704, 1286592, 8395656, 51940128];
 
 /// T_{7A}(τ) coefficients.
-const MONSTER_7A_COEFFS: &[i64] = &[
-    276,
-    2716,
-    20652,
-    175704,
-    1286592,
-    8395656,
-    51940128,
-];
+const MONSTER_7A_COEFFS: &[i64] = &[276, 2716, 20652, 175704, 1286592, 8395656, 51940128];
 
 /// T_{11A}(τ) coefficients.
-const MONSTER_11A_COEFFS: &[i64] = &[
-    276,
-    2716,
-    20652,
-    175704,
-    1286592,
-    8395656,
-    51940128,
-];
+const MONSTER_11A_COEFFS: &[i64] = &[276, 2716, 20652, 175704, 1286592, 8395656, 51940128];
 
 // ---------------------------------------------------------------------------
 // Helper: integer utilities
@@ -536,7 +501,11 @@ impl GaloisRepresentation {
 
         let mut current_idx = 2u64;
         while current_idx < p {
-            let p_pow = if k > 1 { mod_pow(current_idx as u64, (k - 1) as u64, self.ell) } else { 1 };
+            let p_pow = if k > 1 {
+                mod_pow(current_idx as u64, (k - 1) as u64, self.ell)
+            } else {
+                1
+            };
             let term1 = mod_mul(a_curr, a_curr, self.ell);
             let term2 = mod_mul(p_pow, a_prev, self.ell);
             let next = if term1 >= term2 {
@@ -574,15 +543,9 @@ impl GaloisRepresentation {
 /// This is the primary entry point for the "lawful sentence" invariant check:
 /// given a set of Galois primes, compute the corresponding Frobenius traces
 /// and verify they match the expected arithmetic invariants.
-pub fn batch_frobenius(
-    repr: &GaloisRepresentation,
-    primes: &[u64],
-) -> Vec<Result<FrobeniusData>> {
+pub fn batch_frobenius(repr: &GaloisRepresentation, primes: &[u64]) -> Vec<Result<FrobeniusData>> {
     use rayon::prelude::*;
-    primes
-        .par_iter()
-        .map(|&p| repr.frobenius(p))
-        .collect()
+    primes.par_iter().map(|&p| repr.frobenius(p)).collect()
 }
 
 /// Compute the set of Galois primes (unramified primes) for a given
@@ -644,10 +607,7 @@ pub fn verify_lawful_sentence(
     operators: &[u64],
     invariants: &[ArithmeticInvariant],
 ) -> Result<()> {
-    let inv_map: HashMap<_, _> = invariants
-        .iter()
-        .map(|inv| (inv.prime, inv))
-        .collect();
+    let inv_map: HashMap<_, _> = invariants.iter().map(|inv| (inv.prime, inv)).collect();
 
     for &p in operators {
         if !is_prime_u64(p) {
@@ -734,7 +694,10 @@ impl LanglandsPairing {
     }
 
     /// Create with custom configuration.
-    pub fn with_config(representation: GaloisRepresentation, config: LanglandsPairingConfig) -> Self {
+    pub fn with_config(
+        representation: GaloisRepresentation,
+        config: LanglandsPairingConfig,
+    ) -> Self {
         Self {
             representation,
             config,
@@ -766,8 +729,7 @@ impl LanglandsPairing {
         if denominator.abs() < 1e-30 {
             return Err(GaloisError::ModularSymbolError(format!(
                 "Euler factor vanishes at p={} for class {}",
-                p,
-                self.representation.monster_class.class_id
+                p, self.representation.monster_class.class_id
             )));
         }
 
@@ -835,10 +797,7 @@ impl LanglandsPairing {
         if l_value.abs() < self.config.tolerance {
             return Err(GaloisError::ModularSymbolError(format!(
                 "L(s, ρ_g) appears to vanish at s={} for class {}: |L| = {} < tolerance {}",
-                self.config.s,
-                repr.monster_class.class_id,
-                l_value,
-                self.config.tolerance
+                self.config.s, repr.monster_class.class_id, l_value, self.config.tolerance
             )));
         }
 
@@ -973,8 +932,7 @@ mod tests {
 
     #[test]
     fn test_frobenius_unramified() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
         let frob = repr.frobenius(3).unwrap();
         assert!(!frob.is_ramified);
         assert_eq!(frob.prime, 3);
@@ -982,24 +940,21 @@ mod tests {
 
     #[test]
     fn test_frobenius_ramified_at_level() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
         let frob = repr.frobenius(2).unwrap();
         assert!(frob.is_ramified);
     }
 
     #[test]
     fn test_frobenius_ramified_at_ell() {
-        let repr =
-            GaloisRepresentation::new(MonsterConjugacyClass::IDENTITY, 7).unwrap();
+        let repr = GaloisRepresentation::new(MonsterConjugacyClass::IDENTITY, 7).unwrap();
         let frob = repr.frobenius(7).unwrap();
         assert!(frob.is_ramified);
     }
 
     #[test]
     fn test_batch_frobenius() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_3A).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_3A).unwrap();
         let primes = vec![2, 3, 5, 7, 11];
         let results = batch_frobenius(&repr, &primes);
         assert_eq!(results.len(), 5);
@@ -1020,22 +975,16 @@ mod tests {
 
     #[test]
     fn test_verify_lawful_sentence() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
         let frob_3 = repr.frobenius(3).unwrap();
-        let invariants = vec![ArithmeticInvariant::new(
-            "1A",
-            3,
-            frob_3.trace,
-        )];
+        let invariants = vec![ArithmeticInvariant::new("1A", 3, frob_3.trace)];
         let result = verify_lawful_sentence(&repr, &[3], &invariants);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_determinant_is_one() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
         for &p in &[2, 3, 5, 7, 11] {
             let frob = repr.frobenius(p).unwrap();
             if !frob.is_ramified {
@@ -1053,19 +1002,13 @@ mod tests {
             cycle_shape: &[(99, 1)],
         };
         let result = GaloisRepresentation::new(unknown, 7);
-        assert!(matches!(
-            result,
-            Err(GaloisError::UnknownConjugacyClass(_))
-        ));
+        assert!(matches!(result, Err(GaloisError::UnknownConjugacyClass(_))));
     }
 
     #[test]
     fn test_non_prime_ell_error() {
         let result = GaloisRepresentation::new(MonsterConjugacyClass::IDENTITY, 9);
-        assert!(matches!(
-            result,
-            Err(GaloisError::ModularSymbolError(_))
-        ));
+        assert!(matches!(result, Err(GaloisError::ModularSymbolError(_))));
     }
 
     // -----------------------------------------------------------------------
@@ -1074,8 +1017,7 @@ mod tests {
 
     #[test]
     fn test_langlands_pairing_creation() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
         let pairing = LanglandsPairing::new(repr);
         assert_eq!(pairing.config.s, 1.0);
         assert_eq!(pairing.config.prime_bound, 100);
@@ -1083,8 +1025,7 @@ mod tests {
 
     #[test]
     fn test_euler_factor_unramified() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
         let pairing = LanglandsPairing::new(repr);
         let factor = pairing.euler_factor(3).unwrap();
         assert!(factor != 0.0);
@@ -1093,8 +1034,7 @@ mod tests {
 
     #[test]
     fn test_euler_factor_ramified() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
         let pairing = LanglandsPairing::new(repr);
         let factor = pairing.euler_factor(2).unwrap();
         assert_eq!(factor, 1.0);
@@ -1102,32 +1042,28 @@ mod tests {
 
     #[test]
     fn test_artin_conductor_unramified() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
         let pairing = LanglandsPairing::new(repr);
         assert_eq!(pairing.artin_conductor(3), 0);
     }
 
     #[test]
     fn test_artin_conductor_ramified_at_level() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
         let pairing = LanglandsPairing::new(repr);
         assert_eq!(pairing.artin_conductor(2), 1);
     }
 
     #[test]
     fn test_artin_conductor_ramified_at_ell() {
-        let repr =
-            GaloisRepresentation::new(MonsterConjugacyClass::IDENTITY, 7).unwrap();
+        let repr = GaloisRepresentation::new(MonsterConjugacyClass::IDENTITY, 7).unwrap();
         let pairing = LanglandsPairing::new(repr);
         assert_eq!(pairing.artin_conductor(7), 2);
     }
 
     #[test]
     fn test_l_function_nonzero() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
         let pairing = LanglandsPairing::with_config(
             repr,
             LanglandsPairingConfig {
@@ -1139,13 +1075,16 @@ mod tests {
         );
         let l_val = pairing.special_value_at_one().unwrap();
         assert!(l_val.is_finite(), "L(1, ρ) should be finite: got {}", l_val);
-        assert!(l_val.abs() > 1e-12, "L(1, ρ) should not vanish: got {}", l_val);
+        assert!(
+            l_val.abs() > 1e-12,
+            "L(1, ρ) should not vanish: got {}",
+            l_val
+        );
     }
 
     #[test]
     fn test_axiom_l1_enabled_passes() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
         let axiom = AxiomL1::with_config(true, 2, 1e-12);
         let result = axiom.verify(&repr, &["1A"]);
         assert!(result.is_ok());
@@ -1153,8 +1092,7 @@ mod tests {
 
     #[test]
     fn test_axiom_l1_disabled() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::IDENTITY).unwrap();
         let axiom = AxiomL1::with_config(false, 100, 1e-12);
         let result = axiom.verify(&repr, &["1A"]);
         assert!(result.is_ok());
@@ -1162,8 +1100,7 @@ mod tests {
 
     #[test]
     fn test_axiom_l1_unactivated_class() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
         let axiom = AxiomL1::new();
         let result = axiom.verify(&repr, &["1A"]);
         assert!(result.is_ok());
@@ -1171,8 +1108,7 @@ mod tests {
 
     #[test]
     fn test_langlands_pairing_with_custom_config() {
-        let repr =
-            GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
+        let repr = GaloisRepresentation::with_goldilocks(MonsterConjugacyClass::CLASS_2A).unwrap();
         let config = LanglandsPairingConfig {
             prime_bound: 5,
             s: 1.0,

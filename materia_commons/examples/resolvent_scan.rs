@@ -1,6 +1,6 @@
 // examples/resolvent_scan.rs
 use multiplicity_common::hamiltonian::{build_hamiltonians, N_STATES};
-use multiplicity_common::spectral_resolvent::{resolvent_trace, first_order_trace};
+use multiplicity_common::spectral_resolvent::{first_order_trace, resolvent_trace};
 use nalgebra::DMatrix;
 
 const KAPPA: f64 = 0.1;

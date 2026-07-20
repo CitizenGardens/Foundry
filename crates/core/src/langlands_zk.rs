@@ -137,16 +137,20 @@ impl LanglandsPublicInputs {
         let l_value = crate::galois::LanglandsPairing::new(repr.clone())
             .l_function_at_s()
             .map_err(|e| GateFailure::GaloisError(class_id.to_string(), e.to_string()))?;
-        let scale_pow = scale
-            .checked_pow(n as u32)
-            .ok_or_else(|| GateFailure::GaloisError(
+        let scale_pow = scale.checked_pow(n as u32).ok_or_else(|| {
+            GateFailure::GaloisError(
                 class_id.to_string(),
                 "scale^num_primes overflow".to_string(),
-            ))?;
+            )
+        })?;
         let claimed = (l_value * scale_pow as f64).round() as u64;
 
         let public = LanglandsPublicInputs::new(class_id, prime_list, claimed, scale);
-        Ok(LanglandsWitness { public, traces, determinants })
+        Ok(LanglandsWitness {
+            public,
+            traces,
+            determinants,
+        })
     }
 }
 
@@ -168,59 +172,69 @@ pub struct Groth16Proof {
 impl Groth16Proof {
     /// Parse a proof from JSON (matching the verification-sdk format).
     pub fn from_json(proof: &serde_json::Value) -> ZKResult<Self> {
-        let obj = proof.as_object().ok_or_else(|| {
-            ZKError::InvalidProofFormat("Proof is not a JSON object".to_string())
-        })?;
+        let obj = proof
+            .as_object()
+            .ok_or_else(|| ZKError::InvalidProofFormat("Proof is not a JSON object".to_string()))?;
 
-        let pi_a = obj.get("pi_a").ok_or_else(|| {
-            ZKError::InvalidProofFormat("Missing pi_a".to_string())
-        })?;
-        let pi_b = obj.get("pi_b").ok_or_else(|| {
-            ZKError::InvalidProofFormat("Missing pi_b".to_string())
-        })?;
-        let pi_c = obj.get("pi_c").ok_or_else(|| {
-            ZKError::InvalidProofFormat("Missing pi_c".to_string())
-        })?;
+        let pi_a = obj
+            .get("pi_a")
+            .ok_or_else(|| ZKError::InvalidProofFormat("Missing pi_a".to_string()))?;
+        let pi_b = obj
+            .get("pi_b")
+            .ok_or_else(|| ZKError::InvalidProofFormat("Missing pi_b".to_string()))?;
+        let pi_c = obj
+            .get("pi_c")
+            .ok_or_else(|| ZKError::InvalidProofFormat("Missing pi_c".to_string()))?;
 
         let a = parse_g1_point(pi_a)?;
         let b = parse_g2_point(pi_b)?;
         let c = parse_g1_point(pi_c)?;
 
-        Ok(Self { pi_a: a, pi_b: b, pi_c: c })
+        Ok(Self {
+            pi_a: a,
+            pi_b: b,
+            pi_c: c,
+        })
     }
 }
 
 fn parse_g1_point(val: &serde_json::Value) -> ZKResult<(u64, u64)> {
-    let arr = val.as_array().ok_or_else(|| {
-        ZKError::InvalidProofFormat("pi_a is not an array".to_string())
-    })?;
+    let arr = val
+        .as_array()
+        .ok_or_else(|| ZKError::InvalidProofFormat("pi_a is not an array".to_string()))?;
     if arr.len() != 2 {
-        return Err(ZKError::InvalidProofFormat("pi_a must have 2 elements".to_string()));
+        return Err(ZKError::InvalidProofFormat(
+            "pi_a must have 2 elements".to_string(),
+        ));
     }
-    let x = arr[0].as_u64().ok_or_else(|| {
-        ZKError::InvalidProofFormat("pi_a[0] is not u64".to_string())
-    })?;
-    let y = arr[1].as_u64().ok_or_else(|| {
-        ZKError::InvalidProofFormat("pi_a[1] is not u64".to_string())
-    })?;
+    let x = arr[0]
+        .as_u64()
+        .ok_or_else(|| ZKError::InvalidProofFormat("pi_a[0] is not u64".to_string()))?;
+    let y = arr[1]
+        .as_u64()
+        .ok_or_else(|| ZKError::InvalidProofFormat("pi_a[1] is not u64".to_string()))?;
     Ok((x, y))
 }
 
 fn parse_g2_point(val: &serde_json::Value) -> ZKResult<(u64, u64, u64, u64)> {
-    let arr = val.as_array().ok_or_else(|| {
-        ZKError::InvalidProofFormat("pi_b is not an array".to_string())
-    })?;
+    let arr = val
+        .as_array()
+        .ok_or_else(|| ZKError::InvalidProofFormat("pi_b is not an array".to_string()))?;
     if arr.len() != 2 {
-        return Err(ZKError::InvalidProofFormat("pi_b must have 2 elements".to_string()));
+        return Err(ZKError::InvalidProofFormat(
+            "pi_b must have 2 elements".to_string(),
+        ));
     }
-    let x = arr[0].as_array().ok_or_else(|| {
-        ZKError::InvalidProofFormat("pi_b[0] is not an array".to_string())
-    })?;
-    let y = arr[1].as_array().ok_or_else(|| {
-        ZKError::InvalidProofFormat("pi_b[1] is not an array".to_string())
-    })?;
+    let x = arr[0]
+        .as_array()
+        .ok_or_else(|| ZKError::InvalidProofFormat("pi_b[0] is not an array".to_string()))?;
+    let y = arr[1]
+        .as_array()
+        .ok_or_else(|| ZKError::InvalidProofFormat("pi_b[1] is not an array".to_string()))?;
     if x.len() != 2 || y.len() != 2 {
-        return Err(ZKError::InvalidProofFormat("pi_b elements must have 2 elements each".to_string()));
+        return Err(ZKError::InvalidProofFormat(
+            "pi_b elements must have 2 elements each".to_string(),
+        ));
     }
     let x0 = x[0].as_u64().unwrap_or(0);
     let x1 = x[1].as_u64().unwrap_or(0);
@@ -253,21 +267,21 @@ pub struct LanglandsVerifyingKey {
 impl LanglandsVerifyingKey {
     /// Load a verification key from JSON (matching snarkjs format).
     pub fn from_json(vk: &serde_json::Value) -> ZKResult<Self> {
-        let obj = vk.as_object().ok_or_else(|| {
-            ZKError::InvalidProofFormat("VK is not a JSON object".to_string())
-        })?;
+        let obj = vk
+            .as_object()
+            .ok_or_else(|| ZKError::InvalidProofFormat("VK is not a JSON object".to_string()))?;
 
         let alpha = parse_g1_point(obj.get("vk_alpha").unwrap_or(&serde_json::json!([])))?;
         let beta = parse_g2_point(obj.get("vk_beta").unwrap_or(&serde_json::json!([])))?;
         let gamma = parse_g2_point(obj.get("vk_gamma").unwrap_or(&serde_json::json!([])))?;
         let delta = parse_g2_point(obj.get("vk_delta").unwrap_or(&serde_json::json!([])))?;
 
-        let ic_raw = obj.get("vk_ic").ok_or_else(|| {
-            ZKError::InvalidProofFormat("Missing vk_ic".to_string())
-        })?;
-        let ic_arr = ic_raw.as_array().ok_or_else(|| {
-            ZKError::InvalidProofFormat("vk_ic is not an array".to_string())
-        })?;
+        let ic_raw = obj
+            .get("vk_ic")
+            .ok_or_else(|| ZKError::InvalidProofFormat("Missing vk_ic".to_string()))?;
+        let ic_arr = ic_raw
+            .as_array()
+            .ok_or_else(|| ZKError::InvalidProofFormat("vk_ic is not an array".to_string()))?;
         let mut ic = Vec::with_capacity(ic_arr.len());
         for item in ic_arr {
             ic.push(parse_g1_point(item)?);
@@ -385,32 +399,43 @@ impl LanglandsVerifier {
         let fr_modulus = BigUint::parse_bytes(
             b"21888242871839275222246405745257275088548364400416034343698204186575808495617",
             10,
-        ).expect("Valid BN254 modulus");
+        )
+        .expect("Valid BN254 modulus");
 
         // G1 point range check
         let pi_a_x = BigUint::from(proof.pi_a.0);
         let pi_a_y = BigUint::from(proof.pi_a.1);
         if pi_a_x >= fr_modulus || pi_a_y >= fr_modulus {
-            return Err(ZKError::VerificationFailed("Proof pi_a coordinates out of BN254 Fr range".to_string()));
+            return Err(ZKError::VerificationFailed(
+                "Proof pi_a coordinates out of BN254 Fr range".to_string(),
+            ));
         }
         let pi_c_x = BigUint::from(proof.pi_c.0);
         let pi_c_y = BigUint::from(proof.pi_c.1);
         if pi_c_x >= fr_modulus || pi_c_y >= fr_modulus {
-            return Err(ZKError::VerificationFailed("Proof pi_c coordinates out of BN254 Fr range".to_string()));
+            return Err(ZKError::VerificationFailed(
+                "Proof pi_c coordinates out of BN254 Fr range".to_string(),
+            ));
         }
 
         // G2 point range check
-        for (i, &coord) in [proof.pi_b.0, proof.pi_b.1, proof.pi_b.2, proof.pi_b.3].iter().enumerate() {
+        for (i, &coord) in [proof.pi_b.0, proof.pi_b.1, proof.pi_b.2, proof.pi_b.3]
+            .iter()
+            .enumerate()
+        {
             if BigUint::from(coord) >= fr_modulus {
-                return Err(ZKError::VerificationFailed(
-                    format!("Proof pi_b coordinate {} out of BN254 Fr range", i)
-                ));
+                return Err(ZKError::VerificationFailed(format!(
+                    "Proof pi_b coordinate {} out of BN254 Fr range",
+                    i
+                )));
             }
         }
 
         // VK alpha range check
         if BigUint::from(vk.alpha.0) >= fr_modulus || BigUint::from(vk.alpha.1) >= fr_modulus {
-            return Err(ZKError::VerificationFailed("VK alpha coordinates out of range".to_string()));
+            return Err(ZKError::VerificationFailed(
+                "VK alpha coordinates out of range".to_string(),
+            ));
         }
 
         // Perform the standard structural checks
@@ -431,15 +456,16 @@ pub fn verify_langlands_zk(
     public_inputs: &LanglandsPublicInputs,
     vk_json: &serde_json::Value,
 ) -> Result<(), GateFailure> {
-    let proof = match Groth16Proof::from_json(&serde_json::from_slice(proof_bytes).unwrap_or_default()) {
-        Ok(p) => p,
-        Err(e) => {
-            return Err(GateFailure::GaloisError(
-                repr.monster_class.class_id.to_string(),
-                format!("ZK proof parse error: {}", e),
-            ));
-        }
-    };
+    let proof =
+        match Groth16Proof::from_json(&serde_json::from_slice(proof_bytes).unwrap_or_default()) {
+            Ok(p) => p,
+            Err(e) => {
+                return Err(GateFailure::GaloisError(
+                    repr.monster_class.class_id.to_string(),
+                    format!("ZK proof parse error: {}", e),
+                ));
+            }
+        };
 
     let vk = match LanglandsVerifyingKey::from_json(vk_json) {
         Ok(vk) => vk,
@@ -451,11 +477,12 @@ pub fn verify_langlands_zk(
         }
     };
 
-    LanglandsVerifier::verify(&proof, public_inputs, &vk)
-        .map_err(|e| GateFailure::GaloisError(
+    LanglandsVerifier::verify(&proof, public_inputs, &vk).map_err(|e| {
+        GateFailure::GaloisError(
             repr.monster_class.class_id.to_string(),
             format!("ZK verification failed: {}", e),
-        ))
+        )
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -553,7 +580,7 @@ mod tests {
 // ---------------------------------------------------------------------------
 
 use std::collections::HashMap;
-// Assuming GoldilocksField is available or defined. 
+// Assuming GoldilocksField is available or defined.
 // For Kani verification, we will mock it or import it properly.
 // use goldilocks_arithmetic_kernel::GoldilocksField;
 
@@ -562,23 +589,39 @@ use std::collections::HashMap;
 pub struct GoldilocksField(pub u64);
 
 impl GoldilocksField {
-    pub fn one() -> Self { Self(1) }
-    pub fn zero() -> Self { Self(0) }
-    pub fn from(v: u64) -> Self { Self(v) }
-    pub fn inverse(&self) -> Option<Self> { Some(Self(1)) /* mock */ }
-    pub fn pow(&self, _exp: u64) -> Self { Self(1) /* mock */ }
+    pub fn one() -> Self {
+        Self(1)
+    }
+    pub fn zero() -> Self {
+        Self(0)
+    }
+    pub fn from(v: u64) -> Self {
+        Self(v)
+    }
+    pub fn inverse(&self) -> Option<Self> {
+        Some(Self(1)) /* mock */
+    }
+    pub fn pow(&self, _exp: u64) -> Self {
+        Self(1) /* mock */
+    }
 }
 impl std::ops::Add for GoldilocksField {
     type Output = Self;
-    fn add(self, _rhs: Self) -> Self::Output { self }
+    fn add(self, _rhs: Self) -> Self::Output {
+        self
+    }
 }
 impl std::ops::Sub for GoldilocksField {
     type Output = Self;
-    fn sub(self, _rhs: Self) -> Self::Output { self }
+    fn sub(self, _rhs: Self) -> Self::Output {
+        self
+    }
 }
 impl std::ops::Mul for GoldilocksField {
     type Output = Self;
-    fn mul(self, _rhs: Self) -> Self::Output { self }
+    fn mul(self, _rhs: Self) -> Self::Output {
+        self
+    }
 }
 
 /// Compute the truncated Euler product for a set of primes.
@@ -600,10 +643,10 @@ pub fn compute_euler_product(
     let mut product = one;
 
     for &p in primes {
-        let p_fe = GoldilocksField::from(p);                 // p mod P
+        let p_fe = GoldilocksField::from(p); // p mod P
         let p_inv = p_fe.inverse().expect("prime not zero"); // p^{-1}
-        let p_inv_s = p_inv.pow(s);                          // p^{-s}
-        let p_inv_2s = p_inv.pow(2 * s);                    // p^{-2s}
+        let p_inv_s = p_inv.pow(s); // p^{-s}
+        let p_inv_2s = p_inv.pow(2 * s); // p^{-2s}
 
         let trace = traces.get(&p).copied().unwrap_or(one);
         let det = determinants.get(&p).copied().unwrap_or(one);

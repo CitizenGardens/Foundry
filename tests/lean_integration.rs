@@ -5,7 +5,7 @@
 #[cfg(test)]
 mod integration {
     // Import public items from the `multiplicity` crate
-    use multiplicity::{Signature, multiplicity};
+    use multiplicity::{multiplicity, Signature};
     use num_rational::BigRational;
     use num_traits::One;
 
@@ -81,5 +81,4 @@ mod integration {
         expected.insert(7, 1);
         assert_eq!(prod, expected);
     }
-
 }

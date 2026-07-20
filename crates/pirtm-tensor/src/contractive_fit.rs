@@ -1,6 +1,6 @@
-use ndarray::Array1;
-use crate::multiplicity_cell::MultiplicityCell;
 use crate::csl::Attractor;
+use crate::multiplicity_cell::MultiplicityCell;
+use ndarray::Array1;
 
 /// A contractive Fit operator that uses a MultiplicityCell to guide
 /// the state toward the Bindu (artaDefect = 0, coherentWeight maximal).
@@ -20,9 +20,16 @@ pub struct ContractiveFit<'a, C: MultiplicityCell> {
 
 impl<'a, C: MultiplicityCell> ContractiveFit<'a, C> {
     pub fn new(cell: C, learning_rate: f64, tolerance: f64) -> Self {
-        ContractiveFit { cell, learning_rate, tolerance, lambda_csl: 0.0, zeta_threshold: None, attractor: None }
+        ContractiveFit {
+            cell,
+            learning_rate,
+            tolerance,
+            lambda_csl: 0.0,
+            zeta_threshold: None,
+            attractor: None,
+        }
     }
-    
+
     pub fn with_csl(mut self, lambda_csl: f64, attractor: &'a dyn Attractor) -> Self {
         self.lambda_csl = lambda_csl;
         self.attractor = Some(attractor);
@@ -59,13 +66,13 @@ impl<'a, C: MultiplicityCell> ContractiveFit<'a, C> {
 
     pub fn step(&self, state: &Array1<f64>) -> (Array1<f64>, f64) {
         let mut grad = self.gradient(state);
-        
+
         // Add CSL penalty gradient if configured
         if let Some(attr) = self.attractor {
             let csl_grad = attr.penalty_gradient(state);
             grad = grad + &(self.lambda_csl * csl_grad);
         }
-        
+
         // Zeta-Regularization: Clamp divergent gradients
         if let Some(zeta) = self.zeta_threshold {
             let norm = grad.iter().map(|x| x.powi(2)).sum::<f64>().sqrt();
@@ -74,7 +81,7 @@ impl<'a, C: MultiplicityCell> ContractiveFit<'a, C> {
                 grad.mapv_inplace(|x| x * scale);
             }
         }
-        
+
         let new_state = state - self.learning_rate * &grad;
         let (_, defect) = self.cell.forward(&new_state);
         (new_state, defect)

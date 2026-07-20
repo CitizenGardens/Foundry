@@ -1,4 +1,4 @@
-use crate::schemas::{RuleViolation, Severity, ClinicalWorkflowInput};
+use crate::schemas::{ClinicalWorkflowInput, RuleViolation, Severity};
 
 pub fn check_clinical_dissonance(input: &ClinicalWorkflowInput) -> Vec<RuleViolation> {
     let mut violations = Vec::new();
@@ -21,7 +21,8 @@ pub fn check_clinical_dissonance(input: &ClinicalWorkflowInput) -> Vec<RuleViola
         violations.push(RuleViolation {
             rule_id: "CD-002".to_string(),
             severity: Severity::Critical,
-            message: "Clinical justification is not anchored in Archivum. Decision blocked.".to_string(),
+            message: "Clinical justification is not anchored in Archivum. Decision blocked."
+                .to_string(),
             context: None,
         });
     }
@@ -56,9 +57,13 @@ pub fn check_clinical_dissonance(input: &ClinicalWorkflowInput) -> Vec<RuleViola
 }
 
 fn is_prime(n: u64) -> bool {
-    if n < 2 { return false; }
+    if n < 2 {
+        return false;
+    }
     for i in 2..=((n as f64).sqrt() as u64) {
-        if n % i == 0 { return false; }
+        if n % i == 0 {
+            return false;
+        }
     }
     true
 }

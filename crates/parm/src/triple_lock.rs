@@ -6,8 +6,8 @@
 //! Publisher → signs sealed state into Archivum
 //! ```
 
+use super::{ParmEngine, ParmError, ParmSealWitness};
 use chrono::Utc;
-use super::{ParmEngine, ParmSealWitness, ParmError};
 
 #[derive(Debug, Clone, Default)]
 pub struct TripleLockParm {
@@ -77,7 +77,9 @@ impl TripleLockParm {
     ) -> Result<(u64, ParmSealWitness), ParmError> {
         let (sealed, witness) = engine.seal_with_witness(primes)?;
         let proof = archivum::ParmSealProof::new(witness.input_hash, sealed);
-        ledger.stamp_parm_seal_proof(&proof).map_err(|_| ParmError::Overflow)?;
+        ledger
+            .stamp_parm_seal_proof(&proof)
+            .map_err(|_| ParmError::Overflow)?;
         self.guardian_approve()
             .examiner_audit(&witness)
             .publisher_sign(&proof);

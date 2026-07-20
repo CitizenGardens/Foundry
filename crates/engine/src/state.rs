@@ -1,4 +1,4 @@
-use crate::sigma_layer::{ZeroModeExtractable, ZeroModeQuantities, CertificationError};
+use crate::sigma_layer::{CertificationError, ZeroModeExtractable, ZeroModeQuantities};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -10,13 +10,13 @@ pub struct PrimeChannel {
 #[derive(Debug, Clone)]
 pub struct SkeletonState {
     /// Maps to the base skeleton magnitude: |Xi(t)|
-    pub operator_norm: f64, 
+    pub operator_norm: f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct TensorMapState {
     /// Maps to the Lipschitz constant of the tensor map: L_T
-    pub lipschitz_bound: f64, 
+    pub lipschitz_bound: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -31,7 +31,7 @@ impl ZeroModeExtractable for RuntimeState {
         let mut prime_weights = HashMap::new();
 
         // Map the active channels into the HashMap expected by the certification layer.
-        // We take the absolute value of the weight, as the ZM gain bound 
+        // We take the absolute value of the weight, as the ZM gain bound
         // is concerned with absolute magnitude |lambda_p(t)|.
         for channel in &self.active_channels {
             prime_weights.insert(channel.prime_index, channel.weight.abs());

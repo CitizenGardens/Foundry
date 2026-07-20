@@ -1,11 +1,11 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 pub fn get_prime_factors(n: u64) -> HashMap<u64, u32> {
     if n <= 1 {
         return HashMap::new();
     }
-    
+
     let mut factors = HashMap::new();
     let mut d = 2;
     let mut temp = n;

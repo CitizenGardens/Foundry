@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::fs::{OpenOptions, File};
+use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
@@ -36,12 +36,17 @@ pub struct ArchivumLedger {
 
 impl ArchivumLedger {
     pub fn new() -> Self {
-        Self { witnesses: Vec::new(), root_hash: [0u8; 32] }
+        Self {
+            witnesses: Vec::new(),
+            root_hash: [0u8; 32],
+        }
     }
 
     pub fn append(&mut self, w: Witness) -> Result<[u8; 32], ArchivumError> {
         if self.witnesses.iter().any(|x| x.state_hash == w.state_hash) {
-            return Err(ArchivumError::DuplicateWitness { state_hash: w.state_hash });
+            return Err(ArchivumError::DuplicateWitness {
+                state_hash: w.state_hash,
+            });
         }
         self.witnesses.push(w);
         self.root_hash = self.compute_root_hash();
@@ -88,11 +93,11 @@ mod verification {
             commit_hash: None,
             previous_hash: None,
         };
-        
+
         let res = ledger.append(w.clone());
         kani::assert(res.is_ok(), "Append failed on empty ledger");
         kani::assert(ledger.verify_chain(), "Chain invalid after append");
-        
+
         let res2 = ledger.append(w);
         kani::assert(res2.is_err(), "Duplicate witness not rejected");
     }
@@ -110,16 +115,22 @@ pub struct ConflictLogSchema {
 }
 
 impl ConflictLogSchema {
-    pub fn new(transition_id: &str, r_sc: f64, l_eff: f64, tau_r: f64, breach_type: String) -> Self {
+    pub fn new(
+        transition_id: &str,
+        r_sc: f64,
+        l_eff: f64,
+        tau_r: f64,
+        breach_type: String,
+    ) -> Self {
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_secs()
             .to_string();
-        
+
         let receipt_hash = format!("PWEH-TRAP-{}", timestamp);
         let pweh_hash = PwehHash::compute(transition_id, &receipt_hash);
-        
+
         Self {
             receipt_hash,
             r_sc,
@@ -158,13 +169,19 @@ pub struct ZmosSpectralProof {
 }
 
 impl ZmosSpectralProof {
-    pub fn new(operator_id: String, spectral_radius: f64, lean_proof_hash: String, rust_binary_hash: String, tee_quote: String) -> Self {
+    pub fn new(
+        operator_id: String,
+        spectral_radius: f64,
+        lean_proof_hash: String,
+        rust_binary_hash: String,
+        tee_quote: String,
+    ) -> Self {
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             operator_id,
             spectral_radius,
@@ -191,7 +208,7 @@ impl SigmaProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             state_hash,
             invariant_holds,
@@ -216,7 +233,7 @@ impl StratumProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             transition_signature,
             from_stratum,
@@ -241,7 +258,7 @@ impl MatrixEngineProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             kernel_name,
             contraction_param,
@@ -265,7 +282,7 @@ impl ACEProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             witness_count,
             final_cycles,
@@ -288,7 +305,7 @@ impl PirtmCompileProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             ast_hash,
             type_signature,
@@ -311,7 +328,7 @@ impl XiCompileProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             target_arch,
             optimized_blob,
@@ -334,7 +351,7 @@ impl AutomorphicTrainingProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             energy_bound,
             step_count,
@@ -358,7 +375,7 @@ impl MQNNExecutionProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             qudit_output_hash,
             classical_output_hash,
@@ -383,7 +400,7 @@ impl EchoBraidProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             sender,
             receiver,
@@ -407,7 +424,7 @@ impl ALPCheckProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             policy_name,
             rta_metric,
@@ -430,7 +447,7 @@ impl ORFCoherenceProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             lambda_hat_descent,
             in_coherence_manifold,
@@ -453,7 +470,7 @@ impl MocOperationProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             operation_type,
             result_summary,
@@ -476,7 +493,7 @@ impl FockContractionProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             operator_norm,
             lipschitz_constant,
@@ -499,7 +516,7 @@ impl SovereignStackProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             proof_digest,
             margin,
@@ -522,7 +539,7 @@ impl NoiseSuppressionProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             max_depth,
             final_amplitude,
@@ -545,7 +562,7 @@ impl QuantumAlgorithmProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             algorithm,
             norm,
@@ -568,7 +585,7 @@ impl IKEExecutionProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             query_hash,
             result_count,
@@ -591,7 +608,7 @@ impl PTQEKeyProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             prime_count,
             entropy_bits,
@@ -615,7 +632,7 @@ impl CVFeedbackProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             original_norm,
             final_norm,
@@ -639,7 +656,7 @@ impl POTUSimulationProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             tensor_hash,
             lambda_m_norm,
@@ -663,7 +680,7 @@ impl ZmodTensorProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             grads_hash,
             prime,
@@ -688,7 +705,7 @@ impl GoldilocksOpProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             op_type,
             operand_hash,
@@ -712,7 +729,7 @@ impl UORTypeProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             type_name,
             type_hash,
@@ -735,7 +752,7 @@ impl ParmSealProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             input_hash,
             sealed_value,
@@ -758,7 +775,7 @@ impl PrmsTelemetryProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             telemetry_hash,
             cond_number,
@@ -781,7 +798,7 @@ impl MocSchemaProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             schema_hash,
             seq,
@@ -805,7 +822,7 @@ impl XiFormalProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             function_hash,
             kappa,
@@ -830,7 +847,7 @@ impl RocDynamicsProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             state_hash,
             v_before,
@@ -856,7 +873,7 @@ impl MocCertificateProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             operator_name,
             prime_gate,
@@ -881,7 +898,7 @@ impl ApoProof {
             .unwrap()
             .as_secs()
             .to_string();
-            
+
         Self {
             apo_root_hash,
             proof_count,
@@ -908,12 +925,17 @@ pub struct WitnessLedger {
 
 impl WitnessLedger {
     pub fn new<P: AsRef<Path>>(path: P) -> Self {
-        Self { path: path.as_ref().to_path_buf() }
+        Self {
+            path: path.as_ref().to_path_buf(),
+        }
     }
 
     pub fn stamp_pweh(&self, log: &ConflictLogSchema) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(log)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -921,7 +943,10 @@ impl WitnessLedger {
 
     pub fn stamp_zmos_proof(&self, proof: &ZmosSpectralProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -929,7 +954,10 @@ impl WitnessLedger {
 
     pub fn stamp_sigma_proof(&self, proof: &SigmaProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -937,15 +965,24 @@ impl WitnessLedger {
 
     pub fn stamp_stratum_proof(&self, proof: &StratumProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_matrix_engine_proof(&self, proof: &MatrixEngineProof) -> Result<(), ArchivumError> {
+    pub fn stamp_matrix_engine_proof(
+        &self,
+        proof: &MatrixEngineProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -953,15 +990,24 @@ impl WitnessLedger {
 
     pub fn stamp_ace_proof(&self, proof: &ACEProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_pirtm_compile_proof(&self, proof: &PirtmCompileProof) -> Result<(), ArchivumError> {
+    pub fn stamp_pirtm_compile_proof(
+        &self,
+        proof: &PirtmCompileProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -969,7 +1015,10 @@ impl WitnessLedger {
 
     pub fn stamp_apo_proof(&self, proof: &ApoProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -977,23 +1026,38 @@ impl WitnessLedger {
 
     pub fn stamp_xi_compile_proof(&self, proof: &XiCompileProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_automorphic_training_proof(&self, proof: &AutomorphicTrainingProof) -> Result<(), ArchivumError> {
+    pub fn stamp_automorphic_training_proof(
+        &self,
+        proof: &AutomorphicTrainingProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_mqnn_execution_proof(&self, proof: &MQNNExecutionProof) -> Result<(), ArchivumError> {
+    pub fn stamp_mqnn_execution_proof(
+        &self,
+        proof: &MQNNExecutionProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1001,7 +1065,10 @@ impl WitnessLedger {
 
     pub fn stamp_echo_braid_proof(&self, proof: &EchoBraidProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1009,63 +1076,108 @@ impl WitnessLedger {
 
     pub fn stamp_alp_check_proof(&self, proof: &ALPCheckProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_orf_coherence_proof(&self, proof: &ORFCoherenceProof) -> Result<(), ArchivumError> {
+    pub fn stamp_orf_coherence_proof(
+        &self,
+        proof: &ORFCoherenceProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_moc_operation_proof(&self, proof: &MocOperationProof) -> Result<(), ArchivumError> {
+    pub fn stamp_moc_operation_proof(
+        &self,
+        proof: &MocOperationProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_fock_contraction_proof(&self, proof: &FockContractionProof) -> Result<(), ArchivumError> {
+    pub fn stamp_fock_contraction_proof(
+        &self,
+        proof: &FockContractionProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_sovereign_stack_proof(&self, proof: &SovereignStackProof) -> Result<(), ArchivumError> {
+    pub fn stamp_sovereign_stack_proof(
+        &self,
+        proof: &SovereignStackProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_noise_suppression_proof(&self, proof: &NoiseSuppressionProof) -> Result<(), ArchivumError> {
+    pub fn stamp_noise_suppression_proof(
+        &self,
+        proof: &NoiseSuppressionProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_quantum_algorithm_proof(&self, proof: &QuantumAlgorithmProof) -> Result<(), ArchivumError> {
+    pub fn stamp_quantum_algorithm_proof(
+        &self,
+        proof: &QuantumAlgorithmProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_ike_execution_proof(&self, proof: &IKEExecutionProof) -> Result<(), ArchivumError> {
+    pub fn stamp_ike_execution_proof(
+        &self,
+        proof: &IKEExecutionProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1073,7 +1185,10 @@ impl WitnessLedger {
 
     pub fn stamp_ptqe_key_proof(&self, proof: &PTQEKeyProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1081,15 +1196,24 @@ impl WitnessLedger {
 
     pub fn stamp_cv_feedback_proof(&self, proof: &CVFeedbackProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_potu_simulation_proof(&self, proof: &POTUSimulationProof) -> Result<(), ArchivumError> {
+    pub fn stamp_potu_simulation_proof(
+        &self,
+        proof: &POTUSimulationProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1097,15 +1221,24 @@ impl WitnessLedger {
 
     pub fn stamp_zmod_tensor_proof(&self, proof: &ZmodTensorProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_goldilocks_op_proof(&self, proof: &GoldilocksOpProof) -> Result<(), ArchivumError> {
+    pub fn stamp_goldilocks_op_proof(
+        &self,
+        proof: &GoldilocksOpProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1113,7 +1246,10 @@ impl WitnessLedger {
 
     pub fn stamp_uor_type_proof(&self, proof: &UORTypeProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1121,15 +1257,24 @@ impl WitnessLedger {
 
     pub fn stamp_parm_seal_proof(&self, proof: &ParmSealProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_prms_telemetry_proof(&self, proof: &PrmsTelemetryProof) -> Result<(), ArchivumError> {
+    pub fn stamp_prms_telemetry_proof(
+        &self,
+        proof: &PrmsTelemetryProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1137,7 +1282,10 @@ impl WitnessLedger {
 
     pub fn stamp_moc_schema_proof(&self, proof: &MocSchemaProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1145,7 +1293,10 @@ impl WitnessLedger {
 
     pub fn stamp_xi_formal_proof(&self, proof: &XiFormalProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1153,15 +1304,24 @@ impl WitnessLedger {
 
     pub fn stamp_roc_dynamics_proof(&self, proof: &RocDynamicsProof) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
     }
 
-    pub fn stamp_moc_certificate_proof(&self, proof: &MocCertificateProof) -> Result<(), ArchivumError> {
+    pub fn stamp_moc_certificate_proof(
+        &self,
+        proof: &MocCertificateProof,
+    ) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(proof)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1169,7 +1329,10 @@ impl WitnessLedger {
 
     pub fn append_block(&self, block: &TransitionBlock) -> Result<(), ArchivumError> {
         self.ensure_dir()?;
-        let mut file = OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)?;
         let json = serde_json::to_string(block)?;
         writeln!(file, "{}", json)?;
         Ok(())
@@ -1197,7 +1360,8 @@ impl WitnessLedger {
             reader.lines().any(|line| {
                 if let Ok(l) = line {
                     if let Ok(obj) = serde_json::from_str::<serde_json::Value>(&l) {
-                        return obj.get("transition_id")
+                        return obj
+                            .get("transition_id")
                             .and_then(|v| v.as_str())
                             .map(|s| s == block.transition_id)
                             .unwrap_or(false);

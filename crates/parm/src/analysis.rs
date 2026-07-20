@@ -1,9 +1,9 @@
-use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::collections::HashMap;
 use crate::parm_module;
 use rand::prelude::*;
-use rand_distr::{Zipf, Distribution};
+use rand_distr::{Distribution, Zipf};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::error::Error;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RootData {
@@ -27,8 +27,13 @@ pub fn process_corpus(input_path: &str, output_path: &str) -> Result<(), Box<dyn
         let root = record.get("root").ok_or("Missing root")?;
         let gloss = record.get("gloss").unwrap_or(&"".to_string()).clone();
 
-        let clean_root: String = root.chars().filter(|c| ('\u{05D0}'..='\u{05EA}').contains(c)).collect();
-        if clean_root.is_empty() { continue; }
+        let clean_root: String = root
+            .chars()
+            .filter(|c| ('\u{05D0}'..='\u{05EA}').contains(c))
+            .collect();
+        if clean_root.is_empty() {
+            continue;
+        }
 
         let analysis = analyze_word_rs(&clean_root);
 
@@ -39,7 +44,11 @@ pub fn process_corpus(input_path: &str, output_path: &str) -> Result<(), Box<dyn
             rq_num: analysis.rq_num,
             c_resonance: analysis.c_resonance,
             delta: analysis.rq_num - analysis.rq_shape,
-            ratio: if analysis.rq_shape > 0.0 { analysis.rq_num / analysis.rq_shape } else { f64::INFINITY },
+            ratio: if analysis.rq_shape > 0.0 {
+                analysis.rq_num / analysis.rq_shape
+            } else {
+                f64::INFINITY
+            },
             freq: None,
             f_c: None,
         };
@@ -51,7 +60,9 @@ pub fn process_corpus(input_path: &str, output_path: &str) -> Result<(), Box<dyn
 
 pub fn simulate_and_analyze(data: &mut [RootData]) -> Result<(), Box<dyn Error>> {
     let n = data.len();
-    if n == 0 { return Ok(()); }
+    if n == 0 {
+        return Ok(());
+    }
 
     let mut rng = rand::thread_rng();
     let zipf = Zipf::new(n as u64, 1.05)?;
@@ -65,11 +76,14 @@ pub fn simulate_and_analyze(data: &mut [RootData]) -> Result<(), Box<dyn Error>>
         row.f_c = Some(freq as f64 * row.c_resonance);
     }
 
-    data.sort_by(|a, b| b.f_c.partial_cmp(&a.f_c).unwrap_or(std::cmp::Ordering::Equal));
+    data.sort_by(|a, b| {
+        b.f_c
+            .partial_cmp(&a.f_c)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     Ok(())
 }
-
 
 pub struct WordAnalysis {
     pub rq_shape: f64,
@@ -78,15 +92,30 @@ pub struct WordAnalysis {
 }
 
 pub fn analyze_word_rs(word: &str) -> WordAnalysis {
-    let shape_primes: Vec<u32> = word.chars().filter_map(|c| parm_module::get_shape_map(c)).map(|p| parm_module::get_prime(p as usize)).collect();
-    let num_primes: Vec<u32> = word.chars().filter_map(|c| {
-        let sg = parm_module::small_gematria(c);
-        if sg > 0 { parm_module::get_small_gematria_to_prime(sg) } else { None }
-    }).collect();
+    let shape_primes: Vec<u32> = word
+        .chars()
+        .filter_map(|c| parm_module::get_shape_map(c))
+        .map(|p| parm_module::get_prime(p as usize))
+        .collect();
+    let num_primes: Vec<u32> = word
+        .chars()
+        .filter_map(|c| {
+            let sg = parm_module::small_gematria(c);
+            if sg > 0 {
+                parm_module::get_small_gematria_to_prime(sg)
+            } else {
+                None
+            }
+        })
+        .collect();
 
     let rq_shape = parm_module::calculate_rq(&shape_primes, false);
     let rq_num = parm_module::calculate_rq(&num_primes, false);
     let c_resonance = (rq_shape * rq_num).sqrt();
 
-    WordAnalysis { rq_shape, rq_num, c_resonance }
+    WordAnalysis {
+        rq_shape,
+        rq_num,
+        c_resonance,
+    }
 }

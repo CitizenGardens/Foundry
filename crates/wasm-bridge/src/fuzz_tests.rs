@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use crate::{StateTransition, WasmSigmaKernel};
     use proptest::prelude::*;
-    use crate::{WasmSigmaKernel, StateTransition};
     use wasm_bindgen::JsValue;
 
     proptest! {
@@ -13,19 +13,19 @@ mod tests {
             l_eff in -10.0..10.0f64,
         ) {
             let kernel = WasmSigmaKernel::new(47.06998778, 1.0);
-            
+
             let transition = StateTransition {
                 id: "fuzz-tx".to_string(),
                 r_sc,
                 l_eff,
             };
-            
+
             let payload = serde_json::to_string(&transition).unwrap();
             let result = kernel.evaluate_and_sign(&payload, "op-key", "kernel-key");
-            
+
             let passes_tau_r = (r_sc - 47.06998778).abs() < 1e-6;
             let passes_l_eff = l_eff < 1.0;
-            
+
             if passes_tau_r && passes_l_eff {
                 // If it passes bounds, it MUST yield a valid string
                 prop_assert!(result.is_ok());

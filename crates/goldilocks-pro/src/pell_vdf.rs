@@ -1,10 +1,10 @@
 use num_bigint::BigUint;
-use num_traits::{Zero, One};
-use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
 use num_prime::RandPrime;
+use num_traits::{One, Zero};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use thiserror::Error;
-use tracing::{instrument, info, error};
+use tracing::{error, info, instrument};
 use zeroize::Zeroize;
 
 #[derive(Error, Debug)]
@@ -53,10 +53,13 @@ fn seed_to_quad(seed: &[u8], party_id: u64, d: &BigUint, n: &BigUint) -> QuadEle
 }
 
 fn exp_quad(base: &QuadElement, exp: &BigUint, d: &BigUint, n: &BigUint) -> QuadElement {
-    let mut result = QuadElement { x: BigUint::from(1u64), y: BigUint::zero() };
+    let mut result = QuadElement {
+        x: BigUint::from(1u64),
+        y: BigUint::zero(),
+    };
     let mut base_cloned = base.clone();
     let mut exp_cloned = exp.clone();
-    
+
     while exp_cloned > BigUint::zero() {
         if &exp_cloned & BigUint::from(1u64) == BigUint::from(1u64) {
             result = mul_quad(&result, &base_cloned, d, n);
@@ -75,7 +78,12 @@ pub fn prove_vdf(g: &QuadElement, t: u64, d: &BigUint, n: &BigUint) -> QuadEleme
     state
 }
 
-fn generate_proof(g: &QuadElement, t: u64, d: &BigUint, n: &BigUint) -> (BigUint, QuadElement, QuadElement) {
+fn generate_proof(
+    g: &QuadElement,
+    t: u64,
+    d: &BigUint,
+    n: &BigUint,
+) -> (BigUint, QuadElement, QuadElement) {
     let mut rng = rand::thread_rng();
     let l = RandPrime::<BigUint>::gen_prime(&mut rng, 128, None);
 
@@ -95,14 +103,22 @@ fn generate_proof(g: &QuadElement, t: u64, d: &BigUint, n: &BigUint) -> (BigUint
             r = &r % &l;
         }
     }
-    
+
     let pi = exp_quad(g, &q, d, n);
     (l, pi, state)
 }
 
-fn verify_proof(g: &QuadElement, output: &QuadElement, l: &BigUint, pi: &QuadElement, t: u64, d: &BigUint, n: &BigUint) -> bool {
+fn verify_proof(
+    g: &QuadElement,
+    output: &QuadElement,
+    l: &BigUint,
+    pi: &QuadElement,
+    t: u64,
+    d: &BigUint,
+    n: &BigUint,
+) -> bool {
     let two = BigUint::from(2u64);
-    
+
     // Verifier computes r = 2^T mod l efficiently
     let r = two.modpow(&BigUint::from(t), l);
 
@@ -138,14 +154,26 @@ impl PellVDF {
         let g = seed_to_quad(seed, party_id, &self.d, &self.n);
         let (l, pi, output) = generate_proof(&g, self.t, &self.d, &self.n);
         info!("Completed VDF evaluation for party_id: {}", party_id);
-        Ok(PellVDFProof { output, challenge_prime: l, pi })
+        Ok(PellVDFProof {
+            output,
+            challenge_prime: l,
+            pi,
+        })
     }
 
     #[instrument(skip(self, seed), err)]
     pub fn verify(&self, seed: &[u8], party_id: u64, proof: &PellVDFProof) -> Result<(), VDFError> {
         info!("Verifying VDF proof for party_id: {}", party_id);
         let g = seed_to_quad(seed, party_id, &self.d, &self.n);
-        if verify_proof(&g, &proof.output, &proof.challenge_prime, &proof.pi, self.t, &self.d, &self.n) {
+        if verify_proof(
+            &g,
+            &proof.output,
+            &proof.challenge_prime,
+            &proof.pi,
+            self.t,
+            &self.d,
+            &self.n,
+        ) {
             info!("VDF proof verified successfully for party_id: {}", party_id);
             Ok(())
         } else {

@@ -24,9 +24,9 @@
 //!
 //! Parity is guaranteed by checked arithmetic and identical semantics.
 
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use chrono::Utc;
 
 #[cfg(feature = "archivum")]
 use archivum::{ParmSealProof, WitnessLedger};
@@ -134,7 +134,9 @@ impl ParmEngine {
             return primes[0].checked_mul(primes[0]).ok_or(ParmError::Overflow);
         }
 
-        let mut v = primes[0].checked_mul(primes[0]).ok_or(ParmError::Overflow)?;
+        let mut v = primes[0]
+            .checked_mul(primes[0])
+            .ok_or(ParmError::Overflow)?;
 
         for &p in &primes[1..primes.len() - 1] {
             let sum = v.checked_add(p).ok_or(ParmError::Overflow)?;
@@ -171,7 +173,9 @@ impl ParmEngine {
     ) -> Result<(u64, ParmSealWitness), ParmError> {
         let (sealed, witness) = self.seal_with_witness(primes)?;
         let proof = archivum::ParmSealProof::new(witness.input_hash, sealed);
-        ledger.stamp_parm_seal_proof(&proof).map_err(|_| ParmError::Overflow)?;
+        ledger
+            .stamp_parm_seal_proof(&proof)
+            .map_err(|_| ParmError::Overflow)?;
         Ok((sealed, witness))
     }
 }

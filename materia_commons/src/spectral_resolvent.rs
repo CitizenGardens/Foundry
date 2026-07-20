@@ -1,6 +1,6 @@
 // src/spectral_resolvent.rs
-use crate::hamiltonian::{build_hamiltonians, N_STATES, logN};
-use nalgebra::{DMatrix, LU, DVector};
+use crate::hamiltonian::{build_hamiltonians, logN, N_STATES};
+use nalgebra::{DMatrix, DVector, LU};
 use std::f64;
 
 const KAPPA: f64 = 0.1;
@@ -37,5 +37,3 @@ pub fn first_order_trace(z: f64) -> f64 {
     }
     trace
 }
-
-

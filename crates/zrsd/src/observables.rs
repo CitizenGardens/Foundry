@@ -11,7 +11,10 @@ pub fn purity(rho: &DMatrix<Complex64>) -> f64 {
 
 pub fn entropy_vn(rho: &DMatrix<Complex64>) -> f64 {
     // S = -Tr(rho log rho)
-    let eig = rho.clone().eigenvalues().expect("Eigendecomposition failed");
+    let eig = rho
+        .clone()
+        .eigenvalues()
+        .expect("Eigendecomposition failed");
     let mut entropy = 0.0;
     for &p in eig.iter() {
         let p_re = p.re;

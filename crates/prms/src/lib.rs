@@ -1,15 +1,15 @@
-pub mod petc;
 pub mod contractor;
 pub mod dae;
-pub mod zeta_ros;
-pub mod pipeline;
 pub mod lawfulness;
+pub mod petc;
+pub mod pipeline;
+pub mod zeta_ros;
 
-pub use petc::*;
 pub use contractor::*;
 pub use dae::*;
-pub use zeta_ros::*;
 pub use lawfulness::*;
+pub use petc::*;
+pub use zeta_ros::*;
 
 #[cfg(feature = "triple-lock")]
 pub mod triple_lock;
@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 #[cfg(feature = "archivum")]
-use archivum::{WitnessLedger, PrmsTelemetryProof};
+use archivum::{PrmsTelemetryProof, WitnessLedger};
 
 /// Canonical scale factor: 10000 represents 1.0 in fixed-point arithmetic.
 pub const SCALE: u64 = 10000;
@@ -60,10 +60,7 @@ impl LineageMetrics {
         }
         if self.total_channels > 10000 {
             return Err(PrmsViolation::LineageViolation {
-                reason: format!(
-                    "totalChannels {} exceeds scale 10000",
-                    self.total_channels
-                ),
+                reason: format!("totalChannels {} exceeds scale 10000", self.total_channels),
             });
         }
         if self.data_age > self.max_allowed_age {

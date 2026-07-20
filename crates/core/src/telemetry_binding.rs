@@ -17,7 +17,7 @@ pub struct PrimeWaveletCoefficients {
     pub p3: f64, // Prime index 3 (Mid Frequency Harmonic)
     pub p5: f64, // Prime index 5 (High Frequency Transient)
     pub p7: f64, // Prime index 7 (Entropy/Noise floor)
-    
+
     pub global_resonance: f64, // R(t)
     pub system_entropy: f64,   // ΔS
 }
@@ -39,7 +39,10 @@ impl TelemetryBinding {
 
     /// Primary Transformation: Biophysical signals -> Prime-Indexed Coefficients
     /// This acts as the mathematical bridge connecting the physical layer to the Glass Box.
-    pub fn compute_spectral_invariant(&mut self, payload: &RawDMTPSensorData) -> PrimeWaveletCoefficients {
+    pub fn compute_spectral_invariant(
+        &mut self,
+        payload: &RawDMTPSensorData,
+    ) -> PrimeWaveletCoefficients {
         // 1. Normalize HRV (Assume 60-100 BPM is baseline)
         let normalized_hrv = (payload.hrv_bpm - 60.0) / 40.0;
         let hrv_bound = normalized_hrv.clamp(0.0, 1.0);
@@ -60,7 +63,7 @@ impl TelemetryBinding {
         // 5. Compute Global Resonance: R(t)
         // High coherence (p3) and low stress (p7) increase resonance
         let raw_resonance = (p2 + p3 + p5) / 3.0 - (p7 * 0.5);
-        
+
         // 6. Smooth the resonance using a simple Kalman-like alpha filter (Temporal Contractivity)
         let alpha = 0.2;
         self.current_resonance = (self.current_resonance * (1.0 - alpha)) + (raw_resonance * alpha);
@@ -100,20 +103,26 @@ mod tests {
         let payload = RawDMTPSensorData {
             timestamp: 1690000000,
             hrv_bpm: 65.0,
-            eeg_coherence: 0.88, // High cognitive coherence
+            eeg_coherence: 0.88,         // High cognitive coherence
             galvanic_skin_response: 0.1, // Low stress
         };
 
         let coeffs = binding.compute_spectral_invariant(&payload);
-        
+
         // Validate contractivity limits
-        assert!(coeffs.global_resonance > 0.8, "Resonance should be high for this payload");
+        assert!(
+            coeffs.global_resonance > 0.8,
+            "Resonance should be high for this payload"
+        );
         assert!(coeffs.system_entropy < 0.2, "Entropy should be minimal");
-        
+
         // Check stablecoin minting admissibility
         // If baseline entropy was 0.3, reducing it to <0.2 yields a delta > 0.05
         let baseline = 0.30;
-        assert!(binding.evaluate_stability_margin(baseline), "Should achieve stability threshold");
+        assert!(
+            binding.evaluate_stability_margin(baseline),
+            "Should achieve stability threshold"
+        );
     }
 }
 
@@ -122,12 +131,7 @@ mod tests {
 // ============================================================================
 
 #[no_mangle]
-pub extern "C" fn check_cdsi_stability(
-    hrv: f64,
-    eeg: f64,
-    gsr: f64,
-    baseline_entropy: f64
-) -> u8 {
+pub extern "C" fn check_cdsi_stability(hrv: f64, eeg: f64, gsr: f64, baseline_entropy: f64) -> u8 {
     let payload = RawDMTPSensorData {
         timestamp: 0,
         hrv_bpm: hrv,
@@ -136,7 +140,7 @@ pub extern "C" fn check_cdsi_stability(
     };
     let mut binding = TelemetryBinding::new();
     let _coeffs = binding.compute_spectral_invariant(&payload);
-    
+
     if binding.evaluate_stability_margin(baseline_entropy) {
         1
     } else {
@@ -162,7 +166,7 @@ mod kani_proofs {
         kani::assume(baseline >= 0.0 && baseline <= 1.0);
 
         let result = check_cdsi_stability(hrv, eeg, gsr, baseline);
-        
+
         // The result must be exactly boolean 0 or 1.
         kani::assert(result == 0 || result == 1, "FFI return must be boolean u8");
     }

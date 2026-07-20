@@ -56,10 +56,7 @@ impl CnlCompiler {
     /// [`CnlError`]; there is no loose interpretation. The function is
     /// deterministic (ADR-101 Lemma 1).
     pub fn parse(src: &str) -> Result<AlpPolicy, CnlError> {
-        let mut body = src
-            .lines()
-            .map(str::trim)
-            .filter(|l| !l.is_empty());
+        let mut body = src.lines().map(str::trim).filter(|l| !l.is_empty());
 
         let header = body.next().ok_or(CnlError::EmptyPolicy)?;
         let name = header
@@ -101,12 +98,10 @@ fn parse_directive(line: &str, line_no: usize) -> Result<AlpRule, CnlError> {
 /// compiler cannot admit a non-finite Rta perturbation (soundness hole
 /// closed relative to `f64::parse`, which accepts "NaN"/"inf").
 fn parse_magnitude(token: &str, line_no: usize, raw: &str) -> Result<f64, CnlError> {
-    let v: f64 = token
-        .parse()
-        .map_err(|_| CnlError::MalformedNumber {
-            line: line_no,
-            text: raw.to_string(),
-        })?;
+    let v: f64 = token.parse().map_err(|_| CnlError::MalformedNumber {
+        line: line_no,
+        text: raw.to_string(),
+    })?;
     if !v.is_finite() {
         return Err(CnlError::NonFinite {
             line: line_no,

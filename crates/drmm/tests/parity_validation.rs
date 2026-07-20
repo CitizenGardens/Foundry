@@ -71,7 +71,8 @@ fn vec_to_array2(v: Vec<Vec<f64>>) -> Array2<f64> {
 
 #[test]
 fn test_cross_language_parity() {
-    let data = fs::read_to_string("../drmm/parity_vectors.json").expect("Unable to read parity_vectors.json");
+    let data = fs::read_to_string("../drmm/parity_vectors.json")
+        .expect("Unable to read parity_vectors.json");
     let vectors: ParityVectors = serde_json::from_str(&data).expect("JSON was not well-formatted");
 
     // 1. Primes
@@ -100,7 +101,10 @@ fn test_cross_language_parity() {
     assert!((l_val - vectors.lambdam_field.output).abs() < 1e-9);
 
     // 5. Moonshine Modulation
-    let moon = MoonshineOperator::new(vectors.moonshine.group_id, Some(vectors.moonshine.frequency));
+    let moon = MoonshineOperator::new(
+        vectors.moonshine.group_id,
+        Some(vectors.moonshine.frequency),
+    );
     let x_moon_in = vec_to_array2(vectors.moonshine.input);
     let x_moon_out = moon.apply(&x_moon_in, vectors.moonshine.t);
     let expected_moon = vec_to_array2(vectors.moonshine.output);

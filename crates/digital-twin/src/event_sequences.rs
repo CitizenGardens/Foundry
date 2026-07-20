@@ -53,7 +53,7 @@ impl StateEvent {
         if event_id.trim().is_empty() {
             anyhow::bail!("event_id required");
         }
-        
+
         Ok(Self {
             event_id,
             event_type,
@@ -69,7 +69,10 @@ impl StateEvent {
     }
 
     pub fn get_transition_hash(&self) -> String {
-        let content = format!("{}:{}->{}:{}", self.event_id, self.from_state, self.to_state, self.sequence_number);
+        let content = format!(
+            "{}:{}->{}:{}",
+            self.event_id, self.from_state, self.to_state, self.sequence_number
+        );
         let mut hasher = Sha256::new();
         hasher.update(content.as_bytes());
         hex::encode(hasher.finalize())
@@ -156,9 +159,16 @@ impl ScenarioResult {
     pub fn get_summary(&self) -> String {
         let completion = self.get_completion_percentage();
         let status = if self.success { "✓ PASS" } else { "✗ FAIL" };
-        format!("{} | {} | {}/{} events ({:.0}%) | {:?} -> {:?}", 
-            status, self.scenario_name, self.events_executed, self.events_total, 
-            completion, self.initial_state, self.final_state)
+        format!(
+            "{} | {} | {}/{} events ({:.0}%) | {:?} -> {:?}",
+            status,
+            self.scenario_name,
+            self.events_executed,
+            self.events_total,
+            completion,
+            self.initial_state,
+            self.final_state
+        )
     }
 }
 
@@ -200,19 +210,25 @@ impl ScenarioRunner {
         }
 
         let event = &self.sequence.events[self.current_event_index];
-        
+
         if event.from_state != self.execution_state && self.current_event_index > 0 {
             self.failed = true;
-            self.failure_reason = Some(format!("State mismatch: expected {}, got {}", event.from_state, self.execution_state));
+            self.failure_reason = Some(format!(
+                "State mismatch: expected {}, got {}",
+                event.from_state, self.execution_state
+            ));
             return Ok(false);
         }
 
         use crate::enforcement_state::{EnforcementBits, EnforcementLegitimacyPredicate};
-        
+
         let target_bits = EnforcementBits::from_bits_truncate(event.to_state);
         if !EnforcementLegitimacyPredicate::is_legitimate(target_bits) {
             self.failed = true;
-            self.failure_reason = Some(format!("Invalid state transition to illegitimate state {}", event.to_state));
+            self.failure_reason = Some(format!(
+                "Invalid state transition to illegitimate state {}",
+                event.to_state
+            ));
             return Ok(false);
         }
 
@@ -222,22 +238,22 @@ impl ScenarioRunner {
 
         Ok(true)
     }
-    
+
     pub fn run_all(&mut self) -> Result<ScenarioResult> {
         self.reset();
-        
+
         let initial_state = self.sequence.events.first().map(|e| e.from_state);
-        
+
         while self.step()? {}
 
         let final_state = Some(self.execution_state);
-        
+
         let mut replayed_sequence = EventSequence::new("replay".to_string(), "replay".to_string())?;
         replayed_sequence.events = self.events_replayed.clone();
-        
+
         let replay_hash = replayed_sequence.get_sequence_hash();
         let is_deterministic = replay_hash == self.replay_hash_before;
-        
+
         if !is_deterministic && !self.failed {
             self.failed = true;
             self.failure_reason = Some("Replay divergence detected".to_string());

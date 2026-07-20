@@ -1,14 +1,17 @@
-pub mod dialetheic;
 pub mod aperture;
-pub mod contractivity;
-pub mod identity;
 pub mod braid;
+pub mod contractivity;
+pub mod dialetheic;
+pub mod identity;
 
-pub use dialetheic::{LpTruth, DialetheicFilter};
 pub use aperture::Aperture;
-pub use contractivity::{enforce_contractivity, enforce_sovereign_contractivity, LambdaTraceAtom, MetricSpace, ContractivityError};
-pub use identity::PrimeDecomposable;
 pub use braid::*;
+pub use contractivity::{
+    enforce_contractivity, enforce_sovereign_contractivity, ContractivityError, LambdaTraceAtom,
+    MetricSpace,
+};
+pub use dialetheic::{DialetheicFilter, LpTruth};
+pub use identity::PrimeDecomposable;
 
 #[cfg(test)]
 mod tests {
@@ -85,7 +88,10 @@ mod tests {
         };
 
         let result = enforce_sovereign_contractivity(&atom, "ACTIVE", 0.995);
-        assert!(matches!(result, Err(ContractivityError::TrajectoryDissonance { .. })));
+        assert!(matches!(
+            result,
+            Err(ContractivityError::TrajectoryDissonance { .. })
+        ));
     }
 
     #[test]
@@ -119,7 +125,9 @@ mod tests {
         };
 
         let result = enforce_sovereign_contractivity(&atom, "ACTIVE", 0.995);
-        assert!(matches!(result, Err(ContractivityError::DriftExceeded { .. })));
+        assert!(matches!(
+            result,
+            Err(ContractivityError::DriftExceeded { .. })
+        ));
     }
 }
-

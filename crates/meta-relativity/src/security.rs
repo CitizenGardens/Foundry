@@ -2,7 +2,7 @@
 //!
 //! Based on ADR-096: Meta-Relativity — Security, Fail-Safe, and Rollback Protocols.
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 /// Security Context for MR-certified artifacts.
 pub struct SecurityContext<T> {
@@ -12,7 +12,10 @@ pub struct SecurityContext<T> {
 
 impl<T: Clone> SecurityContext<T> {
     pub fn new(golden_set: Vec<T>, whitelist: Vec<String>) -> Self {
-        Self { golden_set, whitelist }
+        Self {
+            golden_set,
+            whitelist,
+        }
     }
 
     /// Triggers a rollback to the last known-good state.
@@ -39,7 +42,7 @@ mod tests {
         let golden_set = vec!["State1".to_string(), "State2".to_string()];
         let whitelist = vec!["Op1".to_string()];
         let context = SecurityContext::new(golden_set, whitelist);
-        
+
         assert_eq!(context.rollback().unwrap(), "State2");
     }
 

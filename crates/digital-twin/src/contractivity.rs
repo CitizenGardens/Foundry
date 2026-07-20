@@ -16,16 +16,21 @@ pub enum Violation {
 pub struct TwinBindingContract;
 
 impl TwinBindingContract {
-    pub fn check(q: f64, c: f64, theta_max: f64, theta_min: f64) -> Result<ContractivityProof, Violation> {
+    pub fn check(
+        q: f64,
+        c: f64,
+        theta_max: f64,
+        theta_min: f64,
+    ) -> Result<ContractivityProof, Violation> {
         if q > theta_max && c < theta_min {
             return Err(Violation::StressExceedsThreshold);
         }
-        
+
         let margin = GlobalContractionMargin::compute(q, c);
         if margin < 0.005 {
             return Err(Violation::MarginBelowThreshold);
         }
-        
+
         Ok(ContractivityProof { margin })
     }
 }
@@ -59,12 +64,16 @@ pub enum AttestationError {
 }
 
 impl LambdaTraceAtom {
-    pub fn bind(proof_digest: &[u8; 32], state_root: &[u8; 32], tee_quote: &TeeQuote) -> Result<Self, AttestationError> {
+    pub fn bind(
+        proof_digest: &[u8; 32],
+        state_root: &[u8; 32],
+        tee_quote: &TeeQuote,
+    ) -> Result<Self, AttestationError> {
         // dummy validation
         if tee_quote.data.is_empty() {
             return Err(AttestationError::InvalidQuote);
         }
-        
+
         Ok(Self {
             proof_digest: *proof_digest,
             state_root_hash: *state_root,
@@ -90,16 +99,21 @@ mod verification {
         kani::assume(c >= 0.0 && c <= 1.0);
 
         if let Ok(proof) = TwinBindingContract::check(q, c, theta_max, theta_min) {
-            kani::assert(proof.margin >= 0.005, "Approved transition must preserve M_global >= 0.005");
+            kani::assert(
+                proof.margin >= 0.005,
+                "Approved transition must preserve M_global >= 0.005",
+            );
         }
     }
 
     #[kani::proof]
     fn proof_lambda_trace_sound() {
-        let empty_quote = TeeQuote { data: "".to_string() };
+        let empty_quote = TeeQuote {
+            data: "".to_string(),
+        };
         let digest = [0u8; 32];
         let root = [0u8; 32];
-        
+
         let res = LambdaTraceAtom::bind(&digest, &root, &empty_quote);
         kani::assert(res.is_err(), "Empty quote must be rejected");
     }

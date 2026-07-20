@@ -9,7 +9,7 @@ const P_COUNT: usize = 5;
 fn build_explicit_formula_surrogate() -> Array2<f64> {
     let mut x_p = Array2::zeros((P_COUNT, P_COUNT));
     let mu = 1.0;
-    
+
     // Smooth psi function (simple exponential decay surrogate)
     let psi = |x: f64| -> f64 { (-x).exp() };
 
@@ -29,12 +29,12 @@ fn build_explicit_formula_surrogate() -> Array2<f64> {
 fn build_bohr_prime_channel(p_index: usize, omega: f64, ell: f64) -> Array2<f64> {
     let mut u_p = Array1::zeros(P_COUNT);
     let p = PRIMES[p_index];
-    
+
     for i in 0..P_COUNT {
         let p_i = PRIMES[i];
         u_p[i] = (omega * (p * p_i + ell).ln()).cos();
     }
-    
+
     // B_p = u_p * u_p^T
     let mut b_p = Array2::zeros((P_COUNT, P_COUNT));
     for i in 0..P_COUNT {
@@ -50,12 +50,14 @@ fn max_eigenvalue(mat: &Array2<f64>) -> f64 {
     let dim = mat.nrows();
     let mut vec = Array1::<f64>::from_elem(dim, 1.0 / (dim as f64).sqrt());
     let mut lambda = 0.0;
-    
+
     for _ in 0..100 {
         let v_next = mat.dot(&vec);
         let norm = v_next.dot(&v_next).sqrt();
-        if norm < 1e-12 { break; }
-        
+        if norm < 1e-12 {
+            break;
+        }
+
         let normalized = &v_next / norm;
         let next_lambda = normalized.dot(&mat.dot(&normalized));
         if (next_lambda - lambda).abs() < 1e-8 {
@@ -82,7 +84,7 @@ fn min_eigenvalue(mat: &Array2<f64>) -> f64 {
 
 fn main() {
     println!("=== DRMM Zeroth-Order Sanity Check (P=5) ===");
-    
+
     let x_p = build_explicit_formula_surrogate();
     println!("Base Operator X_P created (Explicit-Formula Surrogate).");
 
@@ -100,7 +102,7 @@ fn main() {
 
     // Set uniform weights (w_p = 0.05) to check the plant U_P(w)
     let w = [0.05; P_COUNT];
-    
+
     let mut c_omega = Array2::<f64>::zeros((P_COUNT, P_COUNT));
     for i in 0..P_COUNT {
         for j in 0..P_COUNT {
@@ -111,14 +113,14 @@ fn main() {
     }
 
     let u_p = &x_p + &c_omega;
-    
+
     let u_p_norm = max_eigenvalue(&u_p);
     println!("Maximum Spectral Radius of U_P(omega): {:.4}", u_p_norm);
-    
+
     // Bounded check (Weyl limit)
     // 1-norm of w * B
-    let w_1_b: f64 = w.iter().sum(); 
+    let w_1_b: f64 = w.iter().sum();
     println!("||w||_1,b <= {:.4}", w_1_b);
-    
+
     println!("Sanity Check Completed. Plant is constructed and spectra is bounded.");
 }

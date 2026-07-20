@@ -7,17 +7,17 @@ use crate::{GoldilocksField, PrimeMask, ResonanceWord};
 pub struct ConvergencePublicInputsPro {
     /// Lever 2: Prime Mask
     pub prime_mask: PrimeMask,
-    
+
     /// Lever 3: Resonance Word
     pub resonance_word: ResonanceWord,
-    
+
     /// Lever 5: Spectral Gap (scaled)
     pub delta_pz: GoldilocksField,
-    
+
     /// Pro-tier stability bounds
     pub rho_bound: GoldilocksField,
     pub lambda_m: GoldilocksField,
-    
+
     /// Veto flag (0 = Pass, 1 = Veto)
     pub veto_flag: GoldilocksField,
 }
@@ -54,13 +54,15 @@ impl PrimeResonanceAir {
     pub fn verify(&self) -> bool {
         // Simplified verification: just check bit length and class
         let class = (self.resonance_word & 0x3F) as u8;
-        if class >= 96 { return false; }
-        
+        if class >= 96 {
+            return false;
+        }
+
         // Gating rule: if resonance bit 0 is set, mask bit 0 MUST be set
         if (self.resonance_word & 1) != 0 && (self.prime_mask & 1) == 0 {
             return false;
         }
-        
+
         true
     }
 }
@@ -89,7 +91,10 @@ impl ProverChip for ReferenceProverChip {
         for fe in &public {
             proof.extend_from_slice(&fe.0.to_le_bytes());
         }
-        ProofBundle { proof, public_inputs: public }
+        ProofBundle {
+            proof,
+            public_inputs: public,
+        }
     }
 
     fn verify(&self, bundle: &ProofBundle) -> bool {

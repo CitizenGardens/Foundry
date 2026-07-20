@@ -1,6 +1,6 @@
 use crate::MODULUS;
-use std::ops::{Add, Sub, Mul, Neg};
 use serde::{Deserialize, Serialize};
+use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct GoldilocksField(pub u64);
@@ -162,7 +162,7 @@ mod tests {
             let expected = ((a as u128 * b as u128) % MODULUS as u128) as u64;
             assert_eq!((fa * fb).0, expected);
         }
-        
+
         #[test]
         fn test_inv_proptest(a in 1..MODULUS) {
             let fa = GoldilocksField(a);

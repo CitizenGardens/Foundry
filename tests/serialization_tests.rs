@@ -3,16 +3,14 @@
 
 #[cfg(test)]
 mod tests {
-    use multiplicity_common::constitution::{L0Invariant, ConstitutionViolation, ConstitutionModel, PrimeGate, CritiqueResult};
-    use multiplicity_common::types::{TrustLevel, VetoStatus, SpoliationRiskLevel};
+    use multiplicity_common::constitution::{
+        ConstitutionModel, ConstitutionViolation, CritiqueResult, L0Invariant, PrimeGate,
+    };
+    use multiplicity_common::types::{SpoliationRiskLevel, TrustLevel, VetoStatus};
 
     #[test]
     fn l0_invariant_round_trip() {
-        let invariants = vec![
-            L0Invariant::L0_1,
-            L0Invariant::L0_5,
-            L0Invariant::L0_10,
-        ];
+        let invariants = vec![L0Invariant::L0_1, L0Invariant::L0_5, L0Invariant::L0_10];
         for inv in &invariants {
             let json = serde_json::to_string(inv).unwrap();
             let deserialized: L0Invariant = serde_json::from_str(&json).unwrap();
@@ -22,8 +20,14 @@ mod tests {
 
     #[test]
     fn l0_invariant_json_format() {
-        assert_eq!(serde_json::to_string(&L0Invariant::L0_1).unwrap(), r#""L0-1""#);
-        assert_eq!(serde_json::to_string(&L0Invariant::L0_9).unwrap(), r#""L0-9""#);
+        assert_eq!(
+            serde_json::to_string(&L0Invariant::L0_1).unwrap(),
+            r#""L0-1""#
+        );
+        assert_eq!(
+            serde_json::to_string(&L0Invariant::L0_9).unwrap(),
+            r#""L0-9""#
+        );
     }
 
     #[test]
@@ -38,8 +42,14 @@ mod tests {
 
     #[test]
     fn trust_level_json_format() {
-        assert_eq!(serde_json::to_string(&TrustLevel::Internal).unwrap(), r#""internal""#);
-        assert_eq!(serde_json::to_string(&TrustLevel::External).unwrap(), r#""external""#);
+        assert_eq!(
+            serde_json::to_string(&TrustLevel::Internal).unwrap(),
+            r#""internal""#
+        );
+        assert_eq!(
+            serde_json::to_string(&TrustLevel::External).unwrap(),
+            r#""external""#
+        );
     }
 
     #[test]
@@ -58,8 +68,14 @@ mod tests {
 
     #[test]
     fn veto_status_json_format() {
-        assert_eq!(serde_json::to_string(&VetoStatus::Approved).unwrap(), r#""approved""#);
-        assert_eq!(serde_json::to_string(&VetoStatus::Pending).unwrap(), r#""pending""#);
+        assert_eq!(
+            serde_json::to_string(&VetoStatus::Approved).unwrap(),
+            r#""approved""#
+        );
+        assert_eq!(
+            serde_json::to_string(&VetoStatus::Pending).unwrap(),
+            r#""pending""#
+        );
         let vetoed = VetoStatus::Vetoed("test".to_string());
         let json = serde_json::to_string(&vetoed).unwrap();
         assert!(json.contains("vetoed"));
@@ -156,12 +172,18 @@ mod tests {
     #[test]
     fn deserialization_rejects_invalid_variant() {
         let result = serde_json::from_str::<TrustLevel>(r#""banana""#);
-        assert!(result.is_err(), "Invalid variant should fail deserialization");
+        assert!(
+            result.is_err(),
+            "Invalid variant should fail deserialization"
+        );
     }
 
     #[test]
     fn deserialization_rejects_invalid_json() {
         let result = serde_json::from_str::<L0Invariant>("not json at all");
-        assert!(result.is_err(), "Malformed JSON should fail deserialization");
+        assert!(
+            result.is_err(),
+            "Malformed JSON should fail deserialization"
+        );
     }
 }

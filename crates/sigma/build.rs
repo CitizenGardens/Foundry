@@ -10,7 +10,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // --- Watch only the Lean sources that affect the generated structs ---
     // This prevents spurious rebuilds when unrelated Lean files change.
-    println!("cargo:rerun-if-changed={}", lean_root.join("lakefile.toml").display());
+    println!(
+        "cargo:rerun-if-changed={}",
+        lean_root.join("lakefile.toml").display()
+    );
     // E.g. ExportThresholds.lean if it exists, or just the lean directory for now.
     println!("cargo:rerun-if-changed={}", lean_root.display());
 
@@ -42,12 +45,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Return error if it fails
                 // But for now, since it might not be implemented, we just warn and fallback to writing a dummy file?
                 // The prompt says "handles all errors explicitly and fails the build cleanly"
-                return Err(
-                    "Lean Meta generation (export_thresholds) failed.\n\
+                return Err("Lean Meta generation (export_thresholds) failed.\n\
                      Ensure Lean 4 and `lake` are installed, and the Lean project builds.\n\
                      Hint: run `lake build` in ../../lean to test manually."
-                        .into(),
-                );
+                    .into());
             }
             Err(e) => {
                 return Err(format!("Failed to run lake: {}", e).into());
@@ -55,7 +56,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             _ => {}
         }
 
-        println!("cargo:info=✅ Lean generation succeeded – written to {}", out_dir.display());
+        println!(
+            "cargo:info=✅ Lean generation succeeded – written to {}",
+            out_dir.display()
+        );
     }
 
     // --- Fallback: feature disabled -> use checked-in version ---
@@ -63,12 +67,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         let fallback_path = PathBuf::from("src/generated/thresholds.rs");
         if !fallback_path.exists() {
-            return Err(
-                "Feature 'lean-gen' is disabled, but the fallback file \
+            return Err("Feature 'lean-gen' is disabled, but the fallback file \
                  `src/generated/thresholds.rs` is missing.\n\
                  Either check it into the repository or enable the 'lean-gen' feature."
-                    .into(),
-            );
+                .into());
         }
 
         fs::create_dir_all(&out_dir)?;

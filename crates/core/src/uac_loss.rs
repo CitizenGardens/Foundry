@@ -43,10 +43,7 @@ impl Default for LanglandsLossConfig {
 ///
 /// where `target_g` is the expected L-value for class g (typically 1.0 for
 /// the identity class, derived from the normalized j-invariant).
-pub fn langlands_loss(
-    state: &State,
-    config: LanglandsLossConfig,
-) -> f64 {
+pub fn langlands_loss(state: &State, config: LanglandsLossConfig) -> f64 {
     let mut total_loss = 0.0;
     let activated_classes = activated_monster_classes(state);
 
@@ -138,7 +135,11 @@ impl ArithmeticBinduAttractor {
     }
 
     /// Create with custom settings.
-    pub fn with_config(target_class: MonsterConjugacyClass, target_l_value: f64, tolerance: f64) -> Self {
+    pub fn with_config(
+        target_class: MonsterConjugacyClass,
+        target_l_value: f64,
+        tolerance: f64,
+    ) -> Self {
         Self {
             target_class,
             target_l_value,
@@ -224,16 +225,16 @@ mod tests {
         let state = State::new();
         let dist = attractor.distance(&state);
         // Distance should be a finite non‑negative value
-        assert!(dist >= 0.0 && dist.is_finite(), "Distance should be finite and non‑negative");
+        assert!(
+            dist >= 0.0 && dist.is_finite(),
+            "Distance should be finite and non‑negative"
+        );
     }
 
     #[test]
     fn test_arithmetic_bindu_attractor_at_bindu() {
-        let attractor = ArithmeticBinduAttractor::with_config(
-            MonsterConjugacyClass::IDENTITY,
-            1.0,
-            1e-6,
-        );
+        let attractor =
+            ArithmeticBinduAttractor::with_config(MonsterConjugacyClass::IDENTITY, 1.0, 1e-6);
         let state = State::new();
         // The Bindu state should be close to the attractor
         // (though the L-value may not be exactly 1.0 due to numerical precision)

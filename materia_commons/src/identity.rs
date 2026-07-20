@@ -2,7 +2,7 @@
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
@@ -50,14 +50,14 @@ pub struct CivicProfile {
 
 impl CivicProfile {
     /// Computes the dynamic governance voting weight.
-    /// Incorporates a baseline epsilon to prevent absolute loss of identity on a zero-factor, 
+    /// Incorporates a baseline epsilon to prevent absolute loss of identity on a zero-factor,
     /// while effectively suppressing governance influence.
     pub fn compute_voting_weight(&self) -> f64 {
         let epsilon = 0.01;
-        self.resonance.max(epsilon) * 
-        self.agency.max(epsilon) * 
-        self.integrity.max(epsilon) * 
-        self.viability.max(epsilon)
+        self.resonance.max(epsilon)
+            * self.agency.max(epsilon)
+            * self.integrity.max(epsilon)
+            * self.viability.max(epsilon)
     }
 }
 
@@ -135,7 +135,10 @@ pub fn derive_uniqueness_anchor(
     input: &UniquenessAnchorInput,
     salt_secret: &str,
 ) -> UniquenessAnchor {
-    let payload = format!("{}:{}:{}", input.issuer.issuer_id, input.subject_id, input.context);
+    let payload = format!(
+        "{}:{}:{}",
+        input.issuer.issuer_id, input.subject_id, input.context
+    );
     let digest_bytes = hmac_sha256(salt_secret.as_bytes(), payload.as_bytes());
     let anchor_hash = format!("0x{}", hex::encode(digest_bytes));
 
@@ -241,7 +244,12 @@ mod tests {
             issuer: cfg.issuers[0].clone(),
             subject_id: "alice-sub".to_string(),
             context: "membership".to_string(),
-            civic_profile: Some(CivicProfile { resonance: 1.0, agency: 1.0, integrity: 1.0, viability: 1.0 }),
+            civic_profile: Some(CivicProfile {
+                resonance: 1.0,
+                agency: 1.0,
+                integrity: 1.0,
+                viability: 1.0,
+            }),
         };
         let anchor = derive_uniqueness_anchor(&input, "my-secret-salt");
         assert_eq!(anchor.issuer_id, "test-issuer");

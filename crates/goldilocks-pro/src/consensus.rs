@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::resonance::ResonanceWord;
 use anyhow::{Result, bail};
+use serde::{Deserialize, Serialize};
 
 /// Represents a STARK proof from an individual party.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,7 +88,10 @@ impl AggregateWitness {
                 let pid = hasher.finish();
 
                 if vdf.verify(&seed, pid, vdf_proof).is_err() {
-                    bail!("VDF timing verification failed for party: {}", party.party_id);
+                    bail!(
+                        "VDF timing verification failed for party: {}",
+                        party.party_id
+                    );
                 }
             } else {
                 bail!("Missing VDF proof for party: {}", party.party_id);
@@ -96,7 +99,7 @@ impl AggregateWitness {
 
             // Unpack resonance: 0b0000001 (class 1) signifies approval
             let (class, _payload) = party.resonance.unpack();
-            
+
             // In a real circuit, we verify party.stark_proof_bytes using hash-based FRI
             if class == 1 {
                 approved_count += 1;
@@ -104,7 +107,11 @@ impl AggregateWitness {
         }
 
         if approved_count < self.threshold {
-            bail!("Threshold not met: required {}, got {}", self.threshold, approved_count);
+            bail!(
+                "Threshold not met: required {}, got {}",
+                self.threshold,
+                approved_count
+            );
         }
 
         // Mock master proof generation
@@ -169,19 +176,30 @@ mod tests {
             party_id: "NodeA".to_string(),
             resonance: ResonanceWord::pack(1, 12345),
             stark_proof_bytes: vec![0x1, 0x2, 0x3],
-            vdf_proof: Some(vdf.evaluate(&12345u64.to_le_bytes(), hash_pid("NodeA")).unwrap()),
+            vdf_proof: Some(
+                vdf.evaluate(&12345u64.to_le_bytes(), hash_pid("NodeA"))
+                    .unwrap(),
+            ),
         });
 
         agg.add_party(PartyProof {
             party_id: "NodeB".to_string(),
             resonance: ResonanceWord::pack(1, 67890),
             stark_proof_bytes: vec![0x4, 0x5, 0x6],
-            vdf_proof: Some(vdf.evaluate(&67890u64.to_le_bytes(), hash_pid("NodeB")).unwrap()),
+            vdf_proof: Some(
+                vdf.evaluate(&67890u64.to_le_bytes(), hash_pid("NodeB"))
+                    .unwrap(),
+            ),
         });
 
         let proof = agg.aggregate().unwrap();
         assert_eq!(proof, vec![0xCA, 0xFE, 0xBA, 0xBE]);
-        assert!(AggregateWitness::verify_master(&proof, &MasterStatement { action_hash: [0; 32] }));
+        assert!(AggregateWitness::verify_master(
+            &proof,
+            &MasterStatement {
+                action_hash: [0; 32]
+            }
+        ));
     }
 
     #[test]
@@ -193,18 +211,27 @@ mod tests {
             party_id: "NodeA".to_string(),
             resonance: ResonanceWord::pack(1, 12345),
             stark_proof_bytes: vec![0x1, 0x2, 0x3],
-            vdf_proof: Some(vdf.evaluate(&12345u64.to_le_bytes(), hash_pid("NodeA")).unwrap()),
+            vdf_proof: Some(
+                vdf.evaluate(&12345u64.to_le_bytes(), hash_pid("NodeA"))
+                    .unwrap(),
+            ),
         });
 
         agg.add_party(PartyProof {
             party_id: "NodeB".to_string(),
             resonance: ResonanceWord::pack(2, 67890),
             stark_proof_bytes: vec![0x4, 0x5, 0x6],
-            vdf_proof: Some(vdf.evaluate(&67890u64.to_le_bytes(), hash_pid("NodeB")).unwrap()),
+            vdf_proof: Some(
+                vdf.evaluate(&67890u64.to_le_bytes(), hash_pid("NodeB"))
+                    .unwrap(),
+            ),
         });
 
         let res = agg.aggregate();
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "Threshold not met: required 2, got 1");
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "Threshold not met: required 2, got 1"
+        );
     }
 }

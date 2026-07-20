@@ -10,25 +10,25 @@ pub struct SafetyTelemetry {
 }
 
 /// The Constitutional Recursive Manifestation Framework (CRMF) Request.
-/// This is the ultimate proof-carrying artifact. It binds the mathematical 
+/// This is the ultimate proof-carrying artifact. It binds the mathematical
 /// tensor contraction to the physical hardware state.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CRMFRequest {
     /// Pinned to the current architectural state
-    pub lawful_recursion_version: String, 
-    
+    pub lawful_recursion_version: String,
+
     /// The starting point of the MA-VQE loop
     pub initial_state_hash: String,
-    
+
     /// The stabilized 108-cycle attractor state
     pub terminal_state_hash: String,
-    
+
     /// SHA-256 digest of the `events.jsonl` TelemetryObserver output
-    pub trajectory_digest: String, 
-    
+    pub trajectory_digest: String,
+
     /// Cryptographic boolean asserted by the WardMonitor's scan of the JSONL
-    pub proof_of_contraction: bool, 
-    
+    pub proof_of_contraction: bool,
+
     /// The physical hardware state during execution
     pub physical_telemetry: SafetyTelemetry,
 }
@@ -52,7 +52,7 @@ impl CRMFRequest {
         payload.extend_from_slice(self.terminal_state_hash.as_bytes());
         payload.extend_from_slice(self.trajectory_digest.as_bytes());
         // In the final Poseidon2(t=9, r=8) topology, these bytes map to the field elements
-        
+
         payload
     }
 }

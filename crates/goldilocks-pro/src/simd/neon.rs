@@ -1,5 +1,5 @@
 use crate::GoldilocksField;
-use std::ops::{Add, Sub, Mul};
+use std::ops::{Add, Mul, Sub};
 
 #[cfg(target_arch = "aarch64")]
 use std::arch::aarch64::*;
@@ -19,11 +19,11 @@ pub fn vec_add(a: &[GoldilocksField], b: &[GoldilocksField], out: &mut [Goldiloc
                 let vb = vld1q_u64(b[i..].as_ptr() as *const u64);
                 let sum = vaddq_u64(va, vb);
                 let sum_eps = vaddq_u64(sum, eps);
-                
+
                 // mask = sum_eps < sum (unsigned)
                 // aarch64 has vcltq_u64 for unsigned less than
                 let mask = vcltq_u64(sum_eps, sum);
-                
+
                 // Bitwise select: vbslq_u64(mask, true_val, false_val)
                 let res = vbslq_u64(mask, sum_eps, sum);
                 vst1q_u64(out[i..].as_mut_ptr() as *mut u64, res);

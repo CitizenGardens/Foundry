@@ -2,8 +2,8 @@
 //!
 //! Based on ADR-093: Meta-Relativity — Structural and Spectral Invariants.
 
-use anyhow::{Result, anyhow};
-use nalgebra::{DMatrix, Complex};
+use anyhow::{anyhow, Result};
+use nalgebra::{Complex, DMatrix};
 use std::collections::HashMap;
 
 /// Multiplicity Functor: M(e) = ∏ p^e_p

@@ -6,10 +6,10 @@
 //! Publisher → signs stability configuration into Archivum
 //! ```
 
-use super::{XiFormalWitness};
+use super::XiFormalWitness;
 
 #[cfg(feature = "archivum")]
-use archivum::{XiFormalProof, WitnessLedger};
+use archivum::{WitnessLedger, XiFormalProof};
 
 #[derive(Debug, Clone, Default)]
 pub struct TripleLockXiFormal {

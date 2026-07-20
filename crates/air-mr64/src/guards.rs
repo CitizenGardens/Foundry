@@ -66,7 +66,7 @@ pub fn guard_trace_rows(rows: usize) {
 pub fn guard_trace_size(trace_json: &str) {
     let window = support_window();
     let size_bytes = trace_json.as_bytes().len();
-    
+
     assert!(
         size_bytes <= window.max_trace_size_bytes,
         "Trace size {} bytes exceeds support window limit {} bytes. Rejecting input.",
@@ -88,7 +88,7 @@ pub fn guard_trace_size(trace_json: &str) {
 pub fn guard_proof_size(proof_bytes: &[u8]) {
     let window = support_window();
     let size_bytes = proof_bytes.len();
-    
+
     assert!(
         size_bytes <= window.max_proof_size_bytes,
         "Proof size {} bytes exceeds support window limit {} bytes. Rejecting proof.",

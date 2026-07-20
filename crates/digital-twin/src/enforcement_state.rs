@@ -68,10 +68,10 @@ impl EnforcementLegitimacyPredicate {
 
     /// Evaluates if the state passes enforcement gates.
     pub fn is_enforceable(bits: EnforcementBits) -> bool {
-        Self::is_legitimate(bits) && 
-        bits.contains(EnforcementBits::VERIFY) &&
-        !bits.contains(EnforcementBits::TAINT) &&
-        !bits.contains(EnforcementBits::PRECEDENT_BAD)
+        Self::is_legitimate(bits)
+            && bits.contains(EnforcementBits::VERIFY)
+            && !bits.contains(EnforcementBits::TAINT)
+            && !bits.contains(EnforcementBits::PRECEDENT_BAD)
     }
 }
 
@@ -95,7 +95,7 @@ impl EnforcementStateSnapshot {
         if state_id.is_empty() {
             anyhow::bail!("state_id required");
         }
-        
+
         // Basic ISO8601 validation
         chrono::DateTime::parse_from_rfc3339(&timestamp)
             .map_err(|e| anyhow::anyhow!("timestamp must be valid ISO 8601: {}", e))?;

@@ -2,7 +2,7 @@
 mod mtpi_proofs {
     use kani;
 
-    // Verifying MTPI configuration constraints 
+    // Verifying MTPI configuration constraints
     // Translated from MTPI_Check.lean
 
     struct Configuration {
@@ -22,12 +22,10 @@ mod mtpi_proofs {
 
     #[kani::proof]
     fn is_108_mtpi() {
-        let config = Configuration {
-            cycle_count: 108,
-        };
+        let config = Configuration { cycle_count: 108 };
 
         let witness = check_mtpi(&config);
-        
+
         // Assert that the explicit 108 configuration yields a valid witness
         assert!(witness.is_valid);
     }

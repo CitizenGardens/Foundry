@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
 use blake3::Hasher;
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "archivum")]
-use archivum::{WitnessLedger, MocSchemaProof};
+use archivum::{MocSchemaProof, WitnessLedger};
 
 #[cfg(feature = "triple-lock")]
 pub mod triple_lock;
@@ -91,17 +91,31 @@ impl MocSchemaWitness {
 pub struct MocEngine;
 
 impl MocEngine {
-    pub fn verify_schema(&self, schema: &Schema, last_seq: u64) -> Result<VerifiedSchema, MocError> {
+    pub fn verify_schema(
+        &self,
+        schema: &Schema,
+        last_seq: u64,
+    ) -> Result<VerifiedSchema, MocError> {
         if schema.attestation != "AUTHORIZED_SCHEMA_SIG" {
             return Err(MocError::InvalidAttestation);
         }
         if schema.seq <= last_seq {
-            return Err(MocError::SequenceViolation { current: schema.seq, last: last_seq });
+            return Err(MocError::SequenceViolation {
+                current: schema.seq,
+                last: last_seq,
+            });
         }
-        Ok(VerifiedSchema { schema: schema.clone(), last_seq })
+        Ok(VerifiedSchema {
+            schema: schema.clone(),
+            last_seq,
+        })
     }
 
-    pub fn verify_operator(&self, op: &MocOperator, schema: &VerifiedSchema) -> Result<(), MocError> {
+    pub fn verify_operator(
+        &self,
+        op: &MocOperator,
+        schema: &VerifiedSchema,
+    ) -> Result<(), MocError> {
         if let Some(p) = op.prime_grading() {
             if !schema.schema.primes.contains(&p) {
                 return Err(MocError::InvalidPrime(p));
@@ -110,7 +124,11 @@ impl MocEngine {
         Ok(())
     }
 
-    pub fn verify_operator_word(&self, word: &OperatorWord, schema: &VerifiedSchema) -> Result<(), MocError> {
+    pub fn verify_operator_word(
+        &self,
+        word: &OperatorWord,
+        schema: &VerifiedSchema,
+    ) -> Result<(), MocError> {
         for op in &word.operators {
             self.verify_operator(op, schema)?;
         }
@@ -144,19 +162,29 @@ impl MocOperator {
 
     pub fn commute(&self, other: &MocOperator) -> CommutatorResult {
         match (self, other) {
-            (MocOperator::Sp(p1), MocOperator::Sp(p2)) => {
-                CommutatorResult { value: if p1 == p2 { 0 } else { 1 }, prime_p: *p1, prime_q: *p2 }
-            }
-            _ => CommutatorResult { value: 0, prime_p: 0, prime_q: 0 },
+            (MocOperator::Sp(p1), MocOperator::Sp(p2)) => CommutatorResult {
+                value: if p1 == p2 { 0 } else { 1 },
+                prime_p: *p1,
+                prime_q: *p2,
+            },
+            _ => CommutatorResult {
+                value: 0,
+                prime_p: 0,
+                prime_q: 0,
+            },
         }
     }
 }
 
-pub fn resonance(value: f64, hamiltonian_hash: [u8; 32], domain_hash: [u8; 32]) -> Result<ResonanceResult, MocError> {
+pub fn resonance(
+    value: f64,
+    hamiltonian_hash: [u8; 32],
+    domain_hash: [u8; 32],
+) -> Result<ResonanceResult, MocError> {
     if value > 1.0 {
         return Err(MocError::ResonanceExceeded { actual: value });
     }
-    
+
     Ok(ResonanceResult {
         value,
         hamiltonian_hash,
@@ -183,10 +211,10 @@ mod verification {
             attestation: "AUTHORIZED_SCHEMA_SIG".to_string(),
         };
         let verified = engine.verify_schema(&schema, 1).unwrap();
-        
+
         let op = MocOperator::Sp(p);
         let res = engine.verify_operator(&op, &verified);
-        
+
         if p == 2 || p == 3 {
             kani::assert(res.is_ok(), "Permitted primes are accepted");
         } else {
@@ -200,8 +228,14 @@ mod verification {
         let op2 = MocOperator::Sp(kani::any());
 
         let res = op1.commute(&op2);
-        let p1 = match op1 { MocOperator::Sp(p) => p, _ => unreachable!() };
-        let p2 = match op2 { MocOperator::Sp(p) => p, _ => unreachable!() };
+        let p1 = match op1 {
+            MocOperator::Sp(p) => p,
+            _ => unreachable!(),
+        };
+        let p2 = match op2 {
+            MocOperator::Sp(p) => p,
+            _ => unreachable!(),
+        };
 
         if p1 == p2 {
             kani::assert(res.value == 0, "Commutator [S_p, S_p] must be 0");
@@ -224,7 +258,7 @@ mod verification {
         let value: f64 = kani::any();
         kani::assume(value >= 0.0);
         let hash = [0u8; 32];
-        
+
         let res = resonance(value, hash, hash);
         if let Ok(r) = res {
             kani::assert(r.value <= 1.0, "Resonance must be <= 1.0");
@@ -240,7 +274,7 @@ mod verification {
             attestation: "AUTHORIZED_SCHEMA_SIG".to_string(),
         };
         let last_seq: u64 = kani::any();
-        
+
         let res = engine.verify_schema(&schema, last_seq);
         if schema.seq <= last_seq {
             kani::assert(res.is_err(), "Monotone seq check");

@@ -1,13 +1,13 @@
 mod engine;
-mod quantum;
-mod numerical;
 mod governance;
-mod utils;
 pub mod mqnn;
+mod numerical;
+mod quantum;
+mod utils;
 
-use clap::{Parser, Subcommand};
 use crate::engine::PirtmEngine;
 use crate::quantum::StabilizerSimulator;
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(name = "hybrid-quantum-rs")]
@@ -43,13 +43,13 @@ async fn main() -> anyhow::Result<()> {
             println!("Initial State: {:?}", engine.get_x());
             engine.step();
             println!("After Step:    {:?}", engine.get_x());
-        },
+        }
         Commands::Quantum { qubits } => {
             let mut sim = StabilizerSimulator::new(qubits);
             println!("Running GHZ state simulation for {} qubits...", qubits);
             sim.run_ghz_test();
             println!("Simulation successful (Polynomial Sovereignty maintained).");
-        },
+        }
         Commands::Validate => {
             println!("--- ADR-087 Phase 2: Environment Validation (Rust) ---");
             println!("✓ Rust toolchain: 1.80+");

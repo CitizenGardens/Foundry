@@ -60,11 +60,17 @@ mod verification {
         let mapped = mode1_feasibility_map(&matrix, epsilon);
 
         // Proposition 1(a): Mapped matrix is still Hermitian
-        kani::assert(is_hermitian(&mapped), "Feasibility map must preserve Hermitianity");
+        kani::assert(
+            is_hermitian(&mapped),
+            "Feasibility map must preserve Hermitianity",
+        );
 
         // Proposition 1(b): Mapped matrix norm is <= epsilon
         let mapped_norm = frobenius_norm(&mapped);
-        kani::assert(mapped_norm <= epsilon + 1e-6, "Feasibility map must bound Frobenius norm to epsilon");
+        kani::assert(
+            mapped_norm <= epsilon + 1e-6,
+            "Feasibility map must bound Frobenius norm to epsilon",
+        );
     }
 
     #[kani::proof]
@@ -81,6 +87,9 @@ mod verification {
         // ||[A, \Delta]||_F <= ||A||_2 ||\Delta - H||_F * 2
         let commutator_norm_upper_bound = 2.0 * h_norm * eta;
 
-        kani::assert(commutator_norm_upper_bound >= 0.0, "Commutator bound must be non-negative");
+        kani::assert(
+            commutator_norm_upper_bound >= 0.0,
+            "Commutator bound must be non-negative",
+        );
     }
 }

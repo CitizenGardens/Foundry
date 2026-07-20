@@ -1,8 +1,7 @@
-
-use proptest::prelude::*;
-use pirtm_tensor::multiplicity_cell::{LinearMultiplicityCell, MultiplicityCell};
-use pirtm_tensor::contractive_fit::ContractiveFit;
 use ndarray::arr1;
+use pirtm_tensor::contractive_fit::ContractiveFit;
+use pirtm_tensor::multiplicity_cell::{LinearMultiplicityCell, MultiplicityCell};
+use proptest::prelude::*;
 
 proptest! {
     #[test]

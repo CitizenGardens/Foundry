@@ -1,6 +1,6 @@
 use num_bigint::BigUint;
-use num_traits::{Zero, One};
-use serde::{Serialize, Deserialize};
+use num_traits::{One, Zero};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PastaField<const N: usize> {
@@ -17,11 +17,17 @@ impl<const N: usize> PastaField<N> {
     }
 
     pub fn zero(modulus: BigUint) -> Self {
-        Self { value: BigUint::zero(), modulus }
+        Self {
+            value: BigUint::zero(),
+            modulus,
+        }
     }
 
     pub fn one(modulus: BigUint) -> Self {
-        Self { value: BigUint::one(), modulus }
+        Self {
+            value: BigUint::one(),
+            modulus,
+        }
     }
 
     pub fn add(&self, other: &Self) -> Self {
@@ -32,7 +38,10 @@ impl<const N: usize> PastaField<N> {
         if self.value >= other.value {
             Self::new(&self.value - &other.value, self.modulus.clone())
         } else {
-            Self::new(&self.modulus + &self.value - &other.value, self.modulus.clone())
+            Self::new(
+                &self.modulus + &self.value - &other.value,
+                self.modulus.clone(),
+            )
         }
     }
 
@@ -55,7 +64,11 @@ impl<const N: usize> PastaField<N> {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AffinePoint<const N: usize> {
-    Identity { modulus: BigUint, a: BigUint, b: BigUint },
+    Identity {
+        modulus: BigUint,
+        a: BigUint,
+        b: BigUint,
+    },
     Point {
         x: PastaField<N>,
         y: PastaField<N>,
@@ -78,14 +91,20 @@ impl<const N: usize> AffinePoint<N> {
             (Self::Identity { .. }, _) => other.clone(),
             (_, Self::Identity { .. }) => self.clone(),
             (
-                Self::Point { x: x1, y: y1, a, b, .. },
+                Self::Point {
+                    x: x1, y: y1, a, b, ..
+                },
                 Self::Point { x: x2, y: y2, .. },
             ) => {
                 if x1 == x2 {
                     if y1 == y2 {
                         return self.double();
                     } else {
-                        return Self::identity(x1.modulus.clone(), a.value.clone(), b.value.clone());
+                        return Self::identity(
+                            x1.modulus.clone(),
+                            a.value.clone(),
+                            b.value.clone(),
+                        );
                     }
                 }
 
@@ -121,7 +140,7 @@ impl<const N: usize> AffinePoint<N> {
                 // lambda = (3x^2 + a) / (2y)
                 let three = PastaField::new(BigUint::from(3u64), x.modulus.clone());
                 let two = PastaField::new(BigUint::from(2u64), x.modulus.clone());
-                
+
                 let num = x.mul(x).mul(&three).add(a);
                 let den = y.mul(&two);
                 let lambda = num.mul(&den.inv().unwrap());
@@ -144,8 +163,12 @@ impl<const N: usize> AffinePoint<N> {
 
     pub fn mul_scalar(&self, scalar: &BigUint) -> Self {
         let mut res = match self {
-            Self::Identity { modulus, a, b } => Self::identity(modulus.clone(), a.clone(), b.clone()),
-            Self::Point { x, a, b, .. } => Self::identity(x.modulus.clone(), a.value.clone(), b.value.clone()),
+            Self::Identity { modulus, a, b } => {
+                Self::identity(modulus.clone(), a.clone(), b.clone())
+            }
+            Self::Point { x, a, b, .. } => {
+                Self::identity(x.modulus.clone(), a.value.clone(), b.value.clone())
+            }
         };
         let mut temp = self.clone();
         let mut s = scalar.clone();
@@ -193,8 +216,16 @@ impl<const N: usize> PedersenCommitment<N> {
 }
 
 pub fn get_pallas_params() -> (BigUint, BigUint, BigUint, BigUint) {
-    let p = BigUint::parse_bytes(b"40000000000000000000000000000000224698fc094cf91b992d30ed00000001", 16).unwrap();
-    let q = BigUint::parse_bytes(b"40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001", 16).unwrap();
+    let p = BigUint::parse_bytes(
+        b"40000000000000000000000000000000224698fc094cf91b992d30ed00000001",
+        16,
+    )
+    .unwrap();
+    let q = BigUint::parse_bytes(
+        b"40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001",
+        16,
+    )
+    .unwrap();
     let a = BigUint::zero();
     let b = BigUint::from(5u64);
     (p, q, a, b)
@@ -207,7 +238,7 @@ mod tests {
     #[test]
     fn test_pallas_algebra() {
         let (p, q, a, b) = get_pallas_params();
-        
+
         // Pallas generator: (-1, 2)
         let g = AffinePoint::<32>::Point {
             x: PastaField::<32>::new(p.clone() - BigUint::from(1u64), p.clone()),
@@ -219,11 +250,17 @@ mod tests {
         // Manual doubling check: 2g = (41/16, -299/64)
         let g2 = g.double();
         if let AffinePoint::Point { ref x, ref y, .. } = g2 {
-            let sixteen_inv = PastaField::<32>::new(BigUint::from(16u64), p.clone()).inv().unwrap();
-            let sixtyfour_inv = PastaField::<32>::new(BigUint::from(64u64), p.clone()).inv().unwrap();
-            let expected_x = PastaField::<32>::new(BigUint::from(41u64), p.clone()).mul(&sixteen_inv);
-            let expected_y = PastaField::<32>::new(p.clone() - BigUint::from(299u64), p.clone()).mul(&sixtyfour_inv);
-            
+            let sixteen_inv = PastaField::<32>::new(BigUint::from(16u64), p.clone())
+                .inv()
+                .unwrap();
+            let sixtyfour_inv = PastaField::<32>::new(BigUint::from(64u64), p.clone())
+                .inv()
+                .unwrap();
+            let expected_x =
+                PastaField::<32>::new(BigUint::from(41u64), p.clone()).mul(&sixteen_inv);
+            let expected_y = PastaField::<32>::new(p.clone() - BigUint::from(299u64), p.clone())
+                .mul(&sixtyfour_inv);
+
             assert_eq!(*x, expected_x, "2g.x mismatch");
             assert_eq!(*y, expected_y, "2g.y mismatch");
         } else {

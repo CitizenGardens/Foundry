@@ -1,8 +1,8 @@
 #[cfg(kani)]
 mod tests {
     use ndarray::{Array1, Array2};
-    use pirtm_tensor::multiplicity_cell::LinearMultiplicityCell;
     use pirtm_tensor::contractive_fit::ContractiveFit;
+    use pirtm_tensor::multiplicity_cell::LinearMultiplicityCell;
 
     #[kani::proof]
     #[kani::unwind(3)]
@@ -10,17 +10,16 @@ mod tests {
         let w_coh = Array1::from_vec(vec![0.5, 0.5]);
         let w_def = Array2::from_shape_vec((2, 2), vec![0.5, 0.0, 0.0, 0.5]).unwrap();
         let cell = LinearMultiplicityCell::new(w_coh, w_def);
-        
+
         let zeta_max = 5.0;
-        let fit = ContractiveFit::new(cell, 0.1, 1e-4)
-            .with_zeta_regularization(zeta_max);
+        let fit = ContractiveFit::new(cell, 0.1, 1e-4).with_zeta_regularization(zeta_max);
 
         // Discretized random state
         let s0_int: i8 = kani::any();
         let s1_int: i8 = kani::any();
         let s0 = (s0_int as f64) * 100.0; // Potentially massive starting state to force explosive gradients
         let s1 = (s1_int as f64) * 100.0;
-        
+
         // Prevent NaN logic
         kani::assume(s0 >= -500.0 && s0 <= 500.0);
         kani::assume(s1 >= -500.0 && s1 <= 500.0);
@@ -29,7 +28,7 @@ mod tests {
 
         // Evaluate a single step
         let (new_state, _) = fit.step(&state);
-        
+
         // Compute the absolute displacement vector norm.
         // new_state = state - lr * clamped_grad
         // displacement = new_state - state = -lr * clamped_grad

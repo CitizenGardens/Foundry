@@ -10,13 +10,13 @@
 //! It is intended for production use in PhaseMirror‑Legal where the Rust engine
 //! provides the canonical ESI preservation risk calculations.
 
-use std::collections::HashMap;
 use num_bigint::{BigInt, ToBigInt};
 use num_rational::BigRational;
 use num_traits::{One, Pow};
-pub mod pmat;
+use std::collections::HashMap;
 pub mod civic;
-pub use pmat::{PrimeMonomialMatrix, Entry};
+pub mod pmat;
+pub use pmat::{Entry, PrimeMonomialMatrix};
 /// A finitely‑supported signature mapping primes to integer exponents.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Signature {
@@ -27,7 +27,9 @@ pub struct Signature {
 impl Signature {
     /// Create an empty signature (the identity for multiplication).
     pub fn new() -> Self {
-        Signature { map: HashMap::new() }
+        Signature {
+            map: HashMap::new(),
+        }
     }
 
     /// Insert or update the exponent for a prime. Zero exponents are removed.
@@ -66,7 +68,6 @@ impl Signature {
         }
         Signature { map: result }
     }
-    
 
     /// Degenerate cup operation: identity on the unit signature.
     /// Returns the empty signature `Signature::new()`.
@@ -79,9 +80,6 @@ impl Signature {
     pub fn cap(&self) -> Signature {
         Signature::new()
     }
-
-
-
 
     /// Invert a signature (negate all exponents).
     pub fn inv(&self) -> Signature {
@@ -115,8 +113,8 @@ pub fn multiplicity(sig: &Signature) -> BigRational {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use num_rational::BigRational;
     use num_bigint::BigInt;
+    use num_rational::BigRational;
     use num_traits::One;
 
     #[test]
@@ -129,7 +127,10 @@ mod tests {
     fn test_single_prime_power() {
         let mut sig = Signature::new();
         sig.insert(2, 3); // 2^3 = 8
-        assert_eq!(multiplicity(&sig), BigRational::new(BigInt::from(8), BigInt::one()));
+        assert_eq!(
+            multiplicity(&sig),
+            BigRational::new(BigInt::from(8), BigInt::one())
+        );
     }
 
     #[test]

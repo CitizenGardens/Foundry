@@ -1,5 +1,5 @@
 use pqcrypto_dilithium::dilithium5::*;
-use pqcrypto_traits::sign::{PublicKey, SecretKey, DetachedSignature};
+use pqcrypto_traits::sign::{DetachedSignature, PublicKey, SecretKey};
 
 /// Generate a new Dilithium5 keypair.
 ///
@@ -58,7 +58,10 @@ mod tests {
         let msg = b"hello dilithium world";
         let sig = sign(&sk, msg);
         assert_eq!(sig.len(), 4627, "Dilithium5 signature must be 4627 bytes");
-        assert!(verify(&pk, msg, &sig).is_ok(), "Valid signature must verify");
+        assert!(
+            verify(&pk, msg, &sig).is_ok(),
+            "Valid signature must verify"
+        );
     }
 
     #[test]
@@ -69,7 +72,10 @@ mod tests {
         // Tamper with the signature by flipping a byte.
         sig[0] ^= 0xff;
         let bad_msg = b"tampered message";
-        assert!(verify(&pk, bad_msg, &sig).is_err(), "Tampered signature must fail");
+        assert!(
+            verify(&pk, bad_msg, &sig).is_err(),
+            "Tampered signature must fail"
+        );
     }
 
     #[test]
@@ -78,7 +84,10 @@ mod tests {
         let (pk_b, _sk_b) = keygen();
         let msg = b"message from A";
         let sig = sign(&sk_a, msg);
-        assert!(verify(&pk_b, msg, &sig).is_err(), "Signature from A must fail against B's key");
+        assert!(
+            verify(&pk_b, msg, &sig).is_err(),
+            "Signature from A must fail against B's key"
+        );
     }
 
     #[test]
@@ -112,6 +121,9 @@ mod kani_proofs {
         let (pk, sk) = keygen();
         let msg = kani::any();
         let sig = sign(&sk, &msg);
-        assert!(verify(&pk, &msg, &sig).is_ok(), "Valid signature must verify under Kani");
+        assert!(
+            verify(&pk, &msg, &sig).is_ok(),
+            "Valid signature must verify under Kani"
+        );
     }
 }

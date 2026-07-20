@@ -1,10 +1,10 @@
-use ndarray::Array1;
 use crate::multiplicity_cell::MultiplicityCell;
+use ndarray::Array1;
 
 /// The Contractive Fit Operator for MA-VQE.
-/// 
-/// Replaces heuristic numerical gradients with the SAPGC (Scale-Adaptive 
-/// Prime-Graded Feedback Controller) pipeline. It uses the exact, bounded 
+///
+/// Replaces heuristic numerical gradients with the SAPGC (Scale-Adaptive
+/// Prime-Graded Feedback Controller) pipeline. It uses the exact, bounded
 /// outputs of the MultiplicityCell to compute a contractive update step.
 pub struct ContractiveFit<C: MultiplicityCell> {
     cell: C,
@@ -51,14 +51,14 @@ impl<C: MultiplicityCell> ContractiveFit<C> {
     /// Executes the full MA-VQE convergence loop.
     /// Returns the terminal state and a boolean indicating if it reached the target tolerance.
     pub fn optimize(
-        &self, 
-        initial_state: Array1<f64>, 
-        max_iter: usize, 
+        &self,
+        initial_state: Array1<f64>,
+        max_iter: usize,
         defect_tol: f64,
-        mut observer: Option<&mut dyn TelemetryObserver>
+        mut observer: Option<&mut dyn TelemetryObserver>,
     ) -> (Array1<f64>, bool) {
         let mut current_state = initial_state;
-        
+
         for i in 0..max_iter {
             let (next_state, coherent, defect) = self.step(&current_state);
             current_state = next_state;
@@ -73,10 +73,10 @@ impl<C: MultiplicityCell> ContractiveFit<C> {
                 return (current_state, true);
             }
         }
-        
+
         (current_state, false)
     }
-    
+
     /// Expose the underlying cell's dimension for pipeline verification
     pub fn dim(&self) -> usize {
         self.cell.dim()

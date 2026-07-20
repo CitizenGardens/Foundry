@@ -1,6 +1,6 @@
-use crate::schemas::{RuleViolation, Severity, MachineDecision, Outcome, OracleInput};
-use std::collections::HashMap;
+use crate::schemas::{MachineDecision, OracleInput, Outcome, RuleViolation, Severity};
 use chrono::Utc;
+use std::collections::HashMap;
 
 pub struct Thresholds {
     pub critical: usize,
@@ -10,16 +10,24 @@ pub struct Thresholds {
 
 pub fn get_thresholds(strict: bool) -> Thresholds {
     if strict {
-        Thresholds { critical: 0, high: 0, medium: 1 }
+        Thresholds {
+            critical: 0,
+            high: 0,
+            medium: 1,
+        }
     } else {
-        Thresholds { critical: 0, high: 1, medium: 3 }
+        Thresholds {
+            critical: 0,
+            high: 1,
+            medium: 3,
+        }
     }
 }
 
 pub fn should_block(counts: &HashMap<Severity, usize>, thresholds: &Thresholds) -> bool {
-    *counts.get(&Severity::Critical).unwrap_or(&0) > thresholds.critical ||
-    *counts.get(&Severity::High).unwrap_or(&0) > thresholds.high ||
-    *counts.get(&Severity::Medium).unwrap_or(&0) > thresholds.medium
+    *counts.get(&Severity::Critical).unwrap_or(&0) > thresholds.critical
+        || *counts.get(&Severity::High).unwrap_or(&0) > thresholds.high
+        || *counts.get(&Severity::Medium).unwrap_or(&0) > thresholds.medium
 }
 
 pub struct DecisionContext {
@@ -32,7 +40,7 @@ pub struct DecisionContext {
 
 pub fn make_decision(context: DecisionContext) -> MachineDecision {
     let thresholds = get_thresholds(context.strict);
-    
+
     let mut counts = HashMap::new();
     for v in &context.violations {
         *counts.entry(v.severity.clone()).or_insert(0) += 1;
@@ -64,18 +72,31 @@ pub fn make_decision(context: DecisionContext) -> MachineDecision {
     if matches!(outcome, Outcome::Allow) && context.violations.is_empty() {
         reasons.push("No violations detected".to_string());
     } else if matches!(outcome, Outcome::Allow) && !context.violations.is_empty() {
-        reasons.push(format!("Minor violations within thresholds: Low: {}", counts.get(&Severity::Low).unwrap_or(&0)));
+        reasons.push(format!(
+            "Minor violations within thresholds: Low: {}",
+            counts.get(&Severity::Low).unwrap_or(&0)
+        ));
     }
 
     let mut metadata = HashMap::new();
-    metadata.insert("timestamp".to_string(), serde_json::json!(Utc::now().to_rfc3339()));
+    metadata.insert(
+        "timestamp".to_string(),
+        serde_json::json!(Utc::now().to_rfc3339()),
+    );
     metadata.insert("mode".to_string(), serde_json::json!(context.mode));
-    
-    let rule_ids: Vec<String> = context.violations.iter().map(|v| v.rule_id.clone()).collect();
+
+    let rule_ids: Vec<String> = context
+        .violations
+        .iter()
+        .map(|v| v.rule_id.clone())
+        .collect();
     let mut unique_rule_ids = rule_ids;
     unique_rule_ids.sort();
     unique_rule_ids.dedup();
-    metadata.insert("rulesEvaluated".to_string(), serde_json::json!(unique_rule_ids));
+    metadata.insert(
+        "rulesEvaluated".to_string(),
+        serde_json::json!(unique_rule_ids),
+    );
 
     MachineDecision {
         outcome,
